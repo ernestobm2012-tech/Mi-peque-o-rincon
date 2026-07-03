@@ -212,6 +212,17 @@
   .mapbox{ border:1px solid var(--line); overflow:hidden; height:320px; }
   .mapbox iframe{ width:100%; height:100%; border:0; filter:grayscale(20%); }
 
+  .wa-float{
+    position:fixed; right:22px; bottom:22px; z-index:60;
+    display:flex; align-items:center; gap:10px;
+    background:var(--olive-dark); color:var(--cream); text-decoration:none;
+    padding:13px 18px; border-radius:999px; font-size:14px; font-weight:500;
+    box-shadow:0 6px 18px rgba(0,0,0,.22);
+  }
+  .wa-float svg{ width:20px; height:20px; flex:none; }
+  .wa-float:hover{ background:var(--ink); }
+  @media (max-width:600px){ .wa-float span{ display:none; } .wa-float{ padding:14px; } }
+
   footer{ background:var(--ink); color:#CFC9B8; padding:40px 0; font-size:13px; }
   .footer-row{ display:flex; justify-content:space-between; flex-wrap:wrap; gap:16px; align-items:center; }
   footer a{ color:#CFC9B8; text-decoration:none; }
@@ -465,6 +476,11 @@
     </div>
   </div>
 </section>
+
+<a class="wa-float" href="https://wa.me/34624297877?text=Hola%2C%20quer%C3%ADa%20consultar%20disponibilidad" target="_blank" rel="noopener" aria-label="Escríbenos por WhatsApp">
+  <svg viewBox="0 0 32 32" fill="currentColor"><path d="M16.02 3C9.4 3 4 8.4 4 15.02c0 2.35.64 4.55 1.86 6.5L4 29l7.66-1.8a11.9 11.9 0 0 0 4.36.82h.01c6.62 0 12.02-5.4 12.02-12.02C28.05 8.4 22.65 3 16.02 3zm0 21.9h-.01a9.9 9.9 0 0 1-5.05-1.38l-.36-.21-4.55 1.07 1.1-4.44-.24-.37a9.86 9.86 0 0 1-1.53-5.55c0-5.46 4.44-9.9 9.9-9.9 2.64 0 5.13 1.03 6.99 2.9a9.83 9.83 0 0 1 2.9 6.99c0 5.46-4.45 9.9-9.15 9.9zm5.4-7.4c-.3-.15-1.75-.86-2.02-.96-.27-.1-.47-.15-.66.15-.2.3-.76.96-.93 1.16-.17.2-.34.22-.64.07-.3-.15-1.25-.46-2.38-1.47-.88-.78-1.47-1.75-1.65-2.05-.17-.3-.02-.46.13-.6.13-.13.3-.34.45-.51.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.66-1.6-.9-2.18-.24-.58-.48-.5-.66-.5-.17 0-.37-.02-.57-.02-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48 0 1.46 1.07 2.87 1.22 3.07.15.2 2.1 3.2 5.08 4.49.71.3 1.26.49 1.69.62.71.23 1.36.2 1.87.12.57-.08 1.75-.71 2-1.4.25-.68.25-1.27.17-1.4-.07-.12-.27-.2-.57-.35z"/></svg>
+  <span>Escríbenos por WhatsApp</span>
+</a>
 
 <footer>
   <div class="wrap footer-row">
