@@ -119,6 +119,9 @@
   .stat-row{ display:flex; gap:36px; margin-top:32px; flex-wrap:wrap; }
   .stat b{ display:block; font-family:'Fraunces',serif; font-size:34px; color:var(--olive-dark); }
   .stat span{ font-size:12.5px; color:var(--ink-soft); letter-spacing:.03em; }
+  .sala-gallery{ display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--line); border:1px solid var(--line); margin-top:56px; }
+  .sala-gallery img{ height:280px; width:100%; object-fit:cover; }
+  @media (max-width:760px){ .sala-gallery{ grid-template-columns:1fr; } }
 
   /* ---------- Events grid ---------- */
   .events-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--line); border:1px solid var(--line); }
@@ -136,8 +139,9 @@
   .catas p{ color:#EFE9D8; }
   .catas .eyebrow{ color:var(--gold); }
   @media (max-width:760px){ .catas{ grid-template-columns:1fr; padding:40px 26px;} }
-  .catas-menu{ margin-top:40px; text-align:center; }
-  .catas-menu img{ max-width:420px; margin:0 auto; border:1px solid var(--line); }
+  .catas-menu{ margin-top:40px; display:flex; gap:24px; flex-wrap:wrap; justify-content:center; }
+  .catas-menu figure{ margin:0; text-align:center; }
+  .catas-menu img{ max-width:340px; max-height:460px; width:auto; border:1px solid var(--line); }
   .catas-menu figcaption{ margin-top:12px; font-size:13px; color:var(--ink-soft); }
 
   /* ---------- Pricing ---------- */
@@ -250,7 +254,7 @@
       </div>
     </div>
     <div class="hero-figure">
-      <img src="assets/logo.jpg" alt="Logo de Mi Pequeño Rincón, sala de eventos en Chozas de Canales">
+      <img src="assets/sala-barra.jpg" alt="Interior de la sala de eventos Mi Pequeño Rincón en Chozas de Canales, con barra y decoración">
     </div>
   </div>
 </section>
@@ -282,6 +286,10 @@
       </div>
     </div>
   </div>
+  <div class="wrap sala-gallery">
+    <img src="assets/sala-mesa-larga.jpg" alt="Mesa larga preparada para un evento en Mi Pequeño Rincón, con la zona de juegos infantil al fondo">
+    <img src="assets/sala-escenario.jpg" alt="Zona de escenario y karaoke de la sala, con pared verde y barra de cocina">
+  </div>
 </section>
 
 <section class="section-alt" id="eventos">
@@ -306,10 +314,16 @@
       </div>
       <p>La sala también se transforma en un espacio íntimo para catas de vino: mesa larga, buena luz y el tiempo justo para hablar de cada copa. Si quieres organizar la tuya, cuéntanos fecha y número de invitados al reservar.</p>
     </div>
-    <figure class="catas-menu">
-      <img src="assets/menu-cata.jpg" alt="Menú de maridaje de nuestra última cata de vino: gazpacho de cerezas, tabla de quesos, carrillada ibérica y cheesecake, maridados con Eresma, Ribada, El Torrejón y Poética">
-      <figcaption>Menú de maridaje de nuestra última cata</figcaption>
-    </figure>
+    <div class="catas-menu">
+      <figure>
+        <img src="assets/cata-mesa.jpg" alt="Mesa larga preparada para una cata de vino en Mi Pequeño Rincón, con copas y sitio para cada invitado">
+        <figcaption>Mesa lista para la cata</figcaption>
+      </figure>
+      <figure>
+        <img src="assets/menu-cata.jpg" alt="Menú de maridaje de nuestra última cata de vino: gazpacho de cerezas, tabla de quesos, carrillada ibérica y cheesecake, maridados con Eresma, Ribada, El Torrejón y Poética">
+        <figcaption>Menú de maridaje de nuestra última cata</figcaption>
+      </figure>
+    </div>
   </div>
 </section>
 
