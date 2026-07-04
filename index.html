@@ -166,13 +166,44 @@
   .cal h4{ font-family:'Fraunces',serif; font-weight:500; font-size:18px; margin-bottom:14px; text-transform:capitalize;}
   .cal-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; font-size:12.5px; text-align:center;}
   .cal-grid .dow{ color:var(--ink-soft); font-size:11px; letter-spacing:.03em; padding-bottom:6px;}
-  .cal-day{ position:relative; aspect-ratio:1; display:flex; align-items:center; justify-content:center; border-radius:50%; cursor:default; }
+  .cal-day{ position:relative; aspect-ratio:1; display:flex; align-items:center; justify-content:center; border-radius:50%; cursor:default; border:none; background:none; font:inherit; color:inherit; }
+  .cal-day.clickable{ cursor:pointer; transition:background .15s; }
+  .cal-day.clickable:hover{ background:var(--cream-2); }
   .cal-day.today{ border:1px solid var(--olive-dark); }
   .cal-day.past{ color:var(--line); }
-  .cal-day.booked{ background:var(--cream-2); }
-  .cal-day.booked svg{ position:absolute; top:1px; right:1px; width:9px; height:9px; }
-  .cal-legend{ display:flex; gap:16px; margin-top:14px; font-size:12px; color:var(--ink-soft); align-items:center; }
+  .cal-day.pending{ background:var(--cream-2); }
+  .cal-day.pending svg{ position:absolute; top:1px; right:1px; width:9px; height:9px; }
+  .cal-day.confirmed{ background:var(--olive-dark); color:var(--cream); }
+  .cal-legend{ display:flex; gap:16px; margin-top:14px; font-size:12px; color:var(--ink-soft); align-items:center; flex-wrap:wrap; }
   .legend-dot{ width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:6px; background:var(--cream-2); border:1px solid var(--line);}
+  .legend-dot.confirmed{ background:var(--olive-dark); border-color:var(--olive-dark); }
+
+  /* ---------- Booking modal ---------- */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(34,31,25,.55); z-index:100;
+    display:flex; align-items:center; justify-content:center; padding:20px;
+  }
+  .modal-overlay[hidden]{ display:none; }
+  .modal-box{
+    background:var(--cream); max-width:640px; width:100%; max-height:90vh; overflow-y:auto;
+    padding:32px; position:relative; border-radius:var(--radius);
+  }
+  .modal-close{
+    position:absolute; top:16px; right:16px; background:none; border:none; cursor:pointer;
+    font-size:22px; line-height:1; color:var(--ink-soft); padding:4px;
+  }
+  .modal-close:hover{ color:var(--ink); }
+  .modal-date{ font-family:'Fraunces',serif; font-size:24px; margin-bottom:4px; text-transform:capitalize; padding-right:24px; }
+  .modal-daytag{ font-size:12.5px; color:var(--ink-soft); margin-bottom:22px; text-transform:uppercase; letter-spacing:.03em; }
+  .plan-options{ display:flex; flex-direction:column; gap:8px; }
+  .plan-option{
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    border:1px solid var(--line); padding:12px 14px; cursor:pointer; font-size:14px;
+  }
+  .plan-option input{ width:auto; margin-right:10px; }
+  .plan-option .amt{ font-family:'Fraunces',serif; color:var(--olive-dark); white-space:nowrap; }
+  .conditional-field{ margin-top:10px; padding-left:26px; }
+  .field-note{ font-size:12.5px; color:var(--ink-soft); margin-top:6px; }
 
   /* ---------- Booking form ---------- */
   .booking{ display:grid; grid-template-columns: .9fr 1.1fr; gap:56px; }
@@ -356,95 +387,102 @@
     <div class="section-head">
       <p class="eyebrow">Disponibilidad</p>
       <h2>Mira qué fechas quedan libres.</h2>
+      <p style="color:var(--ink-soft); margin-top:10px;">Haz clic en un día libre para solicitar tu reserva.</p>
     </div>
     <div class="cal-wrap">
       <div class="cal" id="calThis"></div>
       <div class="cal" id="calNext"></div>
     </div>
     <div class="cal-legend">
-      <span><span class="legend-dot"></span>Fecha con reserva registrada</span>
+      <span><span class="legend-dot"></span>Pendiente de confirmar</span>
+      <span><span class="legend-dot confirmed"></span>Reserva confirmada</span>
     </div>
   </div>
 </section>
 
 <section>
-  <div class="wrap booking">
-    <div class="form-card">
-      <h3 style="font-size:22px; margin-bottom:22px;">Solicitar reserva</h3>
-      <form id="bookingForm">
-        <div class="field">
-          <label for="full_name">Nombre y apellidos</label>
-          <input type="text" id="full_name" required>
-        </div>
-        <div class="field-row">
-          <div class="field">
-            <label for="phone">Teléfono</label>
-            <input type="tel" id="phone" required placeholder="6xx xxx xxx">
-          </div>
-          <div class="field">
-            <label for="email">Email (opcional)</label>
-            <input type="email" id="email">
-          </div>
-        </div>
-        <div class="field-row">
-          <div class="field">
-            <label for="event_type">Tipo de evento</label>
-            <select id="event_type" required></select>
-          </div>
-          <div class="field">
-            <label for="guests">Nº invitados aprox.</label>
-            <input type="number" id="guests" min="1">
-          </div>
-        </div>
-        <div class="field-row">
-          <div class="field">
-            <label for="event_date">Fecha</label>
-            <input type="date" id="event_date" required>
-          </div>
-          <div class="field">
-            <label for="pricing_plan">Tarifa</label>
-            <select id="pricing_plan" required></select>
-          </div>
-        </div>
-        <div class="field-row">
-          <div class="field">
-            <label for="start_time">Hora de inicio</label>
-            <input type="time" id="start_time" required>
-          </div>
-          <div class="field">
-            <label for="end_time">Hora de fin</label>
-            <input type="time" id="end_time" required>
-          </div>
-        </div>
-        <div class="field">
-          <label>Extras</label>
-          <div class="checkbox-row"><input type="checkbox" id="wants_cleaning"><label for="wants_cleaning" style="margin:0; text-transform:none; font-size:14px;">Servicio de limpieza (+25€)</label></div>
-          <div class="checkbox-row"><input type="checkbox" id="wants_decoration"><label for="wants_decoration" style="margin:0; text-transform:none; font-size:14px;">Decoración personalizada (a consultar)</label></div>
-        </div>
-        <div class="field">
-          <label for="kids_menus">Menús infantiles (5,5€/ud.)</label>
-          <input type="number" id="kids_menus" min="0" value="0">
-        </div>
-        <div class="field">
-          <label for="message">Cuéntanos algo más (opcional)</label>
-          <textarea id="message" placeholder="Ej: necesitamos proyector, somos 25 personas, es una cata de vino..."></textarea>
-        </div>
-        <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">Enviar solicitud de reserva</button>
-        <div class="form-msg" id="formMsg"></div>
-      </form>
-    </div>
-    <div class="booking-aside">
-      <p class="eyebrow">Cómo funciona</p>
-      <h2 style="font-size:28px; margin-top:8px;">De la solicitud a la fecha confirmada.</h2>
-      <p>Enviar el formulario reserva provisionalmente tu fecha. Nosotros la revisamos y te confirmamos por teléfono o Instagram en menos de 24-48h.</p>
-      <ul class="steps">
-        <li>Rellenas la fecha, horario y tipo de evento que necesitas.</li>
-        <li>Comprobamos disponibilidad real y te llamamos para confirmar y cerrar detalles.</li>
-        <li>Preparamos la sala para tu celebración, con los extras que hayas elegido.</li>
-      </ul>
-    </div>
+  <div class="wrap" style="max-width:640px;">
+    <p class="eyebrow">Cómo funciona</p>
+    <h2 style="font-size:28px; margin-top:8px;">De la solicitud a la fecha confirmada.</h2>
+    <p style="color:var(--ink-soft);">Al enviar el formulario tu reserva queda como <strong>pendiente</strong>. La revisamos y te confirmamos por teléfono o Instagram en menos de 24-48h.</p>
+    <ul class="steps">
+      <li>Eliges la fecha en el calendario y rellenas horario, tipo de evento y extras.</li>
+      <li>Comprobamos disponibilidad real y te llamamos para confirmar y cerrar detalles.</li>
+      <li>Preparamos la sala para tu celebración, con los extras que hayas elegido.</li>
+    </ul>
   </div>
 </section>
+
+<div class="modal-overlay" id="bookingModal" hidden>
+  <div class="modal-box">
+    <button type="button" class="modal-close" id="modalClose" aria-label="Cerrar">×</button>
+    <div class="modal-date" id="modalDate"></div>
+    <div class="modal-daytag" id="modalDayTag"></div>
+    <form id="bookingForm">
+      <div class="field">
+        <label for="full_name">Nombre y apellidos</label>
+        <input type="text" id="full_name" required>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="phone">Teléfono</label>
+          <input type="tel" id="phone" required placeholder="6xx xxx xxx">
+        </div>
+        <div class="field">
+          <label for="email">Email (opcional)</label>
+          <input type="email" id="email">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="event_type">Tipo de evento</label>
+          <select id="event_type" required></select>
+        </div>
+        <div class="field">
+          <label for="guests">Nº invitados aprox.</label>
+          <input type="number" id="guests" min="1">
+        </div>
+      </div>
+      <div class="field">
+        <label>Tarifa</label>
+        <div class="plan-options" id="planOptions"></div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="start_time">Hora de inicio</label>
+          <input type="time" id="start_time" required>
+        </div>
+        <div class="field">
+          <label for="end_time">Hora de fin</label>
+          <input type="time" id="end_time" required>
+        </div>
+      </div>
+      <div class="field">
+        <label>Extras</label>
+        <div class="checkbox-row"><input type="checkbox" id="wants_cleaning"><label for="wants_cleaning" style="margin:0; text-transform:none; font-size:14px;">Servicio de limpieza (+25€)</label></div>
+
+        <div class="checkbox-row"><input type="checkbox" id="wants_kids_menu"><label for="wants_kids_menu" style="margin:0; text-transform:none; font-size:14px;">Menús infantiles (5,5€/ud.)</label></div>
+        <div class="conditional-field" id="kidsMenuField" hidden>
+          <label for="kids_menus">¿Cuántos?</label>
+          <input type="number" id="kids_menus" min="1" value="1">
+        </div>
+
+        <div class="checkbox-row"><input type="checkbox" id="wants_decoration"><label for="wants_decoration" style="margin:0; text-transform:none; font-size:14px;">Decoración personalizada</label></div>
+        <div class="conditional-field" id="decorationField" hidden>
+          <label for="decoration_theme">Temática</label>
+          <input type="text" id="decoration_theme" placeholder="Ej: unicornio, Naruto, boda rústica...">
+          <p class="field-note">La decoración personalizada requiere una señal para confirmarla; te contactamos para gestionarla (no se cobra desde la web).</p>
+        </div>
+      </div>
+      <div class="field">
+        <label for="message">Cuéntanos algo más (opcional)</label>
+        <textarea id="message" placeholder="Ej: necesitamos proyector, somos 25 personas, es una cata de vino..."></textarea>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">Enviar solicitud de reserva</button>
+      <div class="form-msg" id="formMsg"></div>
+    </form>
+  </div>
+</div>
 
 <div class="branch-divider" aria-hidden="true">
   <svg viewBox="0 0 180 28" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -519,10 +557,10 @@ async function loadEventTypes(){
 }
 
 // ---------- Pricing ----------
+let ALL_PLANS = [];
 async function loadPricing(){
   const wrap = document.getElementById('pricingGroups');
   const note = document.getElementById('pricingNote');
-  const planSelect = document.getElementById('pricing_plan');
 
   const { data: plans, error: pErr } = await supabase.from('pricing_plans').select('*').eq('active', true).order('sort_order');
   const { data: extras, error: eErr } = await supabase.from('extras').select('*').eq('active', true);
@@ -531,6 +569,8 @@ async function loadPricing(){
     note.textContent = 'No se han podido cargar las tarifas ahora mismo. Llámanos al 624 29 78 77.';
     return;
   }
+
+  ALL_PLANS = plans;
 
   const groups = {
     lunes_jueves: { title: 'De lunes a jueves', rows: [] },
@@ -548,8 +588,6 @@ async function loadPricing(){
         </div>`).join('')}
     </div>`).join('');
 
-  planSelect.innerHTML = plans.map(p => `<option value="${p.id}" data-hours="${p.hours_range}">${p.label} · ${p.hours_range} · ${Number(p.price).toFixed(0)}€</option>`).join('');
-
   if (extras && extras.length){
     note.innerHTML = 'Extras: <br>' + `<ul class="extras-list">${extras.map(e => `<li><span>${e.name}</span><span>${e.unit==='a_consultar' ? 'a consultar' : Number(e.price).toFixed(2).replace('.00','') + '€' + (e.unit==='hora' ? '/hora' : e.unit==='por_nino' ? '/niño' : '')}</span></li>`).join('')}</ul>`;
   } else {
@@ -563,7 +601,29 @@ const MONTH_NAMES = ['enero','febrero','marzo','abril','mayo','junio','julio','a
 
 function ymd(d){ return d.toISOString().slice(0,10); }
 
-function buildCalendar(container, year, month, bookedSet){
+function addDays(dateStr, n){
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate() + n);
+  return ymd(d);
+}
+
+// ---------- Festivos / tipo de tarifa según el día ----------
+let FESTIVOS = new Set();
+async function loadFestivos(){
+  const { data } = await supabase.from('festivos').select('event_date');
+  FESTIVOS = new Set((data||[]).map(r => r.event_date));
+}
+
+function dayGroupFor(dateStr){
+  const d = new Date(dateStr + 'T00:00:00');
+  const dow = d.getDay(); // 0=domingo ... 5=viernes, 6=sábado
+  const isWeekend = dow === 0 || dow === 5 || dow === 6;
+  const isFestivo = FESTIVOS.has(dateStr);
+  const isVisperaFestivo = FESTIVOS.has(addDays(dateStr, 1));
+  return (isWeekend || isFestivo || isVisperaFestivo) ? 'viernes_domingo_festivos' : 'lunes_jueves';
+}
+
+function buildCalendar(container, year, month, statusByDate){
   const first = new Date(year, month, 1);
   const startOffset = (first.getDay() + 6) % 7; // Monday-first
   const daysInMonth = new Date(year, month+1, 0).getDate();
@@ -576,44 +636,129 @@ function buildCalendar(container, year, month, bookedSet){
     const d = new Date(year, month, day);
     const key = ymd(d);
     const isPast = d < today;
-    const isToday = ymd(d) === ymd(today);
-    const isBooked = bookedSet.has(key);
-    html += `<div class="cal-day ${isPast?'past':''} ${isToday?'today':''} ${isBooked?'booked':''}">
+    const isToday = key === ymd(today);
+    const status = statusByDate[key];
+    const cls = [
+      'cal-day',
+      isPast ? 'past' : 'clickable',
+      isToday ? 'today' : '',
+      status === 'confirmada' ? 'confirmed' : '',
+      status === 'pendiente' ? 'pending' : ''
+    ].filter(Boolean).join(' ');
+    const tag = isPast ? 'span' : 'button';
+    const attrs = isPast ? '' : `type="button" data-date="${key}"`;
+    html += `<${tag} class="${cls}" ${attrs}>
       ${day}
-      ${isBooked ? '<svg viewBox="0 0 24 24" fill="#5B6B45"><ellipse cx="12" cy="12" rx="9" ry="4" transform="rotate(-30 12 12)"/></svg>' : ''}
-    </div>`;
+      ${status === 'pendiente' ? '<svg viewBox="0 0 24 24" fill="#5B6B45"><ellipse cx="12" cy="12" rx="9" ry="4" transform="rotate(-30 12 12)"/></svg>' : ''}
+    </${tag}>`;
   }
   container.innerHTML = html;
+
+  if (!container.dataset.wired){
+    container.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-date]');
+      if (btn) openBookingModal(btn.dataset.date);
+    });
+    container.dataset.wired = '1';
+  }
 }
 
 async function loadAvailability(){
   const now = new Date();
-  const { data, error } = await supabase.from('availability').select('event_date');
-  const bookedSet = new Set((data||[]).map(r => r.event_date));
+  const { data } = await supabase.from('availability').select('event_date, status');
+  const statusByDate = {};
+  (data||[]).forEach(r => {
+    if (!statusByDate[r.event_date] || r.status === 'confirmada') statusByDate[r.event_date] = r.status;
+  });
 
-  buildCalendar(document.getElementById('calThis'), now.getFullYear(), now.getMonth(), bookedSet);
+  buildCalendar(document.getElementById('calThis'), now.getFullYear(), now.getMonth(), statusByDate);
   const next = new Date(now.getFullYear(), now.getMonth()+1, 1);
-  buildCalendar(document.getElementById('calNext'), next.getFullYear(), next.getMonth(), bookedSet);
-
-  return bookedSet;
+  buildCalendar(document.getElementById('calNext'), next.getFullYear(), next.getMonth(), statusByDate);
 }
 
-// ---------- Booking form ----------
+// ---------- Booking modal ----------
 function setMsg(text, type){
   const el = document.getElementById('formMsg');
   el.textContent = text;
-  el.className = 'form-msg ' + type;
+  el.className = 'form-msg ' + (type || '');
 }
 
-async function initForm(bookedSetPromise){
-  const dateInput = document.getElementById('event_date');
-  const today = new Date();
-  dateInput.min = ymd(today);
+let selectedDate = null;
+
+function renderPlanOptions(dateStr){
+  const group = dayGroupFor(dateStr);
+  const groupPlans = ALL_PLANS.filter(p => p.day_group === group);
+  const wrap = document.getElementById('planOptions');
+
+  wrap.innerHTML = groupPlans.map((p, i) => {
+    const [start, end] = (p.hours_range || '').split(' a ').map(s => (s||'').trim());
+    return `
+      <label class="plan-option">
+        <span><input type="radio" name="pricing_plan" value="${p.id}" data-start="${start}" data-end="${end}" ${i===0?'checked':''}> ${p.label} <span style="color:var(--ink-soft); font-size:12.5px;">(${p.hours_range})</span></span>
+        <span class="amt">${Number(p.price).toFixed(0)}€</span>
+      </label>`;
+  }).join('');
+
+  const fillTimes = (input) => {
+    if (input.dataset.start) document.getElementById('start_time').value = input.dataset.start;
+    if (input.dataset.end) document.getElementById('end_time').value = input.dataset.end === '00:00' ? '23:59' : input.dataset.end;
+  };
+
+  wrap.querySelectorAll('input[name="pricing_plan"]').forEach(input => {
+    input.addEventListener('change', () => { if (input.checked) fillTimes(input); });
+  });
+
+  const first = wrap.querySelector('input[name="pricing_plan"]');
+  if (first) fillTimes(first);
+}
+
+function openBookingModal(dateStr){
+  selectedDate = dateStr;
+  const d = new Date(dateStr + 'T00:00:00');
+  const modal = document.getElementById('bookingModal');
+
+  document.getElementById('modalDate').textContent = d.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+  const group = dayGroupFor(dateStr);
+  document.getElementById('modalDayTag').textContent = group === 'lunes_jueves' ? 'Tarifa de lunes a jueves' : 'Tarifa de viernes, fin de semana o festivo';
+
+  document.getElementById('bookingForm').reset();
+  renderPlanOptions(dateStr);
+  document.getElementById('kidsMenuField').hidden = true;
+  document.getElementById('decorationField').hidden = true;
+  setMsg('', '');
+
+  modal.hidden = false;
+}
+
+function closeBookingModal(){
+  document.getElementById('bookingModal').hidden = true;
+}
+
+async function initForm(){
+  document.getElementById('modalClose').addEventListener('click', closeBookingModal);
+  document.getElementById('bookingModal').addEventListener('click', (e) => {
+    if (e.target.id === 'bookingModal') closeBookingModal();
+  });
+  document.getElementById('wants_kids_menu').addEventListener('change', (e) => {
+    document.getElementById('kidsMenuField').hidden = !e.target.checked;
+  });
+  document.getElementById('wants_decoration').addEventListener('change', (e) => {
+    document.getElementById('decorationField').hidden = !e.target.checked;
+  });
 
   const form = document.getElementById('bookingForm');
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     setMsg('', '');
+
+    const planRadio = form.querySelector('input[name="pricing_plan"]:checked');
+    if (!planRadio){
+      setMsg('Selecciona una tarifa.', 'err');
+      return;
+    }
+
+    const wantsKidsMenu = document.getElementById('wants_kids_menu').checked;
+    const wantsDecoration = document.getElementById('wants_decoration').checked;
 
     const payload = {
       full_name: document.getElementById('full_name').value.trim(),
@@ -621,13 +766,14 @@ async function initForm(bookedSetPromise){
       email: document.getElementById('email').value.trim() || null,
       event_type: document.getElementById('event_type').value,
       guests_estimate: document.getElementById('guests').value ? Number(document.getElementById('guests').value) : null,
-      event_date: document.getElementById('event_date').value,
-      pricing_plan_id: document.getElementById('pricing_plan').value,
+      event_date: selectedDate,
+      pricing_plan_id: planRadio.value,
       start_time: document.getElementById('start_time').value,
       end_time: document.getElementById('end_time').value,
       wants_cleaning: document.getElementById('wants_cleaning').checked,
-      wants_decoration: document.getElementById('wants_decoration').checked,
-      kids_menus_count: Number(document.getElementById('kids_menus').value || 0),
+      wants_decoration: wantsDecoration,
+      decoration_theme: wantsDecoration ? (document.getElementById('decoration_theme').value.trim() || null) : null,
+      kids_menus_count: wantsKidsMenu ? Number(document.getElementById('kids_menus').value || 1) : 0,
       message: document.getElementById('message').value.trim() || null,
     };
 
@@ -650,21 +796,18 @@ async function initForm(bookedSetPromise){
       return;
     }
 
-    form.reset();
-    setMsg('¡Solicitud enviada! Es una reserva provisional: te confirmamos por teléfono en menos de 24-48h.', 'ok');
-
-    const booked = await bookedSetPromise;
-    if (booked.has(payload.event_date)){
-      setMsg('Solicitud enviada. Ojo: ya hay otra reserva registrada ese día — te llamaremos para confirmar franja horaria.', 'warn');
-    }
+    setMsg('¡Solicitud enviada! Es una reserva provisional (pendiente): te confirmamos por teléfono en menos de 24-48h.', 'ok');
+    await loadAvailability();
+    setTimeout(closeBookingModal, 2400);
   });
 }
 
 (async function init(){
   await loadEventTypes();
   await loadPricing();
-  const bookedSet = await loadAvailability();
-  await initForm(Promise.resolve(bookedSet));
+  await loadFestivos();
+  await loadAvailability();
+  await initForm();
 })();
 </script>
 
