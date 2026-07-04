@@ -148,6 +148,15 @@
   .catas-menu img{ max-width:340px; max-height:460px; width:auto; border:1px solid var(--line); }
   .catas-menu figcaption{ margin-top:12px; font-size:13px; color:var(--ink-soft); }
 
+  /* ---------- Kids menu ---------- */
+  .kids-menu-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--line); border:1px solid var(--line); margin-top:40px; }
+  @media (max-width:760px){ .kids-menu-grid{ grid-template-columns:repeat(2,1fr); } }
+  .kids-menu-grid figure{ margin:0; background:var(--cream); }
+  .kids-menu-grid img{ width:100%; height:210px; object-fit:cover; display:block; }
+  .kids-menu-grid figcaption{ padding:12px 14px; font-size:14px; font-weight:500; text-align:center; }
+  .kids-menu-note{ margin-top:28px; display:flex; flex-direction:column; gap:10px; color:var(--ink-soft); font-size:14.5px; max-width:680px; }
+  .kids-menu-note strong{ color:var(--ink); }
+
   /* ---------- Pricing ---------- */
   .pricing-groups{ display:grid; grid-template-columns:1fr 1fr; gap:40px; }
   @media (max-width:860px){ .pricing-groups{ grid-template-columns:1fr; } }
@@ -423,6 +432,38 @@
         <img src="assets/menu-cata.jpg" alt="Menú de maridaje de nuestra última cata de vino: gazpacho de cerezas, tabla de quesos, carrillada ibérica y cheesecake, maridados con Eresma, Ribada, El Torrejón y Poética">
         <figcaption>Menú de maridaje de nuestra última cata</figcaption>
       </figure>
+    </div>
+  </div>
+</section>
+
+<section class="section-alt" id="menu-infantil">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">Para los peques</p>
+      <h2>Menú infantil, 4 opciones a elegir.</h2>
+      <p style="color:var(--ink-soft); margin-top:10px;">Pizza, perrito caliente, hamburguesa o nuggets, todos acompañados de patatas fritas y snacks variados.</p>
+    </div>
+    <div class="kids-menu-grid">
+      <figure>
+        <img src="assets/menu-infantil-pizza.jpg" alt="Menú infantil de pizza con patatas fritas y snacks variados">
+        <figcaption>Pizza</figcaption>
+      </figure>
+      <figure>
+        <img src="assets/menu-infantil-perrito.jpg" alt="Menú infantil de perrito caliente con patatas fritas y snacks variados">
+        <figcaption>Perrito caliente</figcaption>
+      </figure>
+      <figure>
+        <img src="assets/menu-infantil-hamburguesa.jpg" alt="Menú infantil de hamburguesa con patatas fritas y snacks variados">
+        <figcaption>Hamburguesa</figcaption>
+      </figure>
+      <figure>
+        <img src="assets/menu-infantil-nuggets.jpg" alt="Menú infantil de nuggets con patatas fritas y snacks variados">
+        <figcaption>Nuggets</figcaption>
+      </figure>
+    </div>
+    <div class="kids-menu-note">
+      <p>Los menús infantiles los prepara y sirve, a la hora que convengáis, un <strong>colaborador externo</strong> especializado — nosotros nos encargamos de coordinarlo con tu reserva.</p>
+      <p>🥤 Por <strong>cada 6 menús infantiles</strong> pedidos, podéis elegir <strong>3 refrescos de 2 litros</strong> para la mesa.</p>
     </div>
   </div>
 </section>
