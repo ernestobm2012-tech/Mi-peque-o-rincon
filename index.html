@@ -471,12 +471,20 @@
         <div class="conditional-field" id="decorationField" hidden>
           <label for="decoration_theme">Temática</label>
           <input type="text" id="decoration_theme" placeholder="Ej: unicornio, Naruto, boda rústica...">
-          <p class="field-note">La decoración personalizada requiere una señal para confirmarla; te contactamos para gestionarla (no se cobra desde la web).</p>
         </div>
       </div>
       <div class="field">
         <label for="message">Cuéntanos algo más (opcional)</label>
         <textarea id="message" placeholder="Ej: necesitamos proyector, somos 25 personas, es una cata de vino..."></textarea>
+      </div>
+      <div class="field" style="border-top:1px solid var(--line); padding-top:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:baseline;">
+          <span style="text-transform:uppercase; font-size:12.5px; letter-spacing:.03em; color:var(--ink-soft);">Total estimado</span>
+          <span id="totalAmount" style="font-family:'Fraunces',serif; font-size:26px; color:var(--olive-dark);">0€</span>
+        </div>
+        <p class="field-note" id="totalDecoNote" hidden>+ decoración personalizada: precio a consultar (no incluido arriba)</p>
+        <p class="field-note" id="senalNote" style="margin-top:12px;"></p>
+        <p class="field-note">El día del evento se pide una fianza de <strong>50€</strong>, que se devuelve a la entrega de llaves si la sala queda en las mismas condiciones de limpieza y uso.</p>
       </div>
       <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">Enviar solicitud de reserva</button>
       <div class="form-msg" id="formMsg"></div>
@@ -558,6 +566,7 @@ async function loadEventTypes(){
 
 // ---------- Pricing ----------
 let ALL_PLANS = [];
+let ALL_EXTRAS = [];
 async function loadPricing(){
   const wrap = document.getElementById('pricingGroups');
   const note = document.getElementById('pricingNote');
@@ -571,6 +580,7 @@ async function loadPricing(){
   }
 
   ALL_PLANS = plans;
+  ALL_EXTRAS = extras || [];
 
   const groups = {
     lunes_jueves: { title: 'De lunes a jueves', rows: [] },
@@ -705,11 +715,36 @@ function renderPlanOptions(dateStr){
   };
 
   wrap.querySelectorAll('input[name="pricing_plan"]').forEach(input => {
-    input.addEventListener('change', () => { if (input.checked) fillTimes(input); });
+    input.addEventListener('change', () => { if (input.checked){ fillTimes(input); updateSummary(); } });
   });
 
   const first = wrap.querySelector('input[name="pricing_plan"]');
   if (first) fillTimes(first);
+}
+
+function getExtraPrice(keyword){
+  const e = ALL_EXTRAS.find(x => x.name.toLowerCase().includes(keyword));
+  return e ? Number(e.price) : 0;
+}
+
+function updateSummary(){
+  const planRadio = document.querySelector('#planOptions input[name="pricing_plan"]:checked');
+  const plan = planRadio ? ALL_PLANS.find(p => p.id === planRadio.value) : null;
+  const wantsCleaning = document.getElementById('wants_cleaning').checked;
+  const wantsKids = document.getElementById('wants_kids_menu').checked;
+  const kidsCount = wantsKids ? Number(document.getElementById('kids_menus').value || 0) : 0;
+  const wantsDeco = document.getElementById('wants_decoration').checked;
+
+  let total = plan ? Number(plan.price) : 0;
+  if (wantsCleaning) total += getExtraPrice('limpieza');
+  total += kidsCount * getExtraPrice('infantil');
+
+  document.getElementById('totalAmount').textContent = `${total.toFixed(0)}€`;
+  document.getElementById('totalDecoNote').hidden = !wantsDeco;
+
+  document.getElementById('senalNote').innerHTML = wantsDeco
+    ? 'Si aceptamos la reserva se piden <strong>20€</strong> de señal (efectivo o Bizum, gestionada por teléfono), más otros <strong>20€</strong> de señal por la decoración personalizada.'
+    : 'Si aceptamos la reserva se pide una señal de <strong>20€</strong> (efectivo o Bizum, gestionada por teléfono).';
 }
 
 function openBookingModal(dateStr){
@@ -725,6 +760,7 @@ function openBookingModal(dateStr){
   renderPlanOptions(dateStr);
   document.getElementById('kidsMenuField').hidden = true;
   document.getElementById('decorationField').hidden = true;
+  updateSummary();
   setMsg('', '');
 
   modal.hidden = false;
@@ -739,11 +775,15 @@ async function initForm(){
   document.getElementById('bookingModal').addEventListener('click', (e) => {
     if (e.target.id === 'bookingModal') closeBookingModal();
   });
+  document.getElementById('wants_cleaning').addEventListener('change', updateSummary);
   document.getElementById('wants_kids_menu').addEventListener('change', (e) => {
     document.getElementById('kidsMenuField').hidden = !e.target.checked;
+    updateSummary();
   });
+  document.getElementById('kids_menus').addEventListener('input', updateSummary);
   document.getElementById('wants_decoration').addEventListener('change', (e) => {
     document.getElementById('decorationField').hidden = !e.target.checked;
+    updateSummary();
   });
 
   const form = document.getElementById('bookingForm');
