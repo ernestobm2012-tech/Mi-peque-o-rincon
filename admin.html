@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Panel de reservas — Mi Pequeño Rincón</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,500&family=Work+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#F7F2E7;
+    --cream-2:#E7EFC4;
+    --ink:#221F19;
+    --ink-soft:#4A473E;
+    --olive:#7C9A44;
+    --olive-dark:#4B5E22;
+    --gold:#B4924E;
+    --line: rgba(34,31,25,.14);
+    --radius: 2px;
+    --maxw: 780px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--cream); color:var(--ink);
+    font-family:'Work Sans', sans-serif; line-height:1.55; -webkit-font-smoothing:antialiased;
+  }
+  h1,h2{ font-family:'Fraunces', serif; font-weight:500; margin:0; color:var(--ink); }
+  .wrap{ max-width:var(--maxw); margin:0 auto; padding:40px 24px 80px; }
+  .eyebrow{ font-size:12px; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:var(--olive-dark); margin-bottom:8px; }
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:8px; cursor:pointer;
+    padding:12px 22px; font-size:14px; font-weight:500; border-radius:var(--radius); border:1px solid transparent;
+    text-decoration:none;
+  }
+  .btn-primary{ background:var(--olive-dark); color:var(--cream); }
+  .btn-primary:hover{ background:var(--ink); }
+  .btn-deny{ background:#7A2E22; color:#fff; }
+  .btn-deny:hover{ background:#5a2018; }
+  .btn-ghost{ border-color:var(--line); color:var(--ink); background:transparent; font-size:12.5px; padding:8px 14px; }
+  .btn-ghost:hover{ background:var(--cream-2); }
+  .btn[disabled]{ opacity:.5; cursor:default; }
+
+  #loginView{ max-width:380px; margin:80px auto; text-align:center; }
+  #loginView input{
+    width:100%; padding:12px 14px; border:1px solid var(--line); background:#fff; font-size:14.5px;
+    border-radius:var(--radius); margin:18px 0; font-family:inherit;
+  }
+  #loginMsg{ margin-top:14px; font-size:13.5px; color:var(--ink-soft); min-height:1.4em; }
+
+  .top-row{ display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:28px; flex-wrap:wrap; }
+  select#statusFilter{ padding:8px 12px; border:1px solid var(--line); border-radius:var(--radius); font-family:inherit; font-size:13.5px; background:#fff; }
+
+  .res-card{ background:#fff; border:1px solid var(--line); padding:22px 24px; margin-bottom:18px; }
+  .res-head{ display:flex; justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap; }
+  .res-head h3{ font-size:18px; }
+  .badge{ font-size:11px; text-transform:uppercase; letter-spacing:.05em; padding:3px 10px; border-radius:999px; font-weight:600; }
+  .badge.pendiente{ background:#F7EBD3; color:#6B4F17; }
+  .badge.confirmada{ background:#EAF0E2; color:var(--olive-dark); }
+  .badge.cancelada{ background:#F6E4E0; color:#7A2E22; }
+  .res-meta{ font-size:13.5px; color:var(--ink-soft); margin-top:6px; }
+  .res-meta div{ margin-top:3px; }
+  .res-actions{ display:flex; gap:10px; margin-top:16px; flex-wrap:wrap; }
+  .empty-msg{ color:var(--ink-soft); font-size:14px; padding:20px 0; }
+  #actionMsg.ok{ display:block; background:#EAF0E2; color:var(--olive-dark); border:1px solid var(--olive); }
+  #actionMsg.err{ display:block; background:#F6E4E0; color:#7A2E22; border:1px solid #C0685A; }
+  #actionMsg a{ color:inherit; font-weight:600; }
+</style>
+</head>
+<body>
+
+<div id="loginView">
+  <p class="eyebrow">Mi Pequeño Rincón</p>
+  <h1>Panel de reservas</h1>
+  <p style="color:var(--ink-soft); margin-top:14px; font-size:14.5px;">Introduce tu email para recibir un enlace de acceso.</p>
+  <form id="loginForm">
+    <input type="email" id="loginEmail" placeholder="tu@email.com" required>
+    <button type="submit" class="btn btn-primary" style="width:100%;">Enviar enlace de acceso</button>
+  </form>
+  <p id="loginMsg"></p>
+</div>
+
+<div class="wrap" id="dashView" hidden>
+  <div class="top-row">
+    <div>
+      <p class="eyebrow">Mi Pequeño Rincón</p>
+      <h1>Panel de reservas</h1>
+    </div>
+    <div style="display:flex; gap:10px; align-items:center;">
+      <select id="statusFilter">
+        <option value="pendiente">Pendientes</option>
+        <option value="confirmada">Confirmadas</option>
+        <option value="cancelada">Canceladas</option>
+        <option value="todas">Todas</option>
+      </select>
+      <button class="btn btn-ghost" id="logoutBtn">Salir</button>
+    </div>
+  </div>
+  <p id="actionMsg" style="display:none; font-size:13.5px; padding:10px 14px; margin-bottom:18px; border-radius:2px;"></p>
+  <div id="resList"></div>
+</div>
+
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+const SUPABASE_URL = 'https://ztsdkfwnqrlmsirfvoat.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0c2RrZnducXJsbXNpcmZ2b2F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwOTM5OTksImV4cCI6MjA5ODY2OTk5OX0.ODimfaCqTpK8fkY4Oobk8kSR3rppb_afmoTTXG8H2os';
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const loginView = document.getElementById('loginView');
+const dashView = document.getElementById('dashView');
+const loginForm = document.getElementById('loginForm');
+const loginMsg = document.getElementById('loginMsg');
+const statusFilter = document.getElementById('statusFilter');
+const resList = document.getElementById('resList');
+
+let ALL_PLANS = [];
+
+loginForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('loginEmail').value.trim();
+  loginMsg.textContent = 'Enviando enlace…';
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: { emailRedirectTo: window.location.origin + window.location.pathname },
+  });
+  loginMsg.textContent = error
+    ? 'No se ha podido enviar el enlace. Inténtalo de nuevo.'
+    : 'Te hemos enviado un enlace a tu email. Ábrelo desde este mismo dispositivo.';
+});
+
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+  await supabase.auth.signOut();
+  window.location.reload();
+});
+
+statusFilter.addEventListener('change', loadReservations);
+
+function fmtDate(d){
+  return new Date(d + 'T00:00:00').toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+function waNumber(phone){
+  let digits = (phone || '').replace(/\D/g, '');
+  if (digits.startsWith('0034')) digits = digits.slice(2);
+  if (digits.length === 9) digits = '34' + digits;
+  return digits;
+}
+
+function buildConfirmMessage(r, plan){
+  const total = plan ? Number(plan.price) : null;
+  let msg = `Hola ${r.full_name} 👋 Te confirmamos tu reserva en *Mi Pequeño Rincón* para el ${fmtDate(r.event_date)}, de ${r.start_time} a ${r.end_time} (${r.event_type}).`;
+  if (total != null) msg += `\n\nTotal estimado: ${total.toFixed(0)}€.`;
+  msg += `\n\nPara cerrar la reserva pedimos una señal de 20€ (efectivo o Bizum)`;
+  if (r.wants_decoration) msg += `, más otros 20€ de señal por la decoración personalizada`;
+  msg += `. El día del evento se pide además una fianza de 50€, que se devuelve si la sala queda en las mismas condiciones.\n\n¡Te esperamos! 🌿`;
+  return msg;
+}
+
+function buildDenyMessage(r){
+  return `Hola ${r.full_name}, gracias por tu interés en *Mi Pequeño Rincón*. Sentimos decirte que la fecha del ${fmtDate(r.event_date)} (${r.start_time}-${r.end_time}) ya no está disponible. Si quieres, dinos otra fecha y miramos la disponibilidad. ¡Gracias por escribirnos!`;
+}
+
+function setActionMsg(html, type){
+  const el = document.getElementById('actionMsg');
+  el.innerHTML = html;
+  el.className = type || '';
+  el.style.display = html ? 'block' : 'none';
+}
+
+function openWhatsApp(phone, text){
+  const url = `https://wa.me/${waNumber(phone)}?text=${encodeURIComponent(text)}`;
+  const win = window.open(url, '_blank', 'noopener');
+  return !!win;
+}
+
+async function updateStatus(id, status){
+  const { data, error } = await supabase.from('reservations').update({ status }).eq('id', id).select();
+  if (error){
+    setActionMsg('No se ha podido guardar el cambio en Supabase: ' + error.message, 'err');
+    return false;
+  }
+  if (!data || !data.length){
+    setActionMsg('Supabase no ha actualizado ninguna fila (revisa los permisos/RLS). El estado NO se ha guardado.', 'err');
+    return false;
+  }
+  return true;
+}
+
+async function loadReservations(){
+  const filter = statusFilter.value;
+  let query = supabase.from('reservations').select('*').order('event_date', { ascending: true });
+  if (filter !== 'todas') query = query.eq('status', filter);
+  const { data, error } = await query;
+
+  if (error){
+    resList.innerHTML = `<p class="empty-msg">Error cargando reservas: ${error.message}</p>`;
+    return;
+  }
+  if (!data || !data.length){
+    resList.innerHTML = `<p class="empty-msg">No hay reservas en este filtro.</p>`;
+    return;
+  }
+
+  resList.innerHTML = data.map(r => {
+    const plan = ALL_PLANS.find(p => p.id === r.pricing_plan_id);
+    const extras = [];
+    if (r.wants_cleaning) extras.push('Limpieza');
+    if (r.wants_decoration) extras.push(`Decoración${r.decoration_theme ? ' (' + r.decoration_theme + ')' : ''}`);
+    if (r.kids_menus_count) extras.push(`${r.kids_menus_count} menú(s) infantil(es)`);
+
+    const actions = r.status === 'pendiente'
+      ? `<div class="res-actions">
+          <button class="btn btn-primary" data-action="accept" data-id="${r.id}">✅ Aceptar</button>
+          <button class="btn btn-deny" data-action="deny" data-id="${r.id}">❌ Denegar</button>
+        </div>`
+      : `<div class="res-actions">
+          <button class="btn btn-ghost" data-action="resend" data-id="${r.id}">Reenviar WhatsApp</button>
+        </div>`;
+
+    return `
+      <div class="res-card">
+        <div class="res-head">
+          <h3>${r.full_name}</h3>
+          <span class="badge ${r.status}">${r.status}</span>
+        </div>
+        <div class="res-meta">
+          <div>📅 ${fmtDate(r.event_date)} · ⏰ ${r.start_time}-${r.end_time}</div>
+          <div>🎉 ${r.event_type}${r.guests_estimate ? ' · 👥 ' + r.guests_estimate + ' invitados' : ''}</div>
+          <div>📞 ${r.phone}${r.email ? ' · ' + r.email : ''}</div>
+          ${plan ? `<div>💶 ${plan.label} — ${Number(plan.price).toFixed(0)}€</div>` : ''}
+          ${extras.length ? `<div>➕ ${extras.join(', ')}</div>` : ''}
+          ${r.message ? `<div>💬 “${r.message}”</div>` : ''}
+        </div>
+        ${actions}
+      </div>`;
+  }).join('');
+
+  resList.querySelectorAll('button[data-action]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.id;
+      const r = data.find(x => x.id === id);
+      const plan = ALL_PLANS.find(p => p.id === r.pricing_plan_id);
+      const action = btn.dataset.action;
+
+      if (action === 'accept' || action === 'deny'){
+        btn.disabled = true;
+        const status = action === 'accept' ? 'confirmada' : 'cancelada';
+        const label = action === 'accept' ? 'confirmada ✅' : 'cancelada ❌';
+        const msg = action === 'accept' ? buildConfirmMessage(r, plan) : buildDenyMessage(r);
+        const saved = await updateStatus(id, status);
+        if (saved){
+          const opened = openWhatsApp(r.phone, msg);
+          setActionMsg(
+            opened
+              ? `Reserva de ${r.full_name} marcada como <strong>${label}</strong> en Supabase. Se ha abierto WhatsApp para que envíes el mensaje.`
+              : `Reserva de ${r.full_name} marcada como <strong>${label}</strong> en Supabase, pero el navegador ha bloqueado la ventana de WhatsApp. <a href="https://wa.me/${waNumber(r.phone)}?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">Ábrela manualmente aquí</a>.`,
+            'ok'
+          );
+        }
+        await loadReservations();
+      } else if (action === 'resend'){
+        const msg = r.status === 'confirmada' ? buildConfirmMessage(r, plan) : buildDenyMessage(r);
+        const opened = openWhatsApp(r.phone, msg);
+        if (!opened) setActionMsg(`El navegador ha bloqueado la ventana. <a href="https://wa.me/${waNumber(r.phone)}?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">Ábrela manualmente aquí</a>.`, 'ok');
+      }
+    });
+  });
+}
+
+async function showDashboard(){
+  loginView.hidden = true;
+  dashView.hidden = false;
+  const { data: plans } = await supabase.from('pricing_plans').select('*');
+  ALL_PLANS = plans || [];
+  await loadReservations();
+}
+
+async function init(){
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session) {
+    await showDashboard();
+  }
+  supabase.auth.onAuthStateChange((_event, session) => {
+    if (session) showDashboard();
+  });
+}
+
+init();
+</script>
+
+</body>
+</html>
