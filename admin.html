@@ -66,6 +66,52 @@
   #actionMsg.ok{ display:block; background:#EAF0E2; color:var(--olive-dark); border:1px solid var(--olive); }
   #actionMsg.err{ display:block; background:#F6E4E0; color:#7A2E22; border:1px solid #C0685A; }
   #actionMsg a{ color:inherit; font-weight:600; }
+
+  .stats-row{ display:flex; gap:16px; margin-bottom:24px; flex-wrap:wrap; }
+  .stat-card{ background:#fff; border:1px solid var(--line); padding:16px 20px; flex:1; min-width:170px; }
+  .stat-card .num{ font-family:'Fraunces',serif; font-size:28px; color:var(--olive-dark); display:block; }
+  .stat-card .lbl{ font-size:11.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.04em; margin-top:4px; display:block; }
+  .stats-months{ background:#fff; border:1px solid var(--line); padding:14px 20px; margin-bottom:24px; font-size:13px; color:var(--ink-soft); }
+  .stats-months summary{ cursor:pointer; font-weight:500; color:var(--ink); }
+  .stats-months table{ width:100%; border-collapse:collapse; margin-top:10px; }
+  .stats-months td{ padding:4px 0; border-bottom:1px dashed var(--line); }
+  .stats-months td:last-child{ text-align:right; }
+
+  /* ---------- Manual reservation modal ---------- */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(34,31,25,.55); z-index:100;
+    display:flex; align-items:center; justify-content:center; padding:20px;
+  }
+  .modal-overlay[hidden]{ display:none; }
+  .modal-box{
+    background:var(--cream); max-width:600px; width:100%; max-height:90vh; overflow-y:auto;
+    padding:32px; position:relative; border-radius:var(--radius);
+  }
+  .modal-close{
+    position:absolute; top:16px; right:16px; background:none; border:none; cursor:pointer;
+    font-size:22px; line-height:1; color:var(--ink-soft); padding:4px;
+  }
+  .modal-close:hover{ color:var(--ink); }
+  .field{ margin-bottom:16px; }
+  .field label{ display:block; font-size:12px; letter-spacing:.03em; color:var(--ink-soft); margin-bottom:6px; text-transform:uppercase;}
+  .field input, .field select, .field textarea{
+    width:100%; padding:11px 13px; border:1px solid var(--line); background:#fff;
+    font-family:'Work Sans',sans-serif; font-size:14.5px; color:var(--ink); border-radius:var(--radius);
+  }
+  .field textarea{ resize:vertical; min-height:70px; }
+  .field-row{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .checkbox-row{ display:flex; align-items:center; gap:8px; font-size:14px; margin-bottom:10px;}
+  .checkbox-row input{ width:auto; }
+  .conditional-field{ margin-top:8px; padding-left:26px; }
+  .plan-options{ display:flex; flex-direction:column; gap:8px; }
+  .plan-option{
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    border:1px solid var(--line); padding:10px 14px; cursor:pointer; font-size:14px; background:#fff;
+  }
+  .plan-option input{ width:auto; margin-right:10px; }
+  .plan-option .amt{ font-family:'Fraunces',serif; color:var(--olive-dark); white-space:nowrap; }
+  .total-row{ display:flex; justify-content:space-between; align-items:baseline; border-top:1px solid var(--line); padding-top:14px; margin-top:6px; }
+  .total-row .amt{ font-family:'Fraunces',serif; font-size:22px; color:var(--olive-dark); }
 </style>
 </head>
 <body>
@@ -87,7 +133,8 @@
       <p class="eyebrow">Mi Pequeño Rincón</p>
       <h1>Panel de reservas</h1>
     </div>
-    <div style="display:flex; gap:10px; align-items:center;">
+    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+      <button class="btn btn-primary" id="newResBtn">+ Reserva manual</button>
       <select id="statusFilter">
         <option value="pendiente">Pendientes</option>
         <option value="confirmada">Confirmadas</option>
@@ -97,8 +144,107 @@
       <button class="btn btn-ghost" id="logoutBtn">Salir</button>
     </div>
   </div>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <span class="num" id="statIncome">0€</span>
+      <span class="lbl">Ingresos totales (confirmadas)</span>
+    </div>
+    <div class="stat-card">
+      <span class="num" id="statConfirmed">0</span>
+      <span class="lbl">Reservas confirmadas</span>
+    </div>
+    <div class="stat-card">
+      <span class="num" id="statPending">0</span>
+      <span class="lbl">Reservas pendientes</span>
+    </div>
+  </div>
+  <details class="stats-months">
+    <summary>Ver ingresos por mes</summary>
+    <table id="statsMonthsTable"></table>
+  </details>
+
   <p id="actionMsg" style="display:none; font-size:13.5px; padding:10px 14px; margin-bottom:18px; border-radius:2px;"></p>
   <div id="resList"></div>
+</div>
+
+<div class="modal-overlay" id="newResModal" hidden>
+  <div class="modal-box">
+    <button type="button" class="modal-close" id="newResClose" aria-label="Cerrar">×</button>
+    <h2 style="font-size:22px; margin-bottom:20px;">Nueva reserva manual</h2>
+    <form id="newResForm">
+      <div class="field">
+        <label for="nr_full_name">Nombre y apellidos</label>
+        <input type="text" id="nr_full_name" required>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="nr_phone">Teléfono</label>
+          <input type="tel" id="nr_phone" required placeholder="6xx xxx xxx">
+        </div>
+        <div class="field">
+          <label for="nr_email">Email (opcional)</label>
+          <input type="email" id="nr_email">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="nr_event_type">Tipo de evento</label>
+          <select id="nr_event_type" required></select>
+        </div>
+        <div class="field">
+          <label for="nr_guests">Nº invitados aprox.</label>
+          <input type="number" id="nr_guests" min="1">
+        </div>
+      </div>
+      <div class="field">
+        <label for="nr_event_date">Fecha del evento</label>
+        <input type="date" id="nr_event_date" required>
+      </div>
+      <div class="field">
+        <label>Tarifa</label>
+        <div class="plan-options" id="nrPlanOptions"></div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="nr_start_time">Hora de inicio</label>
+          <input type="time" id="nr_start_time" required>
+        </div>
+        <div class="field">
+          <label for="nr_end_time">Hora de fin</label>
+          <input type="time" id="nr_end_time" required>
+        </div>
+      </div>
+      <div class="field">
+        <label>Extras</label>
+        <div class="checkbox-row"><input type="checkbox" id="nr_wants_cleaning"><label for="nr_wants_cleaning" style="margin:0; text-transform:none; font-size:14px;">Servicio de limpieza</label></div>
+
+        <div class="checkbox-row"><input type="checkbox" id="nr_wants_kids_menu"><label for="nr_wants_kids_menu" style="margin:0; text-transform:none; font-size:14px;">Menús infantiles</label></div>
+        <div class="conditional-field" id="nrKidsMenuField" hidden>
+          <label for="nr_kids_menus">¿Cuántos?</label>
+          <input type="number" id="nr_kids_menus" min="1" value="1">
+        </div>
+
+        <div class="checkbox-row"><input type="checkbox" id="nr_wants_decoration"><label for="nr_wants_decoration" style="margin:0; text-transform:none; font-size:14px;">Decoración personalizada</label></div>
+        <div class="conditional-field" id="nrDecorationField" hidden>
+          <label for="nr_decoration_theme">Temática</label>
+          <input type="text" id="nr_decoration_theme">
+        </div>
+      </div>
+      <div class="field">
+        <label for="nr_message">Notas (opcional)</label>
+        <textarea id="nr_message"></textarea>
+      </div>
+      <div class="total-row">
+        <span style="text-transform:uppercase; font-size:12px; letter-spacing:.03em; color:var(--ink-soft);">Total estimado</span>
+        <span class="amt" id="nrTotalAmount">0€</span>
+      </div>
+      <p style="margin-top:20px;">
+        <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">Guardar reserva confirmada</button>
+      </p>
+      <p id="newResMsg" style="font-size:13.5px; margin-top:10px; color:var(--ink-soft);"></p>
+    </form>
+  </div>
 </div>
 
 <script type="module">
@@ -116,6 +262,9 @@ const statusFilter = document.getElementById('statusFilter');
 const resList = document.getElementById('resList');
 
 let ALL_PLANS = [];
+let ALL_EXTRAS = [];
+let EVENT_TYPES = [];
+let FESTIVOS = new Set();
 
 loginForm.addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -162,6 +311,65 @@ function buildDenyMessage(r){
   return `Hola ${r.full_name}, gracias por tu interés en *Mi Pequeño Rincón*. Sentimos decirte que la fecha del ${fmtDate(r.event_date)} (${r.start_time}-${r.end_time}) ya no está disponible. Si quieres, dinos otra fecha y miramos la disponibilidad. ¡Gracias por escribirnos!`;
 }
 
+function addDays(dateStr, n){
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate() + n);
+  return d.toISOString().slice(0,10);
+}
+
+function dayGroupFor(dateStr){
+  const d = new Date(dateStr + 'T00:00:00');
+  const dow = d.getDay();
+  const isWeekend = dow === 0 || dow === 5 || dow === 6;
+  const isFestivo = FESTIVOS.has(dateStr);
+  const isVisperaFestivo = FESTIVOS.has(addDays(dateStr, 1));
+  return (isWeekend || isFestivo || isVisperaFestivo) ? 'viernes_domingo_festivos' : 'lunes_jueves';
+}
+
+function getExtraPrice(keyword){
+  const e = ALL_EXTRAS.find(x => x.name.toLowerCase().includes(keyword));
+  return e ? Number(e.price) : 0;
+}
+
+function reservationTotal(r){
+  const plan = ALL_PLANS.find(p => p.id === r.pricing_plan_id);
+  let total = plan ? Number(plan.price) : 0;
+  if (r.wants_cleaning) total += getExtraPrice('limpieza');
+  total += (r.kids_menus_count || 0) * getExtraPrice('infantil');
+  return total;
+}
+
+async function updateStats(){
+  const { data, error } = await supabase.from('reservations').select('*');
+  if (error || !data) return;
+
+  const confirmed = data.filter(r => r.status === 'confirmada');
+  const pending = data.filter(r => r.status === 'pendiente');
+  const totalIncome = confirmed.reduce((sum, r) => sum + reservationTotal(r), 0);
+
+  document.getElementById('statIncome').textContent = `${totalIncome.toFixed(0)}€`;
+  document.getElementById('statConfirmed').textContent = confirmed.length;
+  document.getElementById('statPending').textContent = pending.length;
+
+  const byMonth = {};
+  confirmed.forEach(r => {
+    const key = (r.event_date || '').slice(0,7);
+    if (!key) return;
+    if (!byMonth[key]) byMonth[key] = { count: 0, total: 0 };
+    byMonth[key].count += 1;
+    byMonth[key].total += reservationTotal(r);
+  });
+  const months = Object.keys(byMonth).sort().reverse();
+  const table = document.getElementById('statsMonthsTable');
+  table.innerHTML = months.length
+    ? months.map(m => {
+        const label = new Date(m + '-01T00:00:00').toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+        const info = byMonth[m];
+        return `<tr><td>${label}</td><td>${info.count} reserva(s)</td><td>${info.total.toFixed(0)}€</td></tr>`;
+      }).join('')
+    : '<tr><td>Todavía no hay reservas confirmadas.</td></tr>';
+}
+
 function setActionMsg(html, type){
   const el = document.getElementById('actionMsg');
   el.innerHTML = html;
@@ -194,6 +402,8 @@ async function loadReservations(){
   if (filter !== 'todas') query = query.eq('status', filter);
   const { data, error } = await query;
 
+  await updateStats();
+
   if (error){
     resList.innerHTML = `<p class="empty-msg">Error cargando reservas: ${error.message}</p>`;
     return;
@@ -202,6 +412,8 @@ async function loadReservations(){
     resList.innerHTML = `<p class="empty-msg">No hay reservas en este filtro.</p>`;
     return;
   }
+
+  const SOURCE_LABELS = { web: '🌐 Web', whatsapp: '💬 WhatsApp', presencial: '📍 Presencial' };
 
   resList.innerHTML = data.map(r => {
     const plan = ALL_PLANS.find(p => p.id === r.pricing_plan_id);
@@ -229,9 +441,10 @@ async function loadReservations(){
           <div>📅 ${fmtDate(r.event_date)} · ⏰ ${r.start_time}-${r.end_time}</div>
           <div>🎉 ${r.event_type}${r.guests_estimate ? ' · 👥 ' + r.guests_estimate + ' invitados' : ''}</div>
           <div>📞 ${r.phone}${r.email ? ' · ' + r.email : ''}</div>
-          ${plan ? `<div>💶 ${plan.label} — ${Number(plan.price).toFixed(0)}€</div>` : ''}
+          ${plan ? `<div>💶 ${plan.label} — ${Number(plan.price).toFixed(0)}€ · Total est. ${reservationTotal(r).toFixed(0)}€</div>` : ''}
           ${extras.length ? `<div>➕ ${extras.join(', ')}</div>` : ''}
           ${r.message ? `<div>💬 “${r.message}”</div>` : ''}
+          <div>${SOURCE_LABELS[r.source] || r.source || ''}</div>
         </div>
         ${actions}
       </div>`;
@@ -272,8 +485,19 @@ async function loadReservations(){
 async function showDashboard(){
   loginView.hidden = true;
   dashView.hidden = false;
-  const { data: plans } = await supabase.from('pricing_plans').select('*');
+  const [{ data: plans }, { data: extras }, { data: types }, { data: festivos }] = await Promise.all([
+    supabase.from('pricing_plans').select('*').eq('active', true),
+    supabase.from('extras').select('*').eq('active', true),
+    supabase.from('event_types').select('name').order('name'),
+    supabase.from('festivos').select('event_date'),
+  ]);
   ALL_PLANS = plans || [];
+  ALL_EXTRAS = extras || [];
+  EVENT_TYPES = (types || []).map(t => t.name);
+  FESTIVOS = new Set((festivos || []).map(f => f.event_date));
+
+  document.getElementById('nr_event_type').innerHTML = EVENT_TYPES.map(t => `<option value="${t}">${t}</option>`).join('');
+
   await loadReservations();
 }
 
@@ -288,6 +512,130 @@ async function init(){
 }
 
 init();
+
+// ---------- Manual reservation modal ----------
+const newResModal = document.getElementById('newResModal');
+const newResForm = document.getElementById('newResForm');
+const newResMsg = document.getElementById('newResMsg');
+
+function renderNrPlanOptions(dateStr){
+  const group = dateStr ? dayGroupFor(dateStr) : null;
+  const groupPlans = group ? ALL_PLANS.filter(p => p.day_group === group) : ALL_PLANS;
+  const wrap = document.getElementById('nrPlanOptions');
+
+  wrap.innerHTML = groupPlans.map((p, i) => {
+    const [start, end] = (p.hours_range || '').split(' a ').map(s => (s||'').trim());
+    return `
+      <label class="plan-option">
+        <span><input type="radio" name="nr_pricing_plan" value="${p.id}" data-start="${start}" data-end="${end}" ${i===0?'checked':''}> ${p.label} <span style="color:var(--ink-soft); font-size:12.5px;">(${p.hours_range})</span></span>
+        <span class="amt">${Number(p.price).toFixed(0)}€</span>
+      </label>`;
+  }).join('');
+
+  const fillTimes = (input) => {
+    if (input.dataset.start) document.getElementById('nr_start_time').value = input.dataset.start;
+    if (input.dataset.end) document.getElementById('nr_end_time').value = input.dataset.end === '00:00' ? '23:59' : input.dataset.end;
+  };
+  wrap.querySelectorAll('input[name="nr_pricing_plan"]').forEach(input => {
+    input.addEventListener('change', () => { if (input.checked){ fillTimes(input); updateNrTotal(); } });
+  });
+  const first = wrap.querySelector('input[name="nr_pricing_plan"]');
+  if (first) fillTimes(first);
+  updateNrTotal();
+}
+
+function updateNrTotal(){
+  const planRadio = document.querySelector('#nrPlanOptions input[name="nr_pricing_plan"]:checked');
+  const plan = planRadio ? ALL_PLANS.find(p => p.id === planRadio.value) : null;
+  const wantsCleaning = document.getElementById('nr_wants_cleaning').checked;
+  const wantsKids = document.getElementById('nr_wants_kids_menu').checked;
+  const kidsCount = wantsKids ? Number(document.getElementById('nr_kids_menus').value || 0) : 0;
+
+  let total = plan ? Number(plan.price) : 0;
+  if (wantsCleaning) total += getExtraPrice('limpieza');
+  total += kidsCount * getExtraPrice('infantil');
+
+  document.getElementById('nrTotalAmount').textContent = `${total.toFixed(0)}€`;
+}
+
+function openNewResModal(){
+  newResForm.reset();
+  document.getElementById('nrKidsMenuField').hidden = true;
+  document.getElementById('nrDecorationField').hidden = true;
+  newResMsg.textContent = '';
+  const dateInput = document.getElementById('nr_event_date');
+  dateInput.value = new Date().toISOString().slice(0,10);
+  renderNrPlanOptions(dateInput.value);
+  newResModal.hidden = false;
+}
+
+document.getElementById('newResBtn').addEventListener('click', openNewResModal);
+document.getElementById('newResClose').addEventListener('click', () => { newResModal.hidden = true; });
+newResModal.addEventListener('click', (e) => { if (e.target === newResModal) newResModal.hidden = true; });
+
+document.getElementById('nr_event_date').addEventListener('change', (e) => renderNrPlanOptions(e.target.value));
+document.getElementById('nr_wants_cleaning').addEventListener('change', updateNrTotal);
+document.getElementById('nr_wants_kids_menu').addEventListener('change', (e) => {
+  document.getElementById('nrKidsMenuField').hidden = !e.target.checked;
+  updateNrTotal();
+});
+document.getElementById('nr_kids_menus').addEventListener('input', updateNrTotal);
+document.getElementById('nr_wants_decoration').addEventListener('change', (e) => {
+  document.getElementById('nrDecorationField').hidden = !e.target.checked;
+});
+
+newResForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const planRadio = document.querySelector('#nrPlanOptions input[name="nr_pricing_plan"]:checked');
+  if (!planRadio){
+    newResMsg.textContent = 'Selecciona una tarifa.';
+    return;
+  }
+  const wantsKidsMenu = document.getElementById('nr_wants_kids_menu').checked;
+  const wantsDecoration = document.getElementById('nr_wants_decoration').checked;
+  const startTime = document.getElementById('nr_start_time').value;
+  const endTime = document.getElementById('nr_end_time').value;
+
+  if (endTime <= startTime){
+    newResMsg.textContent = 'La hora de fin debe ser posterior a la hora de inicio.';
+    return;
+  }
+
+  const payload = {
+    full_name: document.getElementById('nr_full_name').value.trim(),
+    phone: document.getElementById('nr_phone').value.trim(),
+    email: document.getElementById('nr_email').value.trim() || null,
+    event_type: document.getElementById('nr_event_type').value,
+    guests_estimate: document.getElementById('nr_guests').value ? Number(document.getElementById('nr_guests').value) : null,
+    event_date: document.getElementById('nr_event_date').value,
+    pricing_plan_id: planRadio.value,
+    start_time: startTime,
+    end_time: endTime,
+    wants_cleaning: document.getElementById('nr_wants_cleaning').checked,
+    wants_decoration: wantsDecoration,
+    decoration_theme: wantsDecoration ? (document.getElementById('nr_decoration_theme').value.trim() || null) : null,
+    kids_menus_count: wantsKidsMenu ? Number(document.getElementById('nr_kids_menus').value || 1) : 0,
+    message: document.getElementById('nr_message').value.trim() || null,
+    status: 'confirmada',
+    source: 'presencial',
+  };
+
+  const submitBtn = newResForm.querySelector('button[type="submit"]');
+  submitBtn.disabled = true;
+
+  const { error } = await supabase.from('reservations').insert(payload);
+
+  submitBtn.disabled = false;
+
+  if (error){
+    newResMsg.textContent = 'No se ha podido guardar: ' + error.message;
+    return;
+  }
+
+  newResModal.hidden = true;
+  setActionMsg(`Reserva presencial de <strong>${payload.full_name}</strong> guardada como confirmada en Supabase.`, 'ok');
+  await loadReservations();
+});
 </script>
 
 </body>
