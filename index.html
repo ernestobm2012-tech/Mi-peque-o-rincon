@@ -248,7 +248,7 @@
   }
 
   /* ---------- Social embeds ---------- */
-  .social-embeds{ display:grid; grid-template-columns:1fr 1fr; gap:32px; align-items:start; }
+  .social-embeds{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:32px; align-items:start; }
   @media (max-width:860px){ .social-embeds{ grid-template-columns:1fr; } }
   .social-embed-card{ background:var(--cream); border:1px solid var(--line); padding:24px; display:flex; flex-direction:column; align-items:center; gap:16px; }
   .social-embed-card h3{ font-size:15px; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-soft); }
@@ -260,6 +260,13 @@
   .instagram-follow svg{ width:44px; height:44px; color:var(--olive-dark); }
   .instagram-follow strong{ font-size:15px; font-weight:500; }
   .instagram-follow span{ font-size:13px; color:var(--ink-soft); }
+  .google-rating{
+    display:flex; flex-direction:column; align-items:center; gap:10px; text-decoration:none; color:var(--ink);
+    padding:56px 20px; width:100%;
+  }
+  .google-rating .stars{ color:var(--gold); font-size:22px; letter-spacing:3px; }
+  .google-rating strong{ font-family:'Fraunces',serif; font-size:30px; color:var(--olive-dark); }
+  .google-rating span{ font-size:13px; color:var(--ink-soft); }
 
   /* ---------- Contact ---------- */
   .contact-grid{ display:grid; grid-template-columns:1fr 1fr; gap:56px; align-items:start; }
@@ -567,7 +574,7 @@
   <div class="wrap">
     <div class="section-head">
       <p class="eyebrow">Redes sociales</p>
-      <h2>Síguenos y descubre más fotos.</h2>
+      <h2>Síguenos y mira las reseñas.</h2>
     </div>
     <div class="social-embeds">
       <div class="social-embed-card">
@@ -583,6 +590,14 @@
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.2c3.2 0 3.6 0 4.9.1 1.2.1 2 .2 2.4.4.6.2 1 .5 1.4.9.4.4.7.8.9 1.4.2.4.3 1.2.4 2.4.1 1.3.1 1.7.1 4.9s0 3.6-.1 4.9c-.1 1.2-.2 2-.4 2.4-.2.6-.5 1-.9 1.4-.4.4-.8.7-1.4.9-.4.2-1.2.3-2.4.4-1.3.1-1.7.1-4.9.1s-3.6 0-4.9-.1c-1.2-.1-2-.2-2.4-.4-.6-.2-1-.5-1.4-.9-.4-.4-.7-.8-.9-1.4-.2-.4-.3-1.2-.4-2.4C2.2 15.6 2.2 15.2 2.2 12s0-3.6.1-4.9c.1-1.2.2-2 .4-2.4.2-.6.5-1 .9-1.4.4-.4.8-.7 1.4-.9.4-.2 1.2-.3 2.4-.4C8.4 2.2 8.8 2.2 12 2.2zm0 1.8c-3.1 0-3.5 0-4.7.1-1 .05-1.6.2-1.9.3-.5.2-.8.4-1.2.7-.3.3-.5.7-.7 1.2-.1.3-.3.9-.3 1.9C3.1 8.5 3.1 8.9 3.1 12s0 3.5.1 4.7c.05 1 .2 1.6.3 1.9.2.5.4.8.7 1.2.3.3.7.5 1.2.7.3.1.9.3 1.9.3 1.2.1 1.6.1 4.7.1s3.5 0 4.7-.1c1-.05 1.6-.2 1.9-.3.5-.2.8-.4 1.2-.7.3-.3.5-.7.7-1.2.1-.3.3-.9.3-1.9.1-1.2.1-1.6.1-4.7s0-3.5-.1-4.7c-.05-1-.2-1.6-.3-1.9-.2-.5-.4-.8-.7-1.2-.3-.3-.7-.5-1.2-.7-.3-.1-.9-.3-1.9-.3-1.2-.1-1.6-.1-4.7-.1zm0 3.5a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9zm0 1.8a2.7 2.7 0 1 0 0 5.4 2.7 2.7 0 0 0 0-5.4zm5.7-2a1.05 1.05 0 1 1-2.1 0 1.05 1.05 0 0 1 2.1 0z"/></svg>
           <strong>@mi_pq_rincon</strong>
           <span>Ver todas las fotos en Instagram</span>
+        </a>
+      </div>
+      <div class="social-embed-card">
+        <h3>Google</h3>
+        <a class="google-rating" href="https://www.google.com/maps/search/?api=1&query=Calle+Guadalajara+15%2C+Centro+Comercial+La+Pacheca%2C+Chozas+de+Canales" target="_blank" rel="noopener">
+          <span class="stars" aria-hidden="true">★★★★★</span>
+          <strong>5,0</strong>
+          <span>20 reseñas en Google</span>
         </a>
       </div>
     </div>
