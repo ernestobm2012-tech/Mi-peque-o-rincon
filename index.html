@@ -119,6 +119,9 @@
   .stat-row{ display:flex; gap:36px; margin-top:32px; flex-wrap:wrap; }
   .stat b{ display:block; font-family:'Fraunces',serif; font-size:34px; color:var(--olive-dark); }
   .stat span{ font-size:12.5px; color:var(--ink-soft); letter-spacing:.03em; }
+  .sala-gallery{ display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--line); border:1px solid var(--line); margin-top:56px; }
+  .sala-gallery img{ height:280px; width:100%; object-fit:cover; }
+  @media (max-width:760px){ .sala-gallery{ grid-template-columns:1fr; } }
 
   /* ---------- Events grid ---------- */
   .events-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--line); border:1px solid var(--line); }
@@ -136,6 +139,10 @@
   .catas p{ color:#EFE9D8; }
   .catas .eyebrow{ color:var(--gold); }
   @media (max-width:760px){ .catas{ grid-template-columns:1fr; padding:40px 26px;} }
+  .catas-menu{ margin-top:40px; display:flex; gap:24px; flex-wrap:wrap; justify-content:center; }
+  .catas-menu figure{ margin:0; text-align:center; }
+  .catas-menu img{ max-width:340px; max-height:460px; width:auto; border:1px solid var(--line); }
+  .catas-menu figcaption{ margin-top:12px; font-size:13px; color:var(--ink-soft); }
 
   /* ---------- Pricing ---------- */
   .pricing-groups{ display:grid; grid-template-columns:1fr 1fr; gap:40px; }
@@ -168,13 +175,48 @@
   .cal-nav-btn:disabled:hover{ background:none; }
   .cal-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; font-size:12.5px; text-align:center;}
   .cal-grid .dow{ color:var(--ink-soft); font-size:11px; letter-spacing:.03em; padding-bottom:6px;}
-  .cal-day{ position:relative; aspect-ratio:1; display:flex; align-items:center; justify-content:center; border-radius:50%; cursor:default; }
+  .cal-day{ position:relative; aspect-ratio:1; display:flex; align-items:center; justify-content:center; border-radius:50%; cursor:default; border:none; background:none; font:inherit; color:inherit; }
+  .cal-day.clickable{ cursor:pointer; transition:background .15s; }
+  .cal-day.clickable:hover{ background:var(--cream-2); }
   .cal-day.today{ border:1px solid var(--olive-dark); }
   .cal-day.past{ color:var(--line); }
-  .cal-day.booked{ background:var(--cream-2); }
-  .cal-day.booked svg{ position:absolute; top:1px; right:1px; width:9px; height:9px; }
-  .cal-legend{ display:flex; gap:16px; margin-top:14px; font-size:12px; color:var(--ink-soft); align-items:center; justify-content:center; }
+  .cal-day.pending{ background:var(--cream-2); }
+  .cal-day.pending svg{ position:absolute; top:1px; right:1px; width:9px; height:9px; }
+  .cal-day.confirmed{ background:var(--olive-dark); color:var(--cream); }
+  .cal-legend{ display:flex; gap:16px; margin-top:14px; font-size:12px; color:var(--ink-soft); align-items:center; flex-wrap:wrap; }
   .legend-dot{ width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:6px; background:var(--cream-2); border:1px solid var(--line);}
+  .legend-dot.confirmed{ background:var(--olive-dark); border-color:var(--olive-dark); }
+
+  /* ---------- Booking modal ---------- */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(34,31,25,.55); z-index:100;
+    display:flex; align-items:center; justify-content:center; padding:20px;
+  }
+  .modal-overlay[hidden]{ display:none; }
+  .modal-box{
+    background:var(--cream); max-width:640px; width:100%; max-height:90vh; overflow-y:auto;
+    padding:32px; position:relative; border-radius:var(--radius);
+  }
+  .modal-close{
+    position:absolute; top:16px; right:16px; background:none; border:none; cursor:pointer;
+    font-size:22px; line-height:1; color:var(--ink-soft); padding:4px;
+  }
+  .modal-close:hover{ color:var(--ink); }
+  #privacyModal{ z-index:101; }
+  .checkbox-row.privacy{ align-items:flex-start; margin:18px 0 10px; font-size:13.5px; color:var(--ink-soft); }
+  .checkbox-row.privacy input{ margin-top:3px; }
+  .checkbox-row.privacy a{ color:var(--olive-dark); text-decoration:underline; }
+  .modal-date{ font-family:'Fraunces',serif; font-size:24px; margin-bottom:4px; text-transform:capitalize; padding-right:24px; }
+  .modal-daytag{ font-size:12.5px; color:var(--ink-soft); margin-bottom:22px; text-transform:uppercase; letter-spacing:.03em; }
+  .plan-options{ display:flex; flex-direction:column; gap:8px; }
+  .plan-option{
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    border:1px solid var(--line); padding:12px 14px; cursor:pointer; font-size:14px;
+  }
+  .plan-option input{ width:auto; margin-right:10px; }
+  .plan-option .amt{ font-family:'Fraunces',serif; color:var(--olive-dark); white-space:nowrap; }
+  .conditional-field{ margin-top:10px; padding-left:26px; }
+  .field-note{ font-size:12.5px; color:var(--ink-soft); margin-top:6px; }
 
   /* ---------- Booking form ---------- */
   .booking{ display:grid; grid-template-columns: .9fr 1.1fr; gap:56px; }
@@ -201,26 +243,6 @@
     counter-increment:step; content: counter(step);
     font-family:'Fraunces',serif; color:var(--gold); font-size:20px; flex:none;
   }
-  .checkbox-row.privacy{ align-items:flex-start; margin:18px 0; font-size:13.5px; color:var(--ink-soft); }
-  .checkbox-row.privacy input{ margin-top:3px; }
-  .checkbox-row.privacy a{ color:var(--olive-dark); text-decoration:underline; }
-
-  /* ---------- Privacy modal ---------- */
-  .modal-overlay{
-    display:none; position:fixed; inset:0; background:rgba(34,31,25,.55); z-index:100;
-    align-items:center; justify-content:center; padding:20px;
-  }
-  .modal-overlay.open{ display:flex; }
-  .modal-box{
-    background:var(--cream); border:1px solid var(--line); max-width:640px; max-height:80vh;
-    overflow-y:auto; padding:32px; position:relative; border-radius:var(--radius);
-  }
-  .modal-box h3{ font-size:20px; margin-bottom:16px; }
-  .modal-box p{ color:var(--ink-soft); font-size:14.5px; margin:0 0 14px; }
-  .modal-close{
-    position:absolute; top:16px; right:16px; background:none; border:none; cursor:pointer;
-    font-size:20px; line-height:1; color:var(--ink-soft);
-  }
 
   /* ---------- Contact ---------- */
   .contact-grid{ display:grid; grid-template-columns:1fr 1fr; gap:56px; align-items:start; }
@@ -233,6 +255,17 @@
   .social-row a:hover{ background:var(--ink); color:var(--cream); }
   .mapbox{ border:1px solid var(--line); overflow:hidden; height:320px; }
   .mapbox iframe{ width:100%; height:100%; border:0; filter:grayscale(20%); }
+
+  .wa-float{
+    position:fixed; right:22px; bottom:22px; z-index:60;
+    display:flex; align-items:center; gap:10px;
+    background:var(--olive-dark); color:var(--cream); text-decoration:none;
+    padding:13px 18px; border-radius:999px; font-size:14px; font-weight:500;
+    box-shadow:0 6px 18px rgba(0,0,0,.22);
+  }
+  .wa-float svg{ width:20px; height:20px; flex:none; }
+  .wa-float:hover{ background:var(--ink); }
+  @media (max-width:600px){ .wa-float span{ display:none; } .wa-float{ padding:14px; } }
 
   footer{ background:var(--ink); color:#CFC9B8; padding:40px 0; font-size:13px; }
   .footer-row{ display:flex; justify-content:space-between; flex-wrap:wrap; gap:16px; align-items:center; }
@@ -276,7 +309,7 @@
       </div>
     </div>
     <div class="hero-figure">
-      <img src="logo.jpg" alt="Logo de Mi Pequeño Rincón, sala de eventos en Chozas de Canales">
+      <img src="assets/sala-barra.jpg" alt="Interior de la sala de eventos Mi Pequeño Rincón en Chozas de Canales, con barra y decoración">
     </div>
   </div>
 </section>
@@ -308,6 +341,10 @@
       </div>
     </div>
   </div>
+  <div class="wrap sala-gallery">
+    <img src="assets/sala-mesa-larga.jpg" alt="Mesa larga preparada para un evento en Mi Pequeño Rincón, con la zona de juegos infantil al fondo">
+    <img src="assets/sala-escenario.jpg" alt="Zona de escenario y karaoke de la sala, con pared verde y barra de cocina">
+  </div>
 </section>
 
 <section class="section-alt" id="eventos">
@@ -332,6 +369,16 @@
       </div>
       <p>La sala también se transforma en un espacio íntimo para catas de vino: mesa larga, buena luz y el tiempo justo para hablar de cada copa. Si quieres organizar la tuya, cuéntanos fecha y número de invitados al reservar.</p>
     </div>
+    <div class="catas-menu">
+      <figure>
+        <img src="assets/cata-mesa.jpg" alt="Mesa larga preparada para una cata de vino en Mi Pequeño Rincón, con copas y sitio para cada invitado">
+        <figcaption>Mesa lista para la cata</figcaption>
+      </figure>
+      <figure>
+        <img src="assets/menu-cata.jpg" alt="Menú de maridaje de nuestra última cata de vino: gazpacho de cerezas, tabla de quesos, carrillada ibérica y cheesecake, maridados con Eresma, Ribada, El Torrejón y Poética">
+        <figcaption>Menú de maridaje de nuestra última cata</figcaption>
+      </figure>
+    </div>
   </div>
 </section>
 
@@ -353,6 +400,7 @@
     <div class="section-head">
       <p class="eyebrow">Disponibilidad</p>
       <h2>Mira qué fechas quedan libres.</h2>
+      <p style="color:var(--ink-soft); margin-top:10px;">Haz clic en un día libre para solicitar tu reserva.</p>
     </div>
     <div class="cal-wrap">
       <div class="cal">
@@ -365,93 +413,119 @@
       </div>
     </div>
     <div class="cal-legend">
-      <span><span class="legend-dot"></span>Fecha con reserva registrada</span>
+      <span><span class="legend-dot"></span>Pendiente de confirmar</span>
+      <span><span class="legend-dot confirmed"></span>Reserva confirmada</span>
     </div>
   </div>
 </section>
 
 <section>
-  <div class="wrap booking">
-    <div class="form-card">
-      <h3 style="font-size:22px; margin-bottom:22px;">Solicitar reserva</h3>
-      <form id="bookingForm">
-        <div class="field">
-          <label for="full_name">Nombre y apellidos</label>
-          <input type="text" id="full_name" required>
-        </div>
-        <div class="field-row">
-          <div class="field">
-            <label for="phone">Teléfono</label>
-            <input type="tel" id="phone" required placeholder="6xx xxx xxx">
-          </div>
-          <div class="field">
-            <label for="email">Email (opcional)</label>
-            <input type="email" id="email">
-          </div>
-        </div>
-        <div class="field-row">
-          <div class="field">
-            <label for="event_type">Tipo de evento</label>
-            <select id="event_type" required></select>
-          </div>
-          <div class="field">
-            <label for="guests">Nº invitados aprox.</label>
-            <input type="number" id="guests" min="1">
-          </div>
-        </div>
-        <div class="field-row">
-          <div class="field">
-            <label for="event_date">Fecha</label>
-            <input type="date" id="event_date" required>
-          </div>
-          <div class="field">
-            <label for="pricing_plan">Tarifa</label>
-            <select id="pricing_plan" required></select>
-          </div>
-        </div>
-        <div class="field-row">
-          <div class="field">
-            <label for="start_time">Hora de inicio</label>
-            <input type="time" id="start_time" required>
-          </div>
-          <div class="field">
-            <label for="end_time">Hora de fin</label>
-            <input type="time" id="end_time" required>
-          </div>
-        </div>
-        <div class="field">
-          <label>Extras</label>
-          <div class="checkbox-row"><input type="checkbox" id="wants_cleaning"><label for="wants_cleaning" style="margin:0; text-transform:none; font-size:14px;">Servicio de limpieza (+25€)</label></div>
-          <div class="checkbox-row"><input type="checkbox" id="wants_decoration"><label for="wants_decoration" style="margin:0; text-transform:none; font-size:14px;">Decoración personalizada (a consultar)</label></div>
-        </div>
-        <div class="field">
-          <label for="kids_menus">Menús infantiles (5,5€/ud.)</label>
-          <input type="number" id="kids_menus" min="0" value="0">
-        </div>
-        <div class="field">
-          <label for="message">Cuéntanos algo más (opcional)</label>
-          <textarea id="message" placeholder="Ej: necesito animador, ¿qué tipos de menús hay?, ¿qué elementos tiene la cocina?, necesitamos proyector..."></textarea>
-        </div>
-        <div class="checkbox-row privacy">
-          <input type="checkbox" id="accepts_privacy" required>
-          <label for="accepts_privacy" style="margin:0; text-transform:none;">He leído y acepto la <a href="#" id="privacyLink">política de privacidad</a>.</label>
-        </div>
-        <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">Enviar solicitud de reserva</button>
-        <div class="form-msg" id="formMsg"></div>
-      </form>
-    </div>
-    <div class="booking-aside">
-      <p class="eyebrow">Cómo funciona</p>
-      <h2 style="font-size:28px; margin-top:8px;">De la solicitud a la fecha confirmada.</h2>
-      <p>Enviar el formulario reserva provisionalmente tu fecha. Nosotros la revisamos y te confirmamos por teléfono o Instagram en menos de 24-48h.</p>
-      <ul class="steps">
-        <li>Rellenas la fecha, horario y tipo de evento que necesitas.</li>
-        <li>Comprobamos disponibilidad real y te llamamos para confirmar y cerrar detalles.</li>
-        <li>Preparamos la sala para tu celebración, con los extras que hayas elegido.</li>
-      </ul>
-    </div>
+  <div class="wrap" style="max-width:640px;">
+    <p class="eyebrow">Cómo funciona</p>
+    <h2 style="font-size:28px; margin-top:8px;">De la solicitud a la fecha confirmada.</h2>
+    <p style="color:var(--ink-soft);">Al enviar el formulario tu reserva queda como <strong>pendiente</strong>. La revisamos y te confirmamos por teléfono o Instagram en menos de 24-48h.</p>
+    <ul class="steps">
+      <li>Eliges la fecha en el calendario y rellenas horario, tipo de evento y extras.</li>
+      <li>Comprobamos disponibilidad real y te llamamos para confirmar y cerrar detalles.</li>
+      <li>Preparamos la sala para tu celebración, con los extras que hayas elegido.</li>
+    </ul>
   </div>
 </section>
+
+<div class="modal-overlay" id="bookingModal" hidden>
+  <div class="modal-box">
+    <button type="button" class="modal-close" id="modalClose" aria-label="Cerrar">×</button>
+    <div class="modal-date" id="modalDate"></div>
+    <div class="modal-daytag" id="modalDayTag"></div>
+    <form id="bookingForm">
+      <div class="field">
+        <label for="full_name">Nombre y apellidos</label>
+        <input type="text" id="full_name" required>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="phone">Teléfono</label>
+          <input type="tel" id="phone" required placeholder="6xx xxx xxx">
+        </div>
+        <div class="field">
+          <label for="email">Email (opcional)</label>
+          <input type="email" id="email">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="event_type">Tipo de evento</label>
+          <select id="event_type" required></select>
+        </div>
+        <div class="field">
+          <label for="guests">Nº invitados aprox.</label>
+          <input type="number" id="guests" min="1">
+        </div>
+      </div>
+      <div class="field">
+        <label>Tarifa</label>
+        <div class="plan-options" id="planOptions"></div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="start_time">Hora de inicio</label>
+          <input type="time" id="start_time" required>
+        </div>
+        <div class="field">
+          <label for="end_time">Hora de fin</label>
+          <input type="time" id="end_time" required>
+        </div>
+      </div>
+      <div class="field">
+        <label>Extras</label>
+        <div class="checkbox-row"><input type="checkbox" id="wants_cleaning"><label for="wants_cleaning" style="margin:0; text-transform:none; font-size:14px;">Servicio de limpieza (+25€)</label></div>
+
+        <div class="checkbox-row"><input type="checkbox" id="wants_kids_menu"><label for="wants_kids_menu" style="margin:0; text-transform:none; font-size:14px;">Menús infantiles (5,5€/ud.)</label></div>
+        <div class="conditional-field" id="kidsMenuField" hidden>
+          <label for="kids_menus">¿Cuántos?</label>
+          <input type="number" id="kids_menus" min="1" value="1">
+        </div>
+
+        <div class="checkbox-row"><input type="checkbox" id="wants_decoration"><label for="wants_decoration" style="margin:0; text-transform:none; font-size:14px;">Decoración personalizada</label></div>
+        <div class="conditional-field" id="decorationField" hidden>
+          <label for="decoration_theme">Temática</label>
+          <input type="text" id="decoration_theme" placeholder="Ej: unicornio, Naruto, boda rústica...">
+        </div>
+      </div>
+      <div class="field">
+        <label for="message">Cuéntanos algo más (opcional)</label>
+        <textarea id="message" placeholder="Ej: necesito animador, ¿qué tipos de menús hay?, ¿qué elementos tiene la cocina?, necesitamos proyector..."></textarea>
+      </div>
+      <div class="field" style="border-top:1px solid var(--line); padding-top:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:baseline;">
+          <span style="text-transform:uppercase; font-size:12.5px; letter-spacing:.03em; color:var(--ink-soft);">Total estimado</span>
+          <span id="totalAmount" style="font-family:'Fraunces',serif; font-size:26px; color:var(--olive-dark);">0€</span>
+        </div>
+        <p class="field-note" id="totalDecoNote" hidden>+ decoración personalizada: precio a consultar (no incluido arriba)</p>
+        <p class="field-note" id="senalNote" style="margin-top:12px;"></p>
+        <p class="field-note">El día del evento se pide una fianza de <strong>50€</strong>, que se devuelve a la entrega de llaves si la sala queda en las mismas condiciones de limpieza y uso.</p>
+      </div>
+      <div class="checkbox-row privacy">
+        <input type="checkbox" id="accepts_privacy" required>
+        <label for="accepts_privacy" style="margin:0; text-transform:none;">He leído y acepto la <a href="#" id="privacyLink">política de privacidad</a>.</label>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">Enviar solicitud de reserva</button>
+      <div class="form-msg" id="formMsg"></div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="privacyModal" hidden>
+  <div class="modal-box">
+    <button type="button" class="modal-close" id="privacyClose" aria-label="Cerrar">×</button>
+    <h3 style="font-size:20px; margin-bottom:16px;">Política de privacidad</h3>
+    <p style="color:var(--ink-soft); font-size:14.5px; margin:0 0 14px;">En cumplimiento del Reglamento (UE) 2016/679 (RGPD) y la LOPDGDD, te informamos de que los datos personales que nos facilitas en el formulario de reserva (nombre y apellidos, teléfono y, en su caso, email) son tratados por <strong>Mi Pequeño Rincón</strong> con la única finalidad de gestionar tu solicitud de reserva y contactar contigo para confirmarla.</p>
+    <p style="color:var(--ink-soft); font-size:14.5px; margin:0 0 14px;">La base legal del tratamiento es tu consentimiento, prestado al marcar la casilla de aceptación y enviar el formulario.</p>
+    <p style="color:var(--ink-soft); font-size:14.5px; margin:0 0 14px;">Los datos se almacenan de forma segura en <strong>Supabase</strong>, que actúa como encargado del tratamiento, y no se ceden a terceros salvo obligación legal.</p>
+    <p style="color:var(--ink-soft); font-size:14.5px; margin:0 0 14px;">Conservaremos los datos mientras sea necesario para gestionar tu reserva y, como máximo, durante los plazos legalmente exigidos.</p>
+    <p style="color:var(--ink-soft); font-size:14.5px; margin:0;">Puedes ejercer tus derechos de acceso, rectificación, supresión y oposición llamando al <a href="tel:+34624297877">624 29 78 77</a>.</p>
+  </div>
+</div>
 
 <div class="branch-divider" aria-hidden="true">
   <svg viewBox="0 0 180 28" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -475,14 +549,19 @@
         <a href="https://www.instagram.com/mi_pq_rincon/" target="_blank" rel="noopener">Instagram</a>
         <a href="https://www.facebook.com/Mi.pq.rincon/" target="_blank" rel="noopener">Facebook</a>
         <a href="https://www.tiktok.com/@mipqrincon" target="_blank" rel="noopener">TikTok</a>
-        <a href="https://www.google.com/maps/search/Mi+Peque%C3%B1o+Rinc%C3%B3n+Chozas+de+Canales" target="_blank" rel="noopener">Google Maps</a>
+        <a href="https://www.google.com/maps/search/?api=1&query=Calle+Guadalajara+15%2C+Centro+Comercial+La+Pacheca%2C+Chozas+de+Canales" target="_blank" rel="noopener">Google Maps</a>
       </div>
     </div>
     <div class="mapbox">
-      <iframe loading="lazy" src="https://www.google.com/maps?q=Chozas+de+Canales,+Toledo&output=embed" allowfullscreen></iframe>
+      <iframe loading="lazy" src="https://www.google.com/maps?q=Calle+Guadalajara+15,+Centro+Comercial+La+Pacheca,+Chozas+de+Canales&output=embed" allowfullscreen></iframe>
     </div>
   </div>
 </section>
+
+<a class="wa-float" href="https://wa.me/34624297877?text=Hola%2C%20quer%C3%ADa%20consultar%20disponibilidad" target="_blank" rel="noopener" aria-label="Escríbenos por WhatsApp">
+  <svg viewBox="0 0 32 32" fill="currentColor"><path d="M16.02 3C9.4 3 4 8.4 4 15.02c0 2.35.64 4.55 1.86 6.5L4 29l7.66-1.8a11.9 11.9 0 0 0 4.36.82h.01c6.62 0 12.02-5.4 12.02-12.02C28.05 8.4 22.65 3 16.02 3zm0 21.9h-.01a9.9 9.9 0 0 1-5.05-1.38l-.36-.21-4.55 1.07 1.1-4.44-.24-.37a9.86 9.86 0 0 1-1.53-5.55c0-5.46 4.44-9.9 9.9-9.9 2.64 0 5.13 1.03 6.99 2.9a9.83 9.83 0 0 1 2.9 6.99c0 5.46-4.45 9.9-9.15 9.9zm5.4-7.4c-.3-.15-1.75-.86-2.02-.96-.27-.1-.47-.15-.66.15-.2.3-.76.96-.93 1.16-.17.2-.34.22-.64.07-.3-.15-1.25-.46-2.38-1.47-.88-.78-1.47-1.75-1.65-2.05-.17-.3-.02-.46.13-.6.13-.13.3-.34.45-.51.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.66-1.6-.9-2.18-.24-.58-.48-.5-.66-.5-.17 0-.37-.02-.57-.02-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48 0 1.46 1.07 2.87 1.22 3.07.15.2 2.1 3.2 5.08 4.49.71.3 1.26.49 1.69.62.71.23 1.36.2 1.87.12.57-.08 1.75-.71 2-1.4.25-.68.25-1.27.17-1.4-.07-.12-.27-.2-.57-.35z"/></svg>
+  <span>Escríbenos por WhatsApp</span>
+</a>
 
 <footer>
   <div class="wrap footer-row">
@@ -491,18 +570,6 @@
     <a href="#" id="privacyLinkFooter">Política de privacidad</a>
   </div>
 </footer>
-
-<div class="modal-overlay" id="privacyModal">
-  <div class="modal-box">
-    <button type="button" class="modal-close" id="privacyClose" aria-label="Cerrar">&times;</button>
-    <h3>Política de privacidad</h3>
-    <p>En cumplimiento del Reglamento (UE) 2016/679 (RGPD) y la LOPDGDD, te informamos de que los datos personales que nos facilitas en el formulario de reserva (nombre y apellidos, teléfono y, en su caso, email) son tratados por <strong>Mi Pequeño Rincón</strong> con la única finalidad de gestionar tu solicitud de reserva y contactar contigo para confirmarla.</p>
-    <p>La base legal del tratamiento es tu consentimiento, prestado al marcar la casilla de aceptación y enviar el formulario.</p>
-    <p>Los datos se almacenan de forma segura en <strong>Supabase</strong>, que actúa como encargado del tratamiento, y no se ceden a terceros salvo obligación legal.</p>
-    <p>Conservaremos los datos mientras sea necesario para gestionar tu reserva y, como máximo, durante los plazos legalmente exigidos.</p>
-    <p>Puedes ejercer tus derechos de acceso, rectificación, supresión y oposición llamando al <a href="tel:+34624297877">624 29 78 77</a>.</p>
-  </div>
-</div>
 
 <script type="module">
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -513,16 +580,6 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 document.getElementById('year').textContent = new Date().getFullYear();
 
-// ---------- Privacy modal ----------
-(function initPrivacyModal(){
-  const modal = document.getElementById('privacyModal');
-  const openModal = (e) => { e.preventDefault(); modal.classList.add('open'); };
-  document.getElementById('privacyLink').addEventListener('click', openModal);
-  document.getElementById('privacyLinkFooter').addEventListener('click', openModal);
-  document.getElementById('privacyClose').addEventListener('click', () => modal.classList.remove('open'));
-  modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('open'); });
-})();
-
 const EVENT_ICONS = {
   default: '<path d="M12 3v18M4 8h16M4 16h16" stroke="currentColor" stroke-width="1.4" fill="none"/>'
 };
@@ -532,7 +589,7 @@ async function loadEventTypes(){
   const grid = document.getElementById('eventsGrid');
   const select = document.getElementById('event_type');
   const { data, error } = await supabase.from('event_types').select('name').order('name');
-  const types = (!error && data && data.length) ? data.map(d=>d.name) : ['Cumpleaños','Comunión','Bautizo','Boda','Baby shower','Cata de vino','Reunión de empresa','Despedida de soltero/a','Otro'];
+  const types = (!error && data && data.length) ? data.map(d=>d.name) : ['Cumpleaños','Comunión','Bautizo','Boda','Baby shower','Grupo de amigos','Reunión de empresa','Otro'];
 
   grid.innerHTML = types.map(name => `
     <div class="event-card">
@@ -544,10 +601,11 @@ async function loadEventTypes(){
 }
 
 // ---------- Pricing ----------
+let ALL_PLANS = [];
+let ALL_EXTRAS = [];
 async function loadPricing(){
   const wrap = document.getElementById('pricingGroups');
   const note = document.getElementById('pricingNote');
-  const planSelect = document.getElementById('pricing_plan');
 
   const { data: plans, error: pErr } = await supabase.from('pricing_plans').select('*').eq('active', true).order('sort_order');
   const { data: extras, error: eErr } = await supabase.from('extras').select('*').eq('active', true);
@@ -556,6 +614,9 @@ async function loadPricing(){
     note.textContent = 'No se han podido cargar las tarifas ahora mismo. Llámanos al 624 29 78 77.';
     return;
   }
+
+  ALL_PLANS = plans;
+  ALL_EXTRAS = extras || [];
 
   const groups = {
     lunes_jueves: { title: 'De lunes a jueves', rows: [] },
@@ -573,8 +634,6 @@ async function loadPricing(){
         </div>`).join('')}
     </div>`).join('');
 
-  planSelect.innerHTML = plans.map(p => `<option value="${p.id}" data-hours="${p.hours_range}">${p.label} · ${p.hours_range} · ${Number(p.price).toFixed(0)}€</option>`).join('');
-
   if (extras && extras.length){
     note.innerHTML = 'Extras: <br>' + `<ul class="extras-list">${extras.map(e => `<li><span>${e.name}</span><span>${e.unit==='a_consultar' ? 'a consultar' : Number(e.price).toFixed(2).replace('.00','') + '€' + (e.unit==='hora' ? '/hora' : e.unit==='por_nino' ? '/niño' : '')}</span></li>`).join('')}</ul>`;
   } else {
@@ -588,73 +647,223 @@ const MONTH_NAMES = ['enero','febrero','marzo','abril','mayo','junio','julio','a
 
 function ymd(d){ return d.toISOString().slice(0,10); }
 
-const calState = { year:0, month:0, baseYear:0, baseMonth:0, bookedSet:new Set() };
+function addDays(dateStr, n){
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate() + n);
+  return ymd(d);
+}
 
-function renderCalendar(){
-  const first = new Date(calState.year, calState.month, 1);
+// ---------- Festivos / tipo de tarifa según el día ----------
+let FESTIVOS = new Set();
+async function loadFestivos(){
+  const { data } = await supabase.from('festivos').select('event_date');
+  FESTIVOS = new Set((data||[]).map(r => r.event_date));
+}
+
+function dayGroupFor(dateStr){
+  const d = new Date(dateStr + 'T00:00:00');
+  const dow = d.getDay(); // 0=domingo ... 5=viernes, 6=sábado
+  const isWeekend = dow === 0 || dow === 5 || dow === 6;
+  const isFestivo = FESTIVOS.has(dateStr);
+  const isVisperaFestivo = FESTIVOS.has(addDays(dateStr, 1));
+  return (isWeekend || isFestivo || isVisperaFestivo) ? 'viernes_domingo_festivos' : 'lunes_jueves';
+}
+
+function buildCalendar(container, year, month, statusByDate){
+  const first = new Date(year, month, 1);
   const startOffset = (first.getDay() + 6) % 7; // Monday-first
-  const daysInMonth = new Date(calState.year, calState.month+1, 0).getDate();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
   const today = new Date(); today.setHours(0,0,0,0);
-
-  document.getElementById('calLabel').textContent = `${MONTH_NAMES[calState.month]} ${calState.year}`;
 
   let html = '';
   DOWS.forEach(d => html += `<div class="dow">${d}</div>`);
   for(let i=0;i<startOffset;i++) html += `<div></div>`;
   for(let day=1; day<=daysInMonth; day++){
-    const d = new Date(calState.year, calState.month, day);
+    const d = new Date(year, month, day);
     const key = ymd(d);
     const isPast = d < today;
-    const isToday = ymd(d) === ymd(today);
-    const isBooked = calState.bookedSet.has(key);
-    html += `<div class="cal-day ${isPast?'past':''} ${isToday?'today':''} ${isBooked?'booked':''}">
+    const isToday = key === ymd(today);
+    const status = statusByDate[key];
+    const cls = [
+      'cal-day',
+      isPast ? 'past' : 'clickable',
+      isToday ? 'today' : '',
+      status === 'confirmada' ? 'confirmed' : '',
+      status === 'pendiente' ? 'pending' : ''
+    ].filter(Boolean).join(' ');
+    const tag = isPast ? 'span' : 'button';
+    const attrs = isPast ? '' : `type="button" data-date="${key}"`;
+    html += `<${tag} class="${cls}" ${attrs}>
       ${day}
-      ${isBooked ? '<svg viewBox="0 0 24 24" fill="#5B6B45"><ellipse cx="12" cy="12" rx="9" ry="4" transform="rotate(-30 12 12)"/></svg>' : ''}
-    </div>`;
+      ${status === 'pendiente' ? '<svg viewBox="0 0 24 24" fill="#5B6B45"><ellipse cx="12" cy="12" rx="9" ry="4" transform="rotate(-30 12 12)"/></svg>' : ''}
+    </${tag}>`;
   }
-  document.getElementById('calGrid').innerHTML = html;
+  container.innerHTML = html;
 
-  const isBaseMonth = calState.year === calState.baseYear && calState.month === calState.baseMonth;
-  document.getElementById('calPrevBtn').disabled = isBaseMonth;
+  if (!container.dataset.wired){
+    container.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-date]');
+      if (btn) openBookingModal(btn.dataset.date);
+    });
+    container.dataset.wired = '1';
+  }
+}
+
+const calState = { year:0, month:0, baseYear:0, baseMonth:0 };
+let CURRENT_STATUS_BY_DATE = {};
+
+function renderCalendarState(){
+  document.getElementById('calLabel').textContent = `${MONTH_NAMES[calState.month]} ${calState.year}`;
+  buildCalendar(document.getElementById('calGrid'), calState.year, calState.month, CURRENT_STATUS_BY_DATE);
+  document.getElementById('calPrevBtn').disabled = (calState.year === calState.baseYear && calState.month === calState.baseMonth);
 }
 
 function changeCalMonth(delta){
   calState.month += delta;
   if (calState.month < 0){ calState.month = 11; calState.year--; }
   else if (calState.month > 11){ calState.month = 0; calState.year++; }
-  renderCalendar();
+  renderCalendarState();
+}
+
+async function fetchAvailability(){
+  const { data } = await supabase.from('availability').select('event_date, status');
+  const statusByDate = {};
+  (data||[]).forEach(r => {
+    if (!statusByDate[r.event_date] || r.status === 'confirmada') statusByDate[r.event_date] = r.status;
+  });
+  CURRENT_STATUS_BY_DATE = statusByDate;
 }
 
 async function loadAvailability(){
   const now = new Date();
-  const { data, error } = await supabase.from('availability').select('event_date');
-  calState.bookedSet = new Set((data||[]).map(r => r.event_date));
+  await fetchAvailability();
   calState.year = calState.baseYear = now.getFullYear();
   calState.month = calState.baseMonth = now.getMonth();
-  renderCalendar();
-
-  document.getElementById('calPrevBtn').addEventListener('click', () => changeCalMonth(-1));
-  document.getElementById('calNextBtn').addEventListener('click', () => changeCalMonth(1));
-
-  return calState.bookedSet;
+  renderCalendarState();
 }
 
-// ---------- Booking form ----------
+// ---------- Booking modal ----------
 function setMsg(text, type){
   const el = document.getElementById('formMsg');
   el.textContent = text;
-  el.className = 'form-msg ' + type;
+  el.className = 'form-msg ' + (type || '');
 }
 
-async function initForm(bookedSetPromise){
-  const dateInput = document.getElementById('event_date');
-  const today = new Date();
-  dateInput.min = ymd(today);
+let selectedDate = null;
+
+function renderPlanOptions(dateStr){
+  const group = dayGroupFor(dateStr);
+  const groupPlans = ALL_PLANS.filter(p => p.day_group === group);
+  const wrap = document.getElementById('planOptions');
+
+  wrap.innerHTML = groupPlans.map((p, i) => {
+    const [start, end] = (p.hours_range || '').split(' a ').map(s => (s||'').trim());
+    return `
+      <label class="plan-option">
+        <span><input type="radio" name="pricing_plan" value="${p.id}" data-start="${start}" data-end="${end}" ${i===0?'checked':''}> ${p.label} <span style="color:var(--ink-soft); font-size:12.5px;">(${p.hours_range})</span></span>
+        <span class="amt">${Number(p.price).toFixed(0)}€</span>
+      </label>`;
+  }).join('');
+
+  const fillTimes = (input) => {
+    if (input.dataset.start) document.getElementById('start_time').value = input.dataset.start;
+    if (input.dataset.end) document.getElementById('end_time').value = input.dataset.end === '00:00' ? '23:59' : input.dataset.end;
+  };
+
+  wrap.querySelectorAll('input[name="pricing_plan"]').forEach(input => {
+    input.addEventListener('change', () => { if (input.checked){ fillTimes(input); updateSummary(); } });
+  });
+
+  const first = wrap.querySelector('input[name="pricing_plan"]');
+  if (first) fillTimes(first);
+}
+
+function getExtraPrice(keyword){
+  const e = ALL_EXTRAS.find(x => x.name.toLowerCase().includes(keyword));
+  return e ? Number(e.price) : 0;
+}
+
+function updateSummary(){
+  const planRadio = document.querySelector('#planOptions input[name="pricing_plan"]:checked');
+  const plan = planRadio ? ALL_PLANS.find(p => p.id === planRadio.value) : null;
+  const wantsCleaning = document.getElementById('wants_cleaning').checked;
+  const wantsKids = document.getElementById('wants_kids_menu').checked;
+  const kidsCount = wantsKids ? Number(document.getElementById('kids_menus').value || 0) : 0;
+  const wantsDeco = document.getElementById('wants_decoration').checked;
+
+  let total = plan ? Number(plan.price) : 0;
+  if (wantsCleaning) total += getExtraPrice('limpieza');
+  total += kidsCount * getExtraPrice('infantil');
+
+  document.getElementById('totalAmount').textContent = `${total.toFixed(0)}€`;
+  document.getElementById('totalDecoNote').hidden = !wantsDeco;
+
+  document.getElementById('senalNote').innerHTML = wantsDeco
+    ? 'Si aceptamos la reserva se piden <strong>20€</strong> de señal (efectivo o Bizum, gestionada por teléfono), más otros <strong>20€</strong> de señal por la decoración personalizada.'
+    : 'Si aceptamos la reserva se pide una señal de <strong>20€</strong> (efectivo o Bizum, gestionada por teléfono).';
+}
+
+function openBookingModal(dateStr){
+  selectedDate = dateStr;
+  const d = new Date(dateStr + 'T00:00:00');
+  const modal = document.getElementById('bookingModal');
+
+  document.getElementById('modalDate').textContent = d.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+  const group = dayGroupFor(dateStr);
+  document.getElementById('modalDayTag').textContent = group === 'lunes_jueves' ? 'Tarifa de lunes a jueves' : 'Tarifa de viernes, fin de semana o festivo';
+
+  document.getElementById('bookingForm').reset();
+  renderPlanOptions(dateStr);
+  document.getElementById('kidsMenuField').hidden = true;
+  document.getElementById('decorationField').hidden = true;
+  updateSummary();
+  setMsg('', '');
+
+  modal.hidden = false;
+}
+
+function closeBookingModal(){
+  document.getElementById('bookingModal').hidden = true;
+}
+
+async function initForm(){
+  document.getElementById('modalClose').addEventListener('click', closeBookingModal);
+  document.getElementById('bookingModal').addEventListener('click', (e) => {
+    if (e.target.id === 'bookingModal') closeBookingModal();
+  });
+  document.getElementById('calPrevBtn').addEventListener('click', () => changeCalMonth(-1));
+  document.getElementById('calNextBtn').addEventListener('click', () => changeCalMonth(1));
+
+  const privacyModal = document.getElementById('privacyModal');
+  const openPrivacyModal = (e) => { e.preventDefault(); privacyModal.hidden = false; };
+  document.getElementById('privacyLink').addEventListener('click', openPrivacyModal);
+  document.getElementById('privacyLinkFooter').addEventListener('click', openPrivacyModal);
+  document.getElementById('privacyClose').addEventListener('click', () => { privacyModal.hidden = true; });
+  privacyModal.addEventListener('click', (e) => { if (e.target === privacyModal) privacyModal.hidden = true; });
+  document.getElementById('wants_cleaning').addEventListener('change', updateSummary);
+  document.getElementById('wants_kids_menu').addEventListener('change', (e) => {
+    document.getElementById('kidsMenuField').hidden = !e.target.checked;
+    updateSummary();
+  });
+  document.getElementById('kids_menus').addEventListener('input', updateSummary);
+  document.getElementById('wants_decoration').addEventListener('change', (e) => {
+    document.getElementById('decorationField').hidden = !e.target.checked;
+    updateSummary();
+  });
 
   const form = document.getElementById('bookingForm');
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     setMsg('', '');
+
+    const planRadio = form.querySelector('input[name="pricing_plan"]:checked');
+    if (!planRadio){
+      setMsg('Selecciona una tarifa.', 'err');
+      return;
+    }
+
+    const wantsKidsMenu = document.getElementById('wants_kids_menu').checked;
+    const wantsDecoration = document.getElementById('wants_decoration').checked;
 
     const payload = {
       full_name: document.getElementById('full_name').value.trim(),
@@ -662,13 +871,14 @@ async function initForm(bookedSetPromise){
       email: document.getElementById('email').value.trim() || null,
       event_type: document.getElementById('event_type').value,
       guests_estimate: document.getElementById('guests').value ? Number(document.getElementById('guests').value) : null,
-      event_date: document.getElementById('event_date').value,
-      pricing_plan_id: document.getElementById('pricing_plan').value,
+      event_date: selectedDate,
+      pricing_plan_id: planRadio.value,
       start_time: document.getElementById('start_time').value,
       end_time: document.getElementById('end_time').value,
       wants_cleaning: document.getElementById('wants_cleaning').checked,
-      wants_decoration: document.getElementById('wants_decoration').checked,
-      kids_menus_count: Number(document.getElementById('kids_menus').value || 0),
+      wants_decoration: wantsDecoration,
+      decoration_theme: wantsDecoration ? (document.getElementById('decoration_theme').value.trim() || null) : null,
+      kids_menus_count: wantsKidsMenu ? Number(document.getElementById('kids_menus').value || 1) : 0,
       message: document.getElementById('message').value.trim() || null,
     };
 
@@ -691,21 +901,19 @@ async function initForm(bookedSetPromise){
       return;
     }
 
-    form.reset();
-    setMsg('¡Solicitud enviada! Es una reserva provisional: te confirmamos por teléfono en menos de 24-48h.', 'ok');
-
-    const booked = await bookedSetPromise;
-    if (booked.has(payload.event_date)){
-      setMsg('Solicitud enviada. Ojo: ya hay otra reserva registrada ese día — te llamaremos para confirmar franja horaria.', 'warn');
-    }
+    setMsg('¡Solicitud enviada! Es una reserva provisional (pendiente): te confirmamos por teléfono en menos de 24-48h.', 'ok');
+    await fetchAvailability();
+    renderCalendarState();
+    setTimeout(closeBookingModal, 2400);
   });
 }
 
 (async function init(){
   await loadEventTypes();
   await loadPricing();
-  const bookedSet = await loadAvailability();
-  await initForm(Promise.resolve(bookedSet));
+  await loadFestivos();
+  await loadAvailability();
+  await initForm();
 })();
 </script>
 
