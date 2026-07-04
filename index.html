@@ -11,11 +11,11 @@
 <style>
   :root{
     --cream:#F7F2E7;
-    --cream-2:#EFE7D4;
+    --cream-2:#E7EFC4;
     --ink:#221F19;
     --ink-soft:#4A473E;
-    --olive:#5B6B45;
-    --olive-dark:#333B24;
+    --olive:#7C9A44;
+    --olive-dark:#4B5E22;
     --gold:#B4924E;
     --line: rgba(34,31,25,.14);
     --radius: 2px;
@@ -233,7 +233,7 @@
   .checkbox-row{ display:flex; align-items:center; gap:8px; font-size:14px; margin-bottom:10px;}
   .checkbox-row input{ width:auto; }
   .form-msg{ margin-top:16px; font-size:14px; padding:12px 14px; display:none; }
-  .form-msg.ok{ display:block; background:#EAF0E2; color:var(--olive-dark); border:1px solid var(--olive); }
+  .form-msg.ok{ display:block; background:#EEF5D8; color:var(--olive-dark); border:1px solid var(--olive); }
   .form-msg.err{ display:block; background:#F6E4E0; color:#7A2E22; border:1px solid #C0685A; }
   .form-msg.warn{ display:block; background:#F7EBD3; color:#6B4F17; border:1px solid var(--gold); }
   .booking-aside p{ color:var(--ink-soft); }
@@ -316,12 +316,12 @@
 
 <div class="branch-divider" aria-hidden="true">
   <svg viewBox="0 0 180 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M2 14 C 45 4, 135 24, 178 14" stroke="#5B6B45" stroke-width="1.2"/>
-    <ellipse cx="30" cy="9" rx="7" ry="3.2" transform="rotate(-24 30 9)" fill="#5B6B45"/>
-    <ellipse cx="60" cy="21" rx="7" ry="3.2" transform="rotate(20 60 21)" fill="#5B6B45"/>
+    <path d="M2 14 C 45 4, 135 24, 178 14" stroke="#7C9A44" stroke-width="1.2"/>
+    <ellipse cx="30" cy="9" rx="7" ry="3.2" transform="rotate(-24 30 9)" fill="#7C9A44"/>
+    <ellipse cx="60" cy="21" rx="7" ry="3.2" transform="rotate(20 60 21)" fill="#7C9A44"/>
     <ellipse cx="95" cy="9" rx="7" ry="3.2" transform="rotate(-18 95 9)" fill="#B4924E"/>
-    <ellipse cx="128" cy="20" rx="7" ry="3.2" transform="rotate(22 128 20)" fill="#5B6B45"/>
-    <ellipse cx="155" cy="10" rx="7" ry="3.2" transform="rotate(-20 155 10)" fill="#5B6B45"/>
+    <ellipse cx="128" cy="20" rx="7" ry="3.2" transform="rotate(22 128 20)" fill="#7C9A44"/>
+    <ellipse cx="155" cy="10" rx="7" ry="3.2" transform="rotate(-20 155 10)" fill="#7C9A44"/>
   </svg>
 </div>
 
@@ -529,12 +529,12 @@
 
 <div class="branch-divider" aria-hidden="true">
   <svg viewBox="0 0 180 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M2 14 C 45 24, 135 4, 178 14" stroke="#5B6B45" stroke-width="1.2"/>
+    <path d="M2 14 C 45 24, 135 4, 178 14" stroke="#7C9A44" stroke-width="1.2"/>
     <ellipse cx="30" cy="19" rx="7" ry="3.2" transform="rotate(24 30 19)" fill="#B4924E"/>
-    <ellipse cx="60" cy="7" rx="7" ry="3.2" transform="rotate(-20 60 7)" fill="#5B6B45"/>
-    <ellipse cx="95" cy="19" rx="7" ry="3.2" transform="rotate(18 95 19)" fill="#5B6B45"/>
-    <ellipse cx="128" cy="8" rx="7" ry="3.2" transform="rotate(-22 128 8)" fill="#5B6B45"/>
-    <ellipse cx="155" cy="18" rx="7" ry="3.2" transform="rotate(20 155 18)" fill="#5B6B45"/>
+    <ellipse cx="60" cy="7" rx="7" ry="3.2" transform="rotate(-20 60 7)" fill="#7C9A44"/>
+    <ellipse cx="95" cy="19" rx="7" ry="3.2" transform="rotate(18 95 19)" fill="#7C9A44"/>
+    <ellipse cx="128" cy="8" rx="7" ry="3.2" transform="rotate(-22 128 8)" fill="#7C9A44"/>
+    <ellipse cx="155" cy="18" rx="7" ry="3.2" transform="rotate(20 155 18)" fill="#7C9A44"/>
   </svg>
 </div>
 
@@ -695,7 +695,7 @@ function buildCalendar(container, year, month, statusByDate){
     const attrs = isPast ? '' : `type="button" data-date="${key}"`;
     html += `<${tag} class="${cls}" ${attrs}>
       ${day}
-      ${status === 'pendiente' ? '<svg viewBox="0 0 24 24" fill="#5B6B45"><ellipse cx="12" cy="12" rx="9" ry="4" transform="rotate(-30 12 12)"/></svg>' : ''}
+      ${status === 'pendiente' ? '<svg viewBox="0 0 24 24" fill="#7C9A44"><ellipse cx="12" cy="12" rx="9" ry="4" transform="rotate(-30 12 12)"/></svg>' : ''}
     </${tag}>`;
   }
   container.innerHTML = html;
