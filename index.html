@@ -553,7 +553,7 @@ async function loadEventTypes(){
   const grid = document.getElementById('eventsGrid');
   const select = document.getElementById('event_type');
   const { data, error } = await supabase.from('event_types').select('name').order('name');
-  const types = (!error && data && data.length) ? data.map(d=>d.name) : ['Cumpleaños','Comunión','Bautizo','Boda','Baby shower','Cata de vino','Reunión de empresa','Despedida de soltero/a','Otro'];
+  const types = (!error && data && data.length) ? data.map(d=>d.name) : ['Cumpleaños','Comunión','Bautizo','Boda','Baby shower','Grupo de amigos','Reunión de empresa','Otro'];
 
   grid.innerHTML = types.map(name => `
     <div class="event-card">
