@@ -268,6 +268,15 @@
   .google-rating strong{ font-family:'Fraunces',serif; font-size:30px; color:var(--olive-dark); }
   .google-rating span{ font-size:13px; color:var(--ink-soft); }
 
+  /* ---------- Reviews ---------- */
+  .reviews-grid{ display:grid; grid-template-columns:1fr 1fr; gap:28px; }
+  @media (max-width:860px){ .reviews-grid{ grid-template-columns:1fr; } }
+  .review-card{ background:var(--cream-2); border:1px solid var(--line); padding:26px; display:flex; flex-direction:column; gap:12px; }
+  .review-card .stars{ color:var(--gold); font-size:14px; letter-spacing:2px; }
+  .review-card p{ color:var(--ink-soft); font-size:14.5px; line-height:1.65; margin:0; }
+  .reviews-note{ margin-top:28px; font-size:13.5px; color:var(--ink-soft); }
+  .reviews-note a{ color:var(--olive-dark); text-decoration:underline; }
+
   /* ---------- Contact ---------- */
   .contact-grid{ display:grid; grid-template-columns:1fr 1fr; gap:56px; align-items:start; }
   @media (max-width:860px){ .contact-grid{ grid-template-columns:1fr; } }
@@ -601,6 +610,34 @@
         </a>
       </div>
     </div>
+  </div>
+</section>
+
+<section id="resenas">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">Reseñas de Google</p>
+      <h2>Lo que dicen de nosotros.</h2>
+    </div>
+    <div class="reviews-grid">
+      <div class="review-card">
+        <span class="stars" aria-hidden="true">★★★★★</span>
+        <p>Recomendado 100%, muy bonito todo, es amplio para que los niños y no niños disfruten de un momento especial, los dueños un encanto de personas muy amables y dispuestos ayudarte en todo lo que pueden, no dudes en visitarlos.</p>
+      </div>
+      <div class="review-card">
+        <span class="stars" aria-hidden="true">★★★★★</span>
+        <p>Sitio increíble, pero además del sitio el trato recibido ha sido todavía mejor, nos han dado unas facilidades para celebrar un cumpleaños dignas de admiración. Sin duda totalmente recomendable!!</p>
+      </div>
+      <div class="review-card">
+        <span class="stars" aria-hidden="true">★★★★★</span>
+        <p>Un lugar estupendo para cualquier celebración, muy completo y decorado con mucho gusto. Todos quedaron encantados. Ernesto y Bea muy majos, siempre pendientes de todo solucionando cualquier inconveniente que puedas tener. Muchas gracias por todo, volveremos seguro.</p>
+      </div>
+      <div class="review-card">
+        <span class="stars" aria-hidden="true">★★★★★</span>
+        <p>El sitio es muy bonito, está decorado con mucho gusto y tiene mucha versatilidad. Celebramos nuestra boda el fin de semana y todo el mundo salió encantado. Dispone de karaoke, luces, futbolín y un gran parque de bolas del que los niños disfrutaron muchísimo. Los dueños nos pusieron todas las facilidades para que quedase todo perfecto y nos recomendaron el catering con el que colaboran y fue un éxito. Un sitio de 10 para cualquier celebración, volveremos sin duda!</p>
+      </div>
+    </div>
+    <p class="reviews-note">Reseñas reales de clientes en Google Maps. <a href="https://www.google.com/maps/search/?api=1&query=Calle+Guadalajara+15%2C+Centro+Comercial+La+Pacheca%2C+Chozas+de+Canales" target="_blank" rel="noopener">Ver todas las reseñas</a></p>
   </div>
 </section>
 
