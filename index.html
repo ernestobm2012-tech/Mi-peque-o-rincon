@@ -160,10 +160,19 @@
   .price-note{ margin-top:28px; font-size:13.5px; color:var(--ink-soft); }
 
   /* ---------- Availability calendar ---------- */
-  .cal-wrap{ display:grid; grid-template-columns:1fr 1fr; gap:40px; }
-  @media (max-width:860px){ .cal-wrap{ grid-template-columns:1fr; } }
-  .cal{ background:var(--cream); border:1px solid var(--line); padding:22px; }
+  .cal-wrap{ display:flex; justify-content:center; }
+  .cal{ background:var(--cream); border:1px solid var(--line); padding:22px; width:100%; max-width:380px; }
   .cal h4{ font-family:'Fraunces',serif; font-weight:500; font-size:18px; margin-bottom:14px; text-transform:capitalize;}
+  .cal-nav{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .cal-nav h4{ margin:0; }
+  .cal-nav-btn{
+    background:none; border:1px solid var(--line); width:32px; height:32px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:16px;
+    color:var(--ink); transition:background .2s; flex:none;
+  }
+  .cal-nav-btn:hover{ background:var(--cream-2); }
+  .cal-nav-btn:disabled{ opacity:.35; cursor:default; }
+  .cal-nav-btn:disabled:hover{ background:none; }
   .cal-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; font-size:12.5px; text-align:center;}
   .cal-grid .dow{ color:var(--ink-soft); font-size:11px; letter-spacing:.03em; padding-bottom:6px;}
   .cal-day{ position:relative; aspect-ratio:1; display:flex; align-items:center; justify-content:center; border-radius:50%; cursor:default; border:none; background:none; font:inherit; color:inherit; }
@@ -193,6 +202,10 @@
     font-size:22px; line-height:1; color:var(--ink-soft); padding:4px;
   }
   .modal-close:hover{ color:var(--ink); }
+  #privacyModal{ z-index:101; }
+  .checkbox-row.privacy{ align-items:flex-start; margin:18px 0 10px; font-size:13.5px; color:var(--ink-soft); }
+  .checkbox-row.privacy input{ margin-top:3px; }
+  .checkbox-row.privacy a{ color:var(--olive-dark); text-decoration:underline; }
   .modal-date{ font-family:'Fraunces',serif; font-size:24px; margin-bottom:4px; text-transform:capitalize; padding-right:24px; }
   .modal-daytag{ font-size:12.5px; color:var(--ink-soft); margin-bottom:22px; text-transform:uppercase; letter-spacing:.03em; }
   .plan-options{ display:flex; flex-direction:column; gap:8px; }
@@ -390,8 +403,14 @@
       <p style="color:var(--ink-soft); margin-top:10px;">Haz clic en un día libre para solicitar tu reserva.</p>
     </div>
     <div class="cal-wrap">
-      <div class="cal" id="calThis"></div>
-      <div class="cal" id="calNext"></div>
+      <div class="cal">
+        <div class="cal-nav">
+          <button type="button" class="cal-nav-btn" id="calPrevBtn" aria-label="Mes anterior">&#8592;</button>
+          <h4 id="calLabel"></h4>
+          <button type="button" class="cal-nav-btn" id="calNextBtn" aria-label="Mes siguiente">&#8594;</button>
+        </div>
+        <div class="cal-grid" id="calGrid"></div>
+      </div>
     </div>
     <div class="cal-legend">
       <span><span class="legend-dot"></span>Pendiente de confirmar</span>
@@ -475,7 +494,7 @@
       </div>
       <div class="field">
         <label for="message">Cuéntanos algo más (opcional)</label>
-        <textarea id="message" placeholder="Ej: necesitamos proyector, somos 25 personas, es una cata de vino..."></textarea>
+        <textarea id="message" placeholder="Ej: necesito animador, ¿qué tipos de menús hay?, ¿qué elementos tiene la cocina?, necesitamos proyector..."></textarea>
       </div>
       <div class="field" style="border-top:1px solid var(--line); padding-top:16px;">
         <div style="display:flex; justify-content:space-between; align-items:baseline;">
@@ -486,9 +505,25 @@
         <p class="field-note" id="senalNote" style="margin-top:12px;"></p>
         <p class="field-note">El día del evento se pide una fianza de <strong>50€</strong>, que se devuelve a la entrega de llaves si la sala queda en las mismas condiciones de limpieza y uso.</p>
       </div>
+      <div class="checkbox-row privacy">
+        <input type="checkbox" id="accepts_privacy" required>
+        <label for="accepts_privacy" style="margin:0; text-transform:none;">He leído y acepto la <a href="#" id="privacyLink">política de privacidad</a>.</label>
+      </div>
       <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">Enviar solicitud de reserva</button>
       <div class="form-msg" id="formMsg"></div>
     </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="privacyModal" hidden>
+  <div class="modal-box">
+    <button type="button" class="modal-close" id="privacyClose" aria-label="Cerrar">×</button>
+    <h3 style="font-size:20px; margin-bottom:16px;">Política de privacidad</h3>
+    <p style="color:var(--ink-soft); font-size:14.5px; margin:0 0 14px;">En cumplimiento del Reglamento (UE) 2016/679 (RGPD) y la LOPDGDD, te informamos de que los datos personales que nos facilitas en el formulario de reserva (nombre y apellidos, teléfono y, en su caso, email) son tratados por <strong>Mi Pequeño Rincón</strong> con la única finalidad de gestionar tu solicitud de reserva y contactar contigo para confirmarla.</p>
+    <p style="color:var(--ink-soft); font-size:14.5px; margin:0 0 14px;">La base legal del tratamiento es tu consentimiento, prestado al marcar la casilla de aceptación y enviar el formulario.</p>
+    <p style="color:var(--ink-soft); font-size:14.5px; margin:0 0 14px;">Los datos se almacenan de forma segura en <strong>Supabase</strong>, que actúa como encargado del tratamiento, y no se ceden a terceros salvo obligación legal.</p>
+    <p style="color:var(--ink-soft); font-size:14.5px; margin:0 0 14px;">Conservaremos los datos mientras sea necesario para gestionar tu reserva y, como máximo, durante los plazos legalmente exigidos.</p>
+    <p style="color:var(--ink-soft); font-size:14.5px; margin:0;">Puedes ejercer tus derechos de acceso, rectificación, supresión y oposición llamando al <a href="tel:+34624297877">624 29 78 77</a>.</p>
   </div>
 </div>
 
@@ -512,8 +547,8 @@
       <p style="margin-top:18px; font-size:20px; font-family:'Fraunces',serif;"><a href="tel:+34624297877">624 29 78 77</a></p>
       <div class="social-row">
         <a href="https://www.instagram.com/mi_pq_rincon/" target="_blank" rel="noopener">Instagram</a>
-        <a href="https://www.facebook.com/p/Mi-Peque%C3%B1o-Rinc%C3%B3n-100036882176575/" target="_blank" rel="noopener">Facebook</a>
-        <a href="https://www.tiktok.com/@mi_pq_rincon" target="_blank" rel="noopener">TikTok</a>
+        <a href="https://www.facebook.com/Mi.pq.rincon/" target="_blank" rel="noopener">Facebook</a>
+        <a href="https://www.tiktok.com/@mipqrincon" target="_blank" rel="noopener">TikTok</a>
         <a href="https://www.google.com/maps/search/?api=1&query=Calle+Guadalajara+15%2C+Centro+Comercial+La+Pacheca%2C+Chozas+de+Canales" target="_blank" rel="noopener">Google Maps</a>
       </div>
     </div>
@@ -532,6 +567,7 @@
   <div class="wrap footer-row">
     <span>© <span id="year"></span> Mi Pequeño Rincón — Sala de eventos, Chozas de Canales.</span>
     <a href="tel:+34624297877">624 29 78 77</a>
+    <a href="#" id="privacyLinkFooter">Política de privacidad</a>
   </div>
 </footer>
 
@@ -639,7 +675,7 @@ function buildCalendar(container, year, month, statusByDate){
   const daysInMonth = new Date(year, month+1, 0).getDate();
   const today = new Date(); today.setHours(0,0,0,0);
 
-  let html = `<h4>${MONTH_NAMES[month]} ${year}</h4><div class="cal-grid">`;
+  let html = '';
   DOWS.forEach(d => html += `<div class="dow">${d}</div>`);
   for(let i=0;i<startOffset;i++) html += `<div></div>`;
   for(let day=1; day<=daysInMonth; day++){
@@ -673,17 +709,37 @@ function buildCalendar(container, year, month, statusByDate){
   }
 }
 
-async function loadAvailability(){
-  const now = new Date();
+const calState = { year:0, month:0, baseYear:0, baseMonth:0 };
+let CURRENT_STATUS_BY_DATE = {};
+
+function renderCalendarState(){
+  document.getElementById('calLabel').textContent = `${MONTH_NAMES[calState.month]} ${calState.year}`;
+  buildCalendar(document.getElementById('calGrid'), calState.year, calState.month, CURRENT_STATUS_BY_DATE);
+  document.getElementById('calPrevBtn').disabled = (calState.year === calState.baseYear && calState.month === calState.baseMonth);
+}
+
+function changeCalMonth(delta){
+  calState.month += delta;
+  if (calState.month < 0){ calState.month = 11; calState.year--; }
+  else if (calState.month > 11){ calState.month = 0; calState.year++; }
+  renderCalendarState();
+}
+
+async function fetchAvailability(){
   const { data } = await supabase.from('availability').select('event_date, status');
   const statusByDate = {};
   (data||[]).forEach(r => {
     if (!statusByDate[r.event_date] || r.status === 'confirmada') statusByDate[r.event_date] = r.status;
   });
+  CURRENT_STATUS_BY_DATE = statusByDate;
+}
 
-  buildCalendar(document.getElementById('calThis'), now.getFullYear(), now.getMonth(), statusByDate);
-  const next = new Date(now.getFullYear(), now.getMonth()+1, 1);
-  buildCalendar(document.getElementById('calNext'), next.getFullYear(), next.getMonth(), statusByDate);
+async function loadAvailability(){
+  const now = new Date();
+  await fetchAvailability();
+  calState.year = calState.baseYear = now.getFullYear();
+  calState.month = calState.baseMonth = now.getMonth();
+  renderCalendarState();
 }
 
 // ---------- Booking modal ----------
@@ -775,6 +831,15 @@ async function initForm(){
   document.getElementById('bookingModal').addEventListener('click', (e) => {
     if (e.target.id === 'bookingModal') closeBookingModal();
   });
+  document.getElementById('calPrevBtn').addEventListener('click', () => changeCalMonth(-1));
+  document.getElementById('calNextBtn').addEventListener('click', () => changeCalMonth(1));
+
+  const privacyModal = document.getElementById('privacyModal');
+  const openPrivacyModal = (e) => { e.preventDefault(); privacyModal.hidden = false; };
+  document.getElementById('privacyLink').addEventListener('click', openPrivacyModal);
+  document.getElementById('privacyLinkFooter').addEventListener('click', openPrivacyModal);
+  document.getElementById('privacyClose').addEventListener('click', () => { privacyModal.hidden = true; });
+  privacyModal.addEventListener('click', (e) => { if (e.target === privacyModal) privacyModal.hidden = true; });
   document.getElementById('wants_cleaning').addEventListener('change', updateSummary);
   document.getElementById('wants_kids_menu').addEventListener('change', (e) => {
     document.getElementById('kidsMenuField').hidden = !e.target.checked;
@@ -837,7 +902,8 @@ async function initForm(){
     }
 
     setMsg('¡Solicitud enviada! Es una reserva provisional (pendiente): te confirmamos por teléfono en menos de 24-48h.', 'ok');
-    await loadAvailability();
+    await fetchAvailability();
+    renderCalendarState();
     setTimeout(closeBookingModal, 2400);
   });
 }
