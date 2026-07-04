@@ -63,7 +63,8 @@
   }
   .nav{ display:flex; align-items:center; justify-content:space-between; padding:14px 0;}
   .nav .brand{ display:flex; align-items:center; gap:10px; font-family:'Fraunces',serif; font-size:19px; letter-spacing:.02em;}
-  .nav .brand .mono{ font-weight:600; }
+  .nav .brand .brand-mark{ display:flex; align-items:center; gap:10px; text-decoration:none; color:var(--ink); }
+  .nav .brand .brand-logo{ display:block; height:38px; width:auto; }
   .nav .brand .fb-link{ display:inline-flex; color:var(--ink-soft); transition:color .2s; }
   .nav .brand .fb-link:hover{ color:var(--olive-dark); }
   .nav .brand .fb-link svg{ width:19px; height:19px; }
@@ -313,7 +314,10 @@
 <header class="site">
   <div class="wrap nav">
     <div class="brand">
-      <span class="mono">M·P·R</span> Mi Pequeño Rincón
+      <a class="brand-mark" href="#" aria-label="Mi Pequeño Rincón — ir al inicio">
+        <img src="assets/logo-mpr.jpg" alt="" class="brand-logo">
+        <span>Mi Pequeño Rincón</span>
+      </a>
       <a class="fb-link" href="https://www.facebook.com/Mi.pq.rincon/" target="_blank" rel="noopener" aria-label="Síguenos en Facebook">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 21v-7.5H16l.4-3H13.5V8.3c0-.87.24-1.46 1.49-1.46H16.5V4.14C16.24 4.1 15.32 4 14.25 4c-2.22 0-3.75 1.36-3.75 3.85V10.5H8v3h2.5V21h3z"/></svg>
       </a>
