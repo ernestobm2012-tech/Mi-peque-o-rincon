@@ -153,10 +153,19 @@
   .price-note{ margin-top:28px; font-size:13.5px; color:var(--ink-soft); }
 
   /* ---------- Availability calendar ---------- */
-  .cal-wrap{ display:grid; grid-template-columns:1fr 1fr; gap:40px; }
-  @media (max-width:860px){ .cal-wrap{ grid-template-columns:1fr; } }
-  .cal{ background:var(--cream); border:1px solid var(--line); padding:22px; }
+  .cal-wrap{ display:flex; justify-content:center; }
+  .cal{ background:var(--cream); border:1px solid var(--line); padding:22px; width:100%; max-width:380px; }
   .cal h4{ font-family:'Fraunces',serif; font-weight:500; font-size:18px; margin-bottom:14px; text-transform:capitalize;}
+  .cal-nav{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .cal-nav h4{ margin:0; }
+  .cal-nav-btn{
+    background:none; border:1px solid var(--line); width:32px; height:32px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:16px;
+    color:var(--ink); transition:background .2s; flex:none;
+  }
+  .cal-nav-btn:hover{ background:var(--cream-2); }
+  .cal-nav-btn:disabled{ opacity:.35; cursor:default; }
+  .cal-nav-btn:disabled:hover{ background:none; }
   .cal-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; font-size:12.5px; text-align:center;}
   .cal-grid .dow{ color:var(--ink-soft); font-size:11px; letter-spacing:.03em; padding-bottom:6px;}
   .cal-day{ position:relative; aspect-ratio:1; display:flex; align-items:center; justify-content:center; border-radius:50%; cursor:default; }
@@ -164,7 +173,7 @@
   .cal-day.past{ color:var(--line); }
   .cal-day.booked{ background:var(--cream-2); }
   .cal-day.booked svg{ position:absolute; top:1px; right:1px; width:9px; height:9px; }
-  .cal-legend{ display:flex; gap:16px; margin-top:14px; font-size:12px; color:var(--ink-soft); align-items:center; }
+  .cal-legend{ display:flex; gap:16px; margin-top:14px; font-size:12px; color:var(--ink-soft); align-items:center; justify-content:center; }
   .legend-dot{ width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:6px; background:var(--cream-2); border:1px solid var(--line);}
 
   /* ---------- Booking form ---------- */
@@ -191,6 +200,26 @@
   .booking-aside .steps li:before{
     counter-increment:step; content: counter(step);
     font-family:'Fraunces',serif; color:var(--gold); font-size:20px; flex:none;
+  }
+  .checkbox-row.privacy{ align-items:flex-start; margin:18px 0; font-size:13.5px; color:var(--ink-soft); }
+  .checkbox-row.privacy input{ margin-top:3px; }
+  .checkbox-row.privacy a{ color:var(--olive-dark); text-decoration:underline; }
+
+  /* ---------- Privacy modal ---------- */
+  .modal-overlay{
+    display:none; position:fixed; inset:0; background:rgba(34,31,25,.55); z-index:100;
+    align-items:center; justify-content:center; padding:20px;
+  }
+  .modal-overlay.open{ display:flex; }
+  .modal-box{
+    background:var(--cream); border:1px solid var(--line); max-width:640px; max-height:80vh;
+    overflow-y:auto; padding:32px; position:relative; border-radius:var(--radius);
+  }
+  .modal-box h3{ font-size:20px; margin-bottom:16px; }
+  .modal-box p{ color:var(--ink-soft); font-size:14.5px; margin:0 0 14px; }
+  .modal-close{
+    position:absolute; top:16px; right:16px; background:none; border:none; cursor:pointer;
+    font-size:20px; line-height:1; color:var(--ink-soft);
   }
 
   /* ---------- Contact ---------- */
@@ -247,7 +276,7 @@
       </div>
     </div>
     <div class="hero-figure">
-      <img src="assets/logo.jpg" alt="Logo de Mi Pequeño Rincón, sala de eventos en Chozas de Canales">
+      <img src="logo.jpg" alt="Logo de Mi Pequeño Rincón, sala de eventos en Chozas de Canales">
     </div>
   </div>
 </section>
@@ -326,8 +355,14 @@
       <h2>Mira qué fechas quedan libres.</h2>
     </div>
     <div class="cal-wrap">
-      <div class="cal" id="calThis"></div>
-      <div class="cal" id="calNext"></div>
+      <div class="cal">
+        <div class="cal-nav">
+          <button type="button" class="cal-nav-btn" id="calPrevBtn" aria-label="Mes anterior">&#8592;</button>
+          <h4 id="calLabel"></h4>
+          <button type="button" class="cal-nav-btn" id="calNextBtn" aria-label="Mes siguiente">&#8594;</button>
+        </div>
+        <div class="cal-grid" id="calGrid"></div>
+      </div>
     </div>
     <div class="cal-legend">
       <span><span class="legend-dot"></span>Fecha con reserva registrada</span>
@@ -395,7 +430,11 @@
         </div>
         <div class="field">
           <label for="message">Cuéntanos algo más (opcional)</label>
-          <textarea id="message" placeholder="Ej: necesitamos proyector, somos 25 personas, es una cata de vino..."></textarea>
+          <textarea id="message" placeholder="Ej: necesito animador, ¿qué tipos de menús hay?, ¿qué elementos tiene la cocina?, necesitamos proyector..."></textarea>
+        </div>
+        <div class="checkbox-row privacy">
+          <input type="checkbox" id="accepts_privacy" required>
+          <label for="accepts_privacy" style="margin:0; text-transform:none;">He leído y acepto la <a href="#" id="privacyLink">política de privacidad</a>.</label>
         </div>
         <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">Enviar solicitud de reserva</button>
         <div class="form-msg" id="formMsg"></div>
@@ -434,8 +473,8 @@
       <p style="margin-top:18px; font-size:20px; font-family:'Fraunces',serif;"><a href="tel:+34624297877">624 29 78 77</a></p>
       <div class="social-row">
         <a href="https://www.instagram.com/mi_pq_rincon/" target="_blank" rel="noopener">Instagram</a>
-        <a href="https://www.facebook.com/p/Mi-Peque%C3%B1o-Rinc%C3%B3n-100036882176575/" target="_blank" rel="noopener">Facebook</a>
-        <a href="https://www.tiktok.com/@mi_pq_rincon" target="_blank" rel="noopener">TikTok</a>
+        <a href="https://www.facebook.com/Mi.pq.rincon/" target="_blank" rel="noopener">Facebook</a>
+        <a href="https://www.tiktok.com/@mipqrincon" target="_blank" rel="noopener">TikTok</a>
         <a href="https://www.google.com/maps/search/Mi+Peque%C3%B1o+Rinc%C3%B3n+Chozas+de+Canales" target="_blank" rel="noopener">Google Maps</a>
       </div>
     </div>
@@ -449,8 +488,21 @@
   <div class="wrap footer-row">
     <span>© <span id="year"></span> Mi Pequeño Rincón — Sala de eventos, Chozas de Canales.</span>
     <a href="tel:+34624297877">624 29 78 77</a>
+    <a href="#" id="privacyLinkFooter">Política de privacidad</a>
   </div>
 </footer>
+
+<div class="modal-overlay" id="privacyModal">
+  <div class="modal-box">
+    <button type="button" class="modal-close" id="privacyClose" aria-label="Cerrar">&times;</button>
+    <h3>Política de privacidad</h3>
+    <p>En cumplimiento del Reglamento (UE) 2016/679 (RGPD) y la LOPDGDD, te informamos de que los datos personales que nos facilitas en el formulario de reserva (nombre y apellidos, teléfono y, en su caso, email) son tratados por <strong>Mi Pequeño Rincón</strong> con la única finalidad de gestionar tu solicitud de reserva y contactar contigo para confirmarla.</p>
+    <p>La base legal del tratamiento es tu consentimiento, prestado al marcar la casilla de aceptación y enviar el formulario.</p>
+    <p>Los datos se almacenan de forma segura en <strong>Supabase</strong>, que actúa como encargado del tratamiento, y no se ceden a terceros salvo obligación legal.</p>
+    <p>Conservaremos los datos mientras sea necesario para gestionar tu reserva y, como máximo, durante los plazos legalmente exigidos.</p>
+    <p>Puedes ejercer tus derechos de acceso, rectificación, supresión y oposición llamando al <a href="tel:+34624297877">624 29 78 77</a>.</p>
+  </div>
+</div>
 
 <script type="module">
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -460,6 +512,16 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 document.getElementById('year').textContent = new Date().getFullYear();
+
+// ---------- Privacy modal ----------
+(function initPrivacyModal(){
+  const modal = document.getElementById('privacyModal');
+  const openModal = (e) => { e.preventDefault(); modal.classList.add('open'); };
+  document.getElementById('privacyLink').addEventListener('click', openModal);
+  document.getElementById('privacyLinkFooter').addEventListener('click', openModal);
+  document.getElementById('privacyClose').addEventListener('click', () => modal.classList.remove('open'));
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('open'); });
+})();
 
 const EVENT_ICONS = {
   default: '<path d="M12 3v18M4 8h16M4 16h16" stroke="currentColor" stroke-width="1.4" fill="none"/>'
@@ -526,39 +588,55 @@ const MONTH_NAMES = ['enero','febrero','marzo','abril','mayo','junio','julio','a
 
 function ymd(d){ return d.toISOString().slice(0,10); }
 
-function buildCalendar(container, year, month, bookedSet){
-  const first = new Date(year, month, 1);
+const calState = { year:0, month:0, baseYear:0, baseMonth:0, bookedSet:new Set() };
+
+function renderCalendar(){
+  const first = new Date(calState.year, calState.month, 1);
   const startOffset = (first.getDay() + 6) % 7; // Monday-first
-  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const daysInMonth = new Date(calState.year, calState.month+1, 0).getDate();
   const today = new Date(); today.setHours(0,0,0,0);
 
-  let html = `<h4>${MONTH_NAMES[month]} ${year}</h4><div class="cal-grid">`;
+  document.getElementById('calLabel').textContent = `${MONTH_NAMES[calState.month]} ${calState.year}`;
+
+  let html = '';
   DOWS.forEach(d => html += `<div class="dow">${d}</div>`);
   for(let i=0;i<startOffset;i++) html += `<div></div>`;
   for(let day=1; day<=daysInMonth; day++){
-    const d = new Date(year, month, day);
+    const d = new Date(calState.year, calState.month, day);
     const key = ymd(d);
     const isPast = d < today;
     const isToday = ymd(d) === ymd(today);
-    const isBooked = bookedSet.has(key);
+    const isBooked = calState.bookedSet.has(key);
     html += `<div class="cal-day ${isPast?'past':''} ${isToday?'today':''} ${isBooked?'booked':''}">
       ${day}
       ${isBooked ? '<svg viewBox="0 0 24 24" fill="#5B6B45"><ellipse cx="12" cy="12" rx="9" ry="4" transform="rotate(-30 12 12)"/></svg>' : ''}
     </div>`;
   }
-  container.innerHTML = html;
+  document.getElementById('calGrid').innerHTML = html;
+
+  const isBaseMonth = calState.year === calState.baseYear && calState.month === calState.baseMonth;
+  document.getElementById('calPrevBtn').disabled = isBaseMonth;
+}
+
+function changeCalMonth(delta){
+  calState.month += delta;
+  if (calState.month < 0){ calState.month = 11; calState.year--; }
+  else if (calState.month > 11){ calState.month = 0; calState.year++; }
+  renderCalendar();
 }
 
 async function loadAvailability(){
   const now = new Date();
   const { data, error } = await supabase.from('availability').select('event_date');
-  const bookedSet = new Set((data||[]).map(r => r.event_date));
+  calState.bookedSet = new Set((data||[]).map(r => r.event_date));
+  calState.year = calState.baseYear = now.getFullYear();
+  calState.month = calState.baseMonth = now.getMonth();
+  renderCalendar();
 
-  buildCalendar(document.getElementById('calThis'), now.getFullYear(), now.getMonth(), bookedSet);
-  const next = new Date(now.getFullYear(), now.getMonth()+1, 1);
-  buildCalendar(document.getElementById('calNext'), next.getFullYear(), next.getMonth(), bookedSet);
+  document.getElementById('calPrevBtn').addEventListener('click', () => changeCalMonth(-1));
+  document.getElementById('calNextBtn').addEventListener('click', () => changeCalMonth(1));
 
-  return bookedSet;
+  return calState.bookedSet;
 }
 
 // ---------- Booking form ----------
