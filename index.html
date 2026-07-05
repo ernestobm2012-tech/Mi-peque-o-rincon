@@ -582,11 +582,20 @@
         <label for="message">Cuéntanos algo más (opcional)</label>
         <textarea id="message" placeholder="Ej: necesito animador, ¿qué tipos de menús hay?, ¿qué elementos tiene la cocina?, necesitamos proyector..."></textarea>
       </div>
+      <div class="field">
+        <label for="coupon_code">¿Tienes un cupón de descuento? (opcional)</label>
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="coupon_code" placeholder="CÓDIGO" style="text-transform:uppercase;">
+          <button type="button" class="btn btn-ghost" id="applyCouponBtn" style="flex:none;">Aplicar</button>
+        </div>
+        <p class="field-note" id="couponMsg"></p>
+      </div>
       <div class="field" style="border-top:1px solid var(--line); padding-top:16px;">
         <div style="display:flex; justify-content:space-between; align-items:baseline;">
           <span style="text-transform:uppercase; font-size:12.5px; letter-spacing:.03em; color:var(--ink-soft);">Total estimado</span>
           <span id="totalAmount" style="font-family:'Fraunces',serif; font-size:26px; color:var(--olive-dark);">0€</span>
         </div>
+        <p class="field-note" id="couponAppliedNote" hidden></p>
         <p class="field-note" id="totalDecoNote" hidden>+ decoración personalizada: precio a consultar (no incluido arriba)</p>
         <p class="field-note" id="senalNote" style="margin-top:12px;"></p>
         <p class="field-note">El día del evento se pide una fianza de <strong>50€</strong>, que se devuelve a la entrega de llaves si la sala queda en las mismas condiciones de limpieza y uso.</p>
@@ -721,6 +730,7 @@
 
 <script type="module">
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { computeDiscount, lookupCoupon, couponSummary } from './assets/coupons.js';
 
 const SUPABASE_URL = 'https://ztsdkfwnqrlmsirfvoat.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0c2RrZnducXJsbXNpcmZ2b2F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwOTM5OTksImV4cCI6MjA5ODY2OTk5OX0.ODimfaCqTpK8fkY4Oobk8kSR3rppb_afmoTTXG8H2os';
@@ -898,6 +908,7 @@ function setMsg(text, type){
 }
 
 let selectedDate = null;
+let appliedCoupon = null;
 
 function renderPlanOptions(dateStr){
   const group = dayGroupFor(dateStr);
@@ -943,12 +954,45 @@ function updateSummary(){
   if (wantsCleaning) total += getExtraPrice('limpieza');
   total += kidsCount * getExtraPrice('infantil');
 
-  document.getElementById('totalAmount').textContent = `${total.toFixed(0)}€`;
+  const discount = appliedCoupon ? computeDiscount(total, appliedCoupon) : 0;
+  const finalTotal = Math.max(0, total - discount);
+
+  document.getElementById('totalAmount').textContent = `${finalTotal.toFixed(0)}€`;
   document.getElementById('totalDecoNote').hidden = !wantsDeco;
+
+  const couponNote = document.getElementById('couponAppliedNote');
+  if (appliedCoupon && discount > 0){
+    couponNote.hidden = false;
+    couponNote.innerHTML = `Cupón <strong>${appliedCoupon.code}</strong> aplicado (${couponSummary(appliedCoupon)}): descuento de ${discount.toFixed(0)}€ sobre ${total.toFixed(0)}€.`;
+  } else {
+    couponNote.hidden = true;
+  }
 
   document.getElementById('senalNote').innerHTML = wantsDeco
     ? 'Si aceptamos la reserva se piden <strong>20€</strong> de señal (efectivo o Bizum, gestionada por teléfono), más otros <strong>20€</strong> de señal por la decoración personalizada.'
     : 'Si aceptamos la reserva se pide una señal de <strong>20€</strong> (efectivo o Bizum, gestionada por teléfono).';
+}
+
+async function applyCoupon(){
+  const input = document.getElementById('coupon_code');
+  const msg = document.getElementById('couponMsg');
+  const code = input.value.trim();
+  if (!code){
+    appliedCoupon = null;
+    msg.textContent = '';
+    updateSummary();
+    return;
+  }
+  msg.textContent = 'Comprobando cupón…';
+  const { coupon, notFound } = await lookupCoupon(supabase, code);
+  if (notFound || !coupon){
+    appliedCoupon = null;
+    msg.textContent = 'Ese cupón no existe o ha caducado.';
+  } else {
+    appliedCoupon = coupon;
+    msg.textContent = `¡Cupón válido! ${couponSummary(coupon)}.`;
+  }
+  updateSummary();
 }
 
 function openBookingModal(dateStr){
@@ -964,6 +1008,8 @@ function openBookingModal(dateStr){
   renderPlanOptions(dateStr);
   document.getElementById('kidsMenuField').hidden = true;
   document.getElementById('decorationField').hidden = true;
+  appliedCoupon = null;
+  document.getElementById('couponMsg').textContent = '';
   updateSummary();
   setMsg('', '');
 
@@ -998,6 +1044,7 @@ async function initForm(){
     document.getElementById('decorationField').hidden = !e.target.checked;
     updateSummary();
   });
+  document.getElementById('applyCouponBtn').addEventListener('click', applyCoupon);
 
   const form = document.getElementById('bookingForm');
   form.addEventListener('submit', async (e) => {
@@ -1012,6 +1059,13 @@ async function initForm(){
 
     const wantsKidsMenu = document.getElementById('wants_kids_menu').checked;
     const wantsDecoration = document.getElementById('wants_decoration').checked;
+    const wantsCleaning = document.getElementById('wants_cleaning').checked;
+    const kidsCount = wantsKidsMenu ? Number(document.getElementById('kids_menus').value || 1) : 0;
+
+    let baseTotal = Number(ALL_PLANS.find(p => p.id === planRadio.value)?.price || 0);
+    if (wantsCleaning) baseTotal += getExtraPrice('limpieza');
+    baseTotal += kidsCount * getExtraPrice('infantil');
+    const discount = appliedCoupon ? computeDiscount(baseTotal, appliedCoupon) : 0;
 
     const payload = {
       full_name: document.getElementById('full_name').value.trim(),
@@ -1023,11 +1077,13 @@ async function initForm(){
       pricing_plan_id: planRadio.value,
       start_time: document.getElementById('start_time').value,
       end_time: document.getElementById('end_time').value,
-      wants_cleaning: document.getElementById('wants_cleaning').checked,
+      wants_cleaning: wantsCleaning,
       wants_decoration: wantsDecoration,
       decoration_theme: wantsDecoration ? (document.getElementById('decoration_theme').value.trim() || null) : null,
-      kids_menus_count: wantsKidsMenu ? Number(document.getElementById('kids_menus').value || 1) : 0,
+      kids_menus_count: kidsCount,
       message: document.getElementById('message').value.trim() || null,
+      coupon_code: appliedCoupon ? appliedCoupon.code : null,
+      discount_amount: discount,
     };
 
     if (payload.end_time <= payload.start_time){
