@@ -426,6 +426,10 @@ function buildDenyMessage(r){
   return `Hola ${r.full_name}, gracias por tu interés en *Mi Pequeño Rincón*. Sentimos decirte que la fecha del ${fmtDate(r.event_date)} (${r.start_time}-${r.end_time}) ya no está disponible. Si quieres, dinos otra fecha y miramos la disponibilidad. ¡Gracias por escribirnos!`;
 }
 
+function buildCancelMessage(r){
+  return `Hola ${r.full_name}, te informamos de que tu reserva en *Mi Pequeño Rincón* del ${fmtDate(r.event_date)} (${r.start_time}-${r.end_time}) ha sido anulada. Si tienes cualquier duda o quieres buscar otra fecha, contacta con nosotros. Disculpa las molestias.`;
+}
+
 function addDays(dateStr, n){
   const d = new Date(dateStr + 'T00:00:00');
   d.setDate(d.getDate() + n);
@@ -542,7 +546,8 @@ async function loadReservations(){
         ${r.status === 'pendiente'
           ? `<button class="btn btn-primary" data-action="accept" data-id="${r.id}">✅ Aceptar</button>
              <button class="btn btn-deny" data-action="deny" data-id="${r.id}">❌ Denegar</button>`
-          : `<button class="btn btn-ghost" data-action="resend" data-id="${r.id}">Reenviar WhatsApp</button>`}
+          : `<button class="btn btn-ghost" data-action="resend" data-id="${r.id}">Reenviar WhatsApp</button>
+             ${r.status === 'confirmada' ? `<button class="btn btn-deny" data-action="cancel" data-id="${r.id}">🚫 Anular reserva</button>` : ''}`}
         <button class="btn btn-ghost" data-action="edit" data-id="${r.id}">✏️ Modificar</button>
       </div>`;
 
@@ -562,9 +567,28 @@ async function loadReservations(){
           ${r.message ? `<div>💬 “${r.message}”</div>` : ''}
           <div>${SOURCE_LABELS[r.source] || r.source || ''}</div>
         </div>
+        ${r.status !== 'pendiente' ? `
+        <label class="checkbox-row" style="margin-top:14px;">
+          <input type="checkbox" data-deposit="${r.id}" ${r.deposit_paid ? 'checked' : ''}>
+          <span style="font-size:13px;">Señal de 20€ pagada</span>
+        </label>` : ''}
         ${actions}
       </div>`;
   }).join('');
+
+  resList.querySelectorAll('[data-deposit]').forEach(cb => {
+    cb.addEventListener('change', async () => {
+      const id = cb.dataset.deposit;
+      const wantChecked = cb.checked;
+      const { error } = await supabase.from('reservations').update({ deposit_paid: wantChecked }).eq('id', id).select();
+      if (error){
+        cb.checked = !wantChecked;
+        setActionMsg('No se ha podido actualizar la señal: ' + error.message, 'err');
+        return;
+      }
+      setActionMsg(`Señal ${wantChecked ? 'marcada como pagada' : 'desmarcada'}.`, 'ok');
+    });
+  });
 
   resList.querySelectorAll('button[data-action]').forEach(btn => {
     btn.addEventListener('click', async () => {
@@ -594,6 +618,22 @@ async function loadReservations(){
         const msg = r.status === 'confirmada' ? buildConfirmMessage(r, plan) : buildDenyMessage(r);
         const opened = openWhatsApp(r.phone, msg);
         if (!opened) setActionMsg(`El navegador ha bloqueado la ventana. <a href="https://wa.me/${waNumber(r.phone)}?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">Ábrela manualmente aquí</a>.`, 'ok');
+      } else if (action === 'cancel'){
+        if (!confirm(`¿Seguro que quieres anular la reserva de ${r.full_name} (${fmtDate(r.event_date)})?`)) return;
+        btn.disabled = true;
+        const msg = buildCancelMessage(r);
+        const saved = await updateStatus(id, 'cancelada');
+        if (saved){
+          const opened = openWhatsApp(r.phone, msg);
+          setActionMsg(
+            opened
+              ? `Reserva de ${r.full_name} anulada en Supabase. Se ha abierto WhatsApp para avisar al cliente.`
+              : `Reserva de ${r.full_name} anulada en Supabase, pero el navegador ha bloqueado la ventana de WhatsApp. <a href="https://wa.me/${waNumber(r.phone)}?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">Ábrela manualmente aquí</a>.`,
+            'ok'
+          );
+        }
+        await loadReservations();
+        refreshActiveTab();
       } else if (action === 'edit'){
         openEditResModal(r);
       }
