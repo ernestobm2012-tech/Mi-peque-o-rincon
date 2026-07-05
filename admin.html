@@ -171,7 +171,7 @@
 <div class="modal-overlay" id="newResModal" hidden>
   <div class="modal-box">
     <button type="button" class="modal-close" id="newResClose" aria-label="Cerrar">×</button>
-    <h2 style="font-size:22px; margin-bottom:20px;">Nueva reserva manual</h2>
+    <h2 style="font-size:22px; margin-bottom:20px;" id="newResTitle">Nueva reserva manual</h2>
     <form id="newResForm">
       <div class="field">
         <label for="nr_full_name">Nombre y apellidos</label>
@@ -240,7 +240,7 @@
         <span class="amt" id="nrTotalAmount">0€</span>
       </div>
       <p style="margin-top:20px;">
-        <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">Guardar reserva confirmada</button>
+        <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;" id="newResSubmitBtn">Guardar reserva confirmada</button>
       </p>
       <p id="newResMsg" style="font-size:13.5px; margin-top:10px; color:var(--ink-soft);"></p>
     </form>
@@ -422,14 +422,13 @@ async function loadReservations(){
     if (r.wants_decoration) extras.push(`Decoración${r.decoration_theme ? ' (' + r.decoration_theme + ')' : ''}`);
     if (r.kids_menus_count) extras.push(`${r.kids_menus_count} menú(s) infantil(es)`);
 
-    const actions = r.status === 'pendiente'
-      ? `<div class="res-actions">
-          <button class="btn btn-primary" data-action="accept" data-id="${r.id}">✅ Aceptar</button>
-          <button class="btn btn-deny" data-action="deny" data-id="${r.id}">❌ Denegar</button>
-        </div>`
-      : `<div class="res-actions">
-          <button class="btn btn-ghost" data-action="resend" data-id="${r.id}">Reenviar WhatsApp</button>
-        </div>`;
+    const actions = `<div class="res-actions">
+        ${r.status === 'pendiente'
+          ? `<button class="btn btn-primary" data-action="accept" data-id="${r.id}">✅ Aceptar</button>
+             <button class="btn btn-deny" data-action="deny" data-id="${r.id}">❌ Denegar</button>`
+          : `<button class="btn btn-ghost" data-action="resend" data-id="${r.id}">Reenviar WhatsApp</button>`}
+        <button class="btn btn-ghost" data-action="edit" data-id="${r.id}">✏️ Modificar</button>
+      </div>`;
 
     return `
       <div class="res-card">
@@ -477,6 +476,8 @@ async function loadReservations(){
         const msg = r.status === 'confirmada' ? buildConfirmMessage(r, plan) : buildDenyMessage(r);
         const opened = openWhatsApp(r.phone, msg);
         if (!opened) setActionMsg(`El navegador ha bloqueado la ventana. <a href="https://wa.me/${waNumber(r.phone)}?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">Ábrela manualmente aquí</a>.`, 'ok');
+      } else if (action === 'edit'){
+        openEditResModal(r);
       }
     });
   });
@@ -518,16 +519,17 @@ const newResModal = document.getElementById('newResModal');
 const newResForm = document.getElementById('newResForm');
 const newResMsg = document.getElementById('newResMsg');
 
-function renderNrPlanOptions(dateStr){
+function renderNrPlanOptions(dateStr, selectedPlanId){
   const group = dateStr ? dayGroupFor(dateStr) : null;
   const groupPlans = group ? ALL_PLANS.filter(p => p.day_group === group) : ALL_PLANS;
   const wrap = document.getElementById('nrPlanOptions');
 
   wrap.innerHTML = groupPlans.map((p, i) => {
     const [start, end] = (p.hours_range || '').split(' a ').map(s => (s||'').trim());
+    const checked = selectedPlanId ? p.id === selectedPlanId : i === 0;
     return `
       <label class="plan-option">
-        <span><input type="radio" name="nr_pricing_plan" value="${p.id}" data-start="${start}" data-end="${end}" ${i===0?'checked':''}> ${p.label} <span style="color:var(--ink-soft); font-size:12.5px;">(${p.hours_range})</span></span>
+        <span><input type="radio" name="nr_pricing_plan" value="${p.id}" data-start="${start}" data-end="${end}" ${checked?'checked':''}> ${p.label} <span style="color:var(--ink-soft); font-size:12.5px;">(${p.hours_range})</span></span>
         <span class="amt">${Number(p.price).toFixed(0)}€</span>
       </label>`;
   }).join('');
@@ -539,8 +541,11 @@ function renderNrPlanOptions(dateStr){
   wrap.querySelectorAll('input[name="nr_pricing_plan"]').forEach(input => {
     input.addEventListener('change', () => { if (input.checked){ fillTimes(input); updateNrTotal(); } });
   });
-  const first = wrap.querySelector('input[name="nr_pricing_plan"]');
-  if (first) fillTimes(first);
+  // Al editar, no pisamos las horas ya guardadas de la reserva con las horas por defecto de la tarifa.
+  if (!selectedPlanId){
+    const first = wrap.querySelector('input[name="nr_pricing_plan"]');
+    if (first) fillTimes(first);
+  }
   updateNrTotal();
 }
 
@@ -558,14 +563,51 @@ function updateNrTotal(){
   document.getElementById('nrTotalAmount').textContent = `${total.toFixed(0)}€`;
 }
 
+let editingId = null;
+
 function openNewResModal(){
+  editingId = null;
   newResForm.reset();
   document.getElementById('nrKidsMenuField').hidden = true;
   document.getElementById('nrDecorationField').hidden = true;
   newResMsg.textContent = '';
+  document.getElementById('newResTitle').textContent = 'Nueva reserva manual';
+  document.getElementById('newResSubmitBtn').textContent = 'Guardar reserva confirmada';
   const dateInput = document.getElementById('nr_event_date');
   dateInput.value = new Date().toISOString().slice(0,10);
   renderNrPlanOptions(dateInput.value);
+  newResModal.hidden = false;
+}
+
+function openEditResModal(r){
+  editingId = r.id;
+  newResForm.reset();
+  newResMsg.textContent = '';
+  document.getElementById('newResTitle').textContent = 'Modificar reserva';
+  document.getElementById('newResSubmitBtn').textContent = 'Guardar cambios';
+
+  document.getElementById('nr_full_name').value = r.full_name || '';
+  document.getElementById('nr_phone').value = r.phone || '';
+  document.getElementById('nr_email').value = r.email || '';
+  document.getElementById('nr_event_type').value = r.event_type || '';
+  document.getElementById('nr_guests').value = r.guests_estimate || '';
+  document.getElementById('nr_event_date').value = r.event_date;
+
+  renderNrPlanOptions(r.event_date, r.pricing_plan_id);
+  document.getElementById('nr_start_time').value = (r.start_time || '').slice(0,5);
+  document.getElementById('nr_end_time').value = (r.end_time || '').slice(0,5);
+
+  document.getElementById('nr_wants_cleaning').checked = !!r.wants_cleaning;
+  const wantsKids = !!r.kids_menus_count;
+  document.getElementById('nr_wants_kids_menu').checked = wantsKids;
+  document.getElementById('nrKidsMenuField').hidden = !wantsKids;
+  document.getElementById('nr_kids_menus').value = r.kids_menus_count || 1;
+  document.getElementById('nr_wants_decoration').checked = !!r.wants_decoration;
+  document.getElementById('nrDecorationField').hidden = !r.wants_decoration;
+  document.getElementById('nr_decoration_theme').value = r.decoration_theme || '';
+  document.getElementById('nr_message').value = r.message || '';
+
+  updateNrTotal();
   newResModal.hidden = false;
 }
 
@@ -616,14 +658,21 @@ newResForm.addEventListener('submit', async (e) => {
     decoration_theme: wantsDecoration ? (document.getElementById('nr_decoration_theme').value.trim() || null) : null,
     kids_menus_count: wantsKidsMenu ? Number(document.getElementById('nr_kids_menus').value || 1) : 0,
     message: document.getElementById('nr_message').value.trim() || null,
-    status: 'confirmada',
-    source: 'presencial',
   };
 
   const submitBtn = newResForm.querySelector('button[type="submit"]');
   submitBtn.disabled = true;
 
-  const { error } = await supabase.from('reservations').insert(payload);
+  let error, successMsg;
+  if (editingId){
+    ({ error } = await supabase.from('reservations').update(payload).eq('id', editingId).select());
+    successMsg = `Reserva de <strong>${payload.full_name}</strong> actualizada en Supabase.`;
+  } else {
+    payload.status = 'confirmada';
+    payload.source = 'presencial';
+    ({ error } = await supabase.from('reservations').insert(payload));
+    successMsg = `Reserva presencial de <strong>${payload.full_name}</strong> guardada como confirmada en Supabase.`;
+  }
 
   submitBtn.disabled = false;
 
@@ -633,7 +682,8 @@ newResForm.addEventListener('submit', async (e) => {
   }
 
   newResModal.hidden = true;
-  setActionMsg(`Reserva presencial de <strong>${payload.full_name}</strong> guardada como confirmada en Supabase.`, 'ok');
+  editingId = null;
+  setActionMsg(successMsg, 'ok');
   await loadReservations();
 });
 </script>
