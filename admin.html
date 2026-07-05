@@ -569,6 +569,7 @@ async function loadReservations(){
           : `<button class="btn btn-ghost" data-action="resend" data-id="${r.id}">Reenviar WhatsApp</button>
              ${r.status === 'confirmada' ? `<button class="btn btn-deny" data-action="cancel" data-id="${r.id}">🚫 Anular reserva</button>` : ''}`}
         <button class="btn btn-ghost" data-action="edit" data-id="${r.id}">✏️ Modificar</button>
+        <button class="btn btn-deny" data-action="delete" data-id="${r.id}">🗑️ Borrar</button>
       </div>`;
 
     return `
@@ -671,6 +672,18 @@ async function loadReservations(){
         await loadReservations();
       } else if (action === 'edit'){
         openEditResModal(r);
+      } else if (action === 'delete'){
+        if (!confirm(`¿Seguro que quieres borrar definitivamente la reserva de ${r.full_name} (${fmtDate(r.event_date)})? Esta acción no se puede deshacer.`)) return;
+        btn.disabled = true;
+        const { error } = await supabase.from('reservations').delete().eq('id', id);
+        if (error){
+          setActionMsg('No se ha podido borrar la reserva: ' + error.message, 'err');
+          btn.disabled = false;
+          return;
+        }
+        setActionMsg(`Reserva de ${r.full_name} borrada.`, 'ok');
+        await loadReservations();
+        refreshActiveTab();
       }
     });
   });
