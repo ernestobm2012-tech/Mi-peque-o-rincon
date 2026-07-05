@@ -430,8 +430,9 @@ function buildCancelMessage(r){
   return `Hola ${r.full_name}, te informamos de que tu reserva en *Mi Pequeño Rincón* del ${fmtDate(r.event_date)} (${r.start_time}-${r.end_time}) ha sido anulada. Si tienes cualquier duda o quieres buscar otra fecha, contacta con nosotros. Disculpa las molestias.`;
 }
 
-function buildDepositMessage(r){
-  return `Hola ${r.full_name} 👋 Confirmamos que hemos recibido tu señal de 20€ para la reserva del ${fmtDate(r.event_date)} en *Mi Pequeño Rincón*. Ese importe se descontará del precio final el día del evento. ¡Gracias!`;
+function buildDepositMessage(r, method){
+  const methodLabel = method === 'bizum' ? ' por Bizum' : method === 'efectivo' ? ' en efectivo' : '';
+  return `Hola ${r.full_name} 👋 Confirmamos que hemos recibido tu señal de 20€${methodLabel} para la reserva del ${fmtDate(r.event_date)} en *Mi Pequeño Rincón*. Ese importe se descontará del precio final el día del evento. ¡Gracias!`;
 }
 
 function addDays(dateStr, n){
@@ -574,8 +575,10 @@ async function loadReservations(){
         ${r.status !== 'pendiente' ? `
         <div style="margin-top:14px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
           ${r.deposit_paid
-            ? `<span class="badge confirmada">✅ Señal pagada</span><button class="btn btn-ghost" data-action="undeposit" data-id="${r.id}" style="font-size:11.5px; padding:5px 10px;">Deshacer</button>`
-            : `<button class="btn btn-ghost" data-action="mark-deposit" data-id="${r.id}">💰 Marcar señal de 20€ pagada</button>`}
+            ? `<span class="badge confirmada">✅ Señal pagada${r.deposit_method ? ' (' + (r.deposit_method === 'bizum' ? 'Bizum' : 'Efectivo') + ')' : ''}</span><button class="btn btn-ghost" data-action="undeposit" data-id="${r.id}" style="font-size:11.5px; padding:5px 10px;">Deshacer</button>`
+            : `<span style="font-size:13px; color:var(--ink-soft);">Marcar señal de 20€ pagada:</span>
+               <button class="btn btn-ghost" data-action="mark-deposit" data-method="efectivo" data-id="${r.id}">💵 Efectivo</button>
+               <button class="btn btn-ghost" data-action="mark-deposit" data-method="bizum" data-id="${r.id}">📱 Bizum</button>`}
         </div>` : ''}
         ${actions}
       </div>`;
@@ -627,24 +630,25 @@ async function loadReservations(){
         refreshActiveTab();
       } else if (action === 'mark-deposit'){
         btn.disabled = true;
-        const { error } = await supabase.from('reservations').update({ deposit_paid: true }).eq('id', id).select();
+        const method = btn.dataset.method;
+        const { error } = await supabase.from('reservations').update({ deposit_paid: true, deposit_method: method }).eq('id', id).select();
         if (error){
           setActionMsg('No se ha podido guardar la señal: ' + error.message, 'err');
           btn.disabled = false;
           return;
         }
-        const msg = buildDepositMessage(r);
+        const msg = buildDepositMessage(r, method);
         const opened = openWhatsApp(r.phone, msg);
         setActionMsg(
           opened
-            ? `Señal de ${r.full_name} marcada como pagada en Supabase. Se ha abierto WhatsApp para confirmárselo.`
+            ? `Señal de ${r.full_name} marcada como pagada (${method === 'bizum' ? 'Bizum' : 'efectivo'}) en Supabase. Se ha abierto WhatsApp para confirmárselo.`
             : `Señal de ${r.full_name} marcada como pagada en Supabase, pero el navegador ha bloqueado la ventana de WhatsApp. <a href="https://wa.me/${waNumber(r.phone)}?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">Ábrela manualmente aquí</a>.`,
           'ok'
         );
         await loadReservations();
       } else if (action === 'undeposit'){
         if (!confirm('¿Desmarcar la señal como pagada? No se avisará al cliente.')) return;
-        const { error } = await supabase.from('reservations').update({ deposit_paid: false }).eq('id', id).select();
+        const { error } = await supabase.from('reservations').update({ deposit_paid: false, deposit_method: null }).eq('id', id).select();
         if (error){
           setActionMsg('No se ha podido actualizar: ' + error.message, 'err');
           return;
