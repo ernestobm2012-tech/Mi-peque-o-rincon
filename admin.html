@@ -112,6 +112,47 @@
   .plan-option .amt{ font-family:'Fraunces',serif; color:var(--olive-dark); white-space:nowrap; }
   .total-row{ display:flex; justify-content:space-between; align-items:baseline; border-top:1px solid var(--line); padding-top:14px; margin-top:6px; }
   .total-row .amt{ font-family:'Fraunces',serif; font-size:22px; color:var(--olive-dark); }
+
+  .tabs-row{ display:flex; gap:8px; margin-bottom:24px; border-bottom:1px solid var(--line); flex-wrap:wrap; }
+  .tab-btn{
+    background:none; border:none; cursor:pointer; padding:10px 4px; margin-right:18px;
+    font-family:inherit; font-size:14px; color:var(--ink-soft); border-bottom:2px solid transparent;
+  }
+  .tab-btn.active{ color:var(--ink); border-bottom-color:var(--olive-dark); font-weight:500; }
+
+  /* ---------- Calendar ---------- */
+  .cal-nav{ display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; gap:12px; }
+  .cal-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:6px; }
+  .cal-grid .dow{ font-size:11px; text-transform:uppercase; letter-spacing:.03em; color:var(--ink-soft); text-align:center; padding-bottom:4px; }
+  .cal-day{
+    background:#fff; border:1px solid var(--line); min-height:64px; padding:6px; cursor:default;
+    font-size:12.5px; display:flex; flex-direction:column; gap:4px;
+  }
+  .cal-day.clickable{ cursor:pointer; }
+  .cal-day.clickable:hover{ background:var(--cream-2); }
+  .cal-day.empty{ background:none; border:none; }
+  .cal-day .daynum{ font-weight:600; }
+  .cal-day .dots{ display:flex; gap:3px; flex-wrap:wrap; }
+  .cal-dot{ width:7px; height:7px; border-radius:50%; display:inline-block; }
+  .cal-dot.pendiente{ background:#C9A227; }
+  .cal-dot.confirmada{ background:var(--olive-dark); }
+  .cal-dot.cancelada{ background:#B3554A; }
+
+  /* ---------- Clients ---------- */
+  .client-card{ background:#fff; border:1px solid var(--line); padding:16px 20px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap; }
+  .client-card .name{ font-weight:500; }
+  .client-card .meta{ font-size:12.5px; color:var(--ink-soft); margin-top:3px; }
+  .client-card .count{ font-family:'Fraunces',serif; font-size:24px; color:var(--olive-dark); text-align:center; }
+  .client-card .count-lbl{ font-size:10.5px; text-transform:uppercase; color:var(--ink-soft); text-align:center; }
+  .frequent-badge{ font-size:11px; background:#F7EBD3; color:#6B4F17; padding:3px 10px; border-radius:999px; font-weight:600; }
+
+  /* ---------- Coupons ---------- */
+  .coupon-card{ background:#fff; border:1px solid var(--line); padding:14px 20px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap; }
+  .coupon-card .code{ font-family:'Fraunces',serif; font-size:18px; }
+  .coupon-card .meta{ font-size:12.5px; color:var(--ink-soft); margin-top:3px; }
+  .coupon-badge{ font-size:11px; text-transform:uppercase; letter-spacing:.05em; padding:3px 10px; border-radius:999px; font-weight:600; }
+  .coupon-badge.active{ background:#EAF0E2; color:var(--olive-dark); }
+  .coupon-badge.inactive{ background:#F6E4E0; color:#7A2E22; }
 </style>
 </head>
 <body>
@@ -135,37 +176,101 @@
     </div>
     <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
       <button class="btn btn-primary" id="newResBtn">+ Reserva manual</button>
-      <select id="statusFilter">
-        <option value="pendiente">Pendientes</option>
-        <option value="confirmada">Confirmadas</option>
-        <option value="cancelada">Canceladas</option>
-        <option value="todas">Todas</option>
-      </select>
       <button class="btn btn-ghost" id="logoutBtn">Salir</button>
     </div>
   </div>
 
-  <div class="stats-row">
-    <div class="stat-card">
-      <span class="num" id="statIncome">0€</span>
-      <span class="lbl">Ingresos totales (confirmadas)</span>
-    </div>
-    <div class="stat-card">
-      <span class="num" id="statConfirmed">0</span>
-      <span class="lbl">Reservas confirmadas</span>
-    </div>
-    <div class="stat-card">
-      <span class="num" id="statPending">0</span>
-      <span class="lbl">Reservas pendientes</span>
-    </div>
+  <div class="tabs-row">
+    <button class="tab-btn active" data-tab="tabReservas">Reservas</button>
+    <button class="tab-btn" data-tab="tabCalendario">Calendario</button>
+    <button class="tab-btn" data-tab="tabClientes">Clientes</button>
+    <button class="tab-btn" data-tab="tabCupones">Cupones</button>
   </div>
-  <details class="stats-months">
-    <summary>Ver ingresos por mes</summary>
-    <table id="statsMonthsTable"></table>
-  </details>
 
   <p id="actionMsg" style="display:none; font-size:13.5px; padding:10px 14px; margin-bottom:18px; border-radius:2px;"></p>
-  <div id="resList"></div>
+
+  <div id="tabReservas" class="tab-panel">
+    <div class="stats-row">
+      <div class="stat-card">
+        <span class="num" id="statIncome">0€</span>
+        <span class="lbl">Ingresos totales (confirmadas)</span>
+      </div>
+      <div class="stat-card">
+        <span class="num" id="statConfirmed">0</span>
+        <span class="lbl">Reservas confirmadas</span>
+      </div>
+      <div class="stat-card">
+        <span class="num" id="statPending">0</span>
+        <span class="lbl">Reservas pendientes</span>
+      </div>
+    </div>
+    <details class="stats-months">
+      <summary>Ver ingresos por mes</summary>
+      <table id="statsMonthsTable"></table>
+    </details>
+
+    <select id="statusFilter" style="margin-bottom:18px;">
+      <option value="pendiente">Pendientes</option>
+      <option value="confirmada">Confirmadas</option>
+      <option value="cancelada">Canceladas</option>
+      <option value="todas">Todas</option>
+    </select>
+    <div id="resList"></div>
+  </div>
+
+  <div id="tabCalendario" class="tab-panel" hidden>
+    <div class="cal-nav">
+      <button type="button" class="btn btn-ghost" id="calPrevBtn">← Mes anterior</button>
+      <h2 id="calLabel" style="font-size:18px; text-transform:capitalize;"></h2>
+      <button type="button" class="btn btn-ghost" id="calNextBtn">Mes siguiente →</button>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+    <div id="calDayList" style="margin-top:24px;"></div>
+  </div>
+
+  <div id="tabClientes" class="tab-panel" hidden>
+    <p style="color:var(--ink-soft); font-size:14px; margin-bottom:18px;">Clientes ordenados por número de reservas confirmadas — útil para valorar descuentos de fidelidad.</p>
+    <div id="clientsList"></div>
+  </div>
+
+  <div id="tabCupones" class="tab-panel" hidden>
+    <div class="res-card" style="margin-bottom:24px;">
+      <h3 style="margin-bottom:16px;">Nuevo cupón</h3>
+      <form id="couponForm">
+        <div class="field-row">
+          <div class="field">
+            <label for="cp_code">Código</label>
+            <input type="text" id="cp_code" required style="text-transform:uppercase;" placeholder="VERANO10">
+          </div>
+          <div class="field">
+            <label for="cp_type">Tipo de descuento</label>
+            <select id="cp_type">
+              <option value="percentage">Porcentaje (%)</option>
+              <option value="fixed_amount">Cantidad fija (€)</option>
+              <option value="fixed_price">Precio final (€)</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="cp_value" id="cp_value_label">Valor (%)</label>
+            <input type="number" id="cp_value" min="0" step="0.01" required>
+          </div>
+          <div class="field">
+            <label for="cp_expires">Caduca (opcional)</label>
+            <input type="date" id="cp_expires">
+          </div>
+        </div>
+        <div class="field">
+          <label for="cp_description">Descripción interna (opcional)</label>
+          <input type="text" id="cp_description" placeholder="Ej: promo Instagram julio, cliente fiel Laura...">
+        </div>
+        <button type="submit" class="btn btn-primary">Crear cupón</button>
+        <p id="couponFormMsg" style="font-size:13.5px; margin-top:10px; color:var(--ink-soft);"></p>
+      </form>
+    </div>
+    <div id="couponsList"></div>
+  </div>
 </div>
 
 <div class="modal-overlay" id="newResModal" hidden>
@@ -235,6 +340,14 @@
         <label for="nr_message">Notas (opcional)</label>
         <textarea id="nr_message"></textarea>
       </div>
+      <div class="field">
+        <label for="nr_coupon_code">Cupón de descuento (opcional)</label>
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="nr_coupon_code" style="text-transform:uppercase;" placeholder="CÓDIGO">
+          <button type="button" class="btn btn-ghost" id="nrApplyCouponBtn" style="flex:none;">Aplicar</button>
+        </div>
+        <p class="field-note" id="nrCouponMsg" style="font-size:12.5px; margin-top:6px; color:var(--ink-soft);"></p>
+      </div>
       <div class="total-row">
         <span style="text-transform:uppercase; font-size:12px; letter-spacing:.03em; color:var(--ink-soft);">Total estimado</span>
         <span class="amt" id="nrTotalAmount">0€</span>
@@ -249,6 +362,7 @@
 
 <script type="module">
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { computeDiscount, lookupCoupon, couponSummary } from './assets/coupons.js';
 
 const SUPABASE_URL = 'https://ztsdkfwnqrlmsirfvoat.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0c2RrZnducXJsbXNpcmZ2b2F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwOTM5OTksImV4cCI6MjA5ODY2OTk5OX0.ODimfaCqTpK8fkY4Oobk8kSR3rppb_afmoTTXG8H2os';
@@ -298,9 +412,10 @@ function waNumber(phone){
 }
 
 function buildConfirmMessage(r, plan){
-  const total = plan ? Number(plan.price) : null;
+  const total = plan ? reservationTotal(r) : null;
   let msg = `Hola ${r.full_name} 👋 Te confirmamos tu reserva en *Mi Pequeño Rincón* para el ${fmtDate(r.event_date)}, de ${r.start_time} a ${r.end_time} (${r.event_type}).`;
   if (total != null) msg += `\n\nTotal estimado: ${total.toFixed(0)}€.`;
+  if (r.coupon_code && Number(r.discount_amount) > 0) msg += ` (incluye descuento del cupón *${r.coupon_code}*: -${Number(r.discount_amount).toFixed(0)}€)`;
   msg += `\n\nPara cerrar la reserva pedimos una señal de 20€ (efectivo o Bizum)`;
   if (r.wants_decoration) msg += `, más otros 20€ de señal por la decoración personalizada`;
   msg += `. El día del evento se pide además una fianza de 50€, que se devuelve si la sala queda en las mismas condiciones.\n\n¡Te esperamos! 🌿`;
@@ -336,7 +451,8 @@ function reservationTotal(r){
   let total = plan ? Number(plan.price) : 0;
   if (r.wants_cleaning) total += getExtraPrice('limpieza');
   total += (r.kids_menus_count || 0) * getExtraPrice('infantil');
-  return total;
+  total -= Number(r.discount_amount || 0);
+  return Math.max(0, total);
 }
 
 async function updateStats(){
@@ -442,6 +558,7 @@ async function loadReservations(){
           <div>📞 ${r.phone}${r.email ? ' · ' + r.email : ''}</div>
           ${plan ? `<div>💶 ${plan.label} — ${Number(plan.price).toFixed(0)}€ · Total est. ${reservationTotal(r).toFixed(0)}€</div>` : ''}
           ${extras.length ? `<div>➕ ${extras.join(', ')}</div>` : ''}
+          ${r.coupon_code ? `<div>🏷️ Cupón ${r.coupon_code} (-${Number(r.discount_amount || 0).toFixed(0)}€)</div>` : ''}
           ${r.message ? `<div>💬 “${r.message}”</div>` : ''}
           <div>${SOURCE_LABELS[r.source] || r.source || ''}</div>
         </div>
@@ -472,6 +589,7 @@ async function loadReservations(){
           );
         }
         await loadReservations();
+        refreshActiveTab();
       } else if (action === 'resend'){
         const msg = r.status === 'confirmada' ? buildConfirmMessage(r, plan) : buildDenyMessage(r);
         const opened = openWhatsApp(r.phone, msg);
@@ -514,6 +632,234 @@ async function init(){
 
 init();
 
+// ---------- Tabs ----------
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.hidden = true);
+    btn.classList.add('active');
+    const panel = document.getElementById(btn.dataset.tab);
+    panel.hidden = false;
+    if (btn.dataset.tab === 'tabCalendario') renderCalendarState();
+    if (btn.dataset.tab === 'tabClientes') renderClients();
+    if (btn.dataset.tab === 'tabCupones') renderCoupons();
+  });
+});
+
+function refreshActiveTab(){
+  const activeBtn = document.querySelector('.tab-btn.active');
+  if (!activeBtn) return;
+  if (activeBtn.dataset.tab === 'tabCalendario') renderCalendarState();
+  if (activeBtn.dataset.tab === 'tabClientes') renderClients();
+}
+
+// ---------- Calendar tab ----------
+const MONTH_NAMES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const DOWS = ['L','M','X','J','V','S','D'];
+const calState = { year: new Date().getFullYear(), month: new Date().getMonth() };
+
+function ymd(d){ return d.toISOString().slice(0,10); }
+
+async function renderCalendarState(){
+  document.getElementById('calLabel').textContent = `${MONTH_NAMES[calState.month]} ${calState.year}`;
+  document.getElementById('calDayList').innerHTML = '';
+
+  const { data, error } = await supabase.from('reservations').select('*')
+    .gte('event_date', `${calState.year}-${String(calState.month+1).padStart(2,'0')}-01`)
+    .lt('event_date', calState.month === 11 ? `${calState.year+1}-01-01` : `${calState.year}-${String(calState.month+2).padStart(2,'0')}-01`);
+
+  const byDate = {};
+  (data || []).forEach(r => {
+    if (!byDate[r.event_date]) byDate[r.event_date] = [];
+    byDate[r.event_date].push(r);
+  });
+
+  const first = new Date(calState.year, calState.month, 1);
+  const startOffset = (first.getDay() + 6) % 7;
+  const daysInMonth = new Date(calState.year, calState.month + 1, 0).getDate();
+
+  let html = '';
+  DOWS.forEach(d => html += `<div class="dow">${d}</div>`);
+  for (let i = 0; i < startOffset; i++) html += `<div class="cal-day empty"></div>`;
+  for (let day = 1; day <= daysInMonth; day++){
+    const key = ymd(new Date(calState.year, calState.month, day));
+    const dayRes = byDate[key] || [];
+    const dots = dayRes.map(r => `<span class="cal-dot ${r.status}"></span>`).join('');
+    const cls = 'cal-day' + (dayRes.length ? ' clickable' : '');
+    html += `<div class="${cls}" ${dayRes.length ? `data-date="${key}"` : ''}>
+        <span class="daynum">${day}</span>
+        <span class="dots">${dots}</span>
+      </div>`;
+  }
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML = html;
+  grid.querySelectorAll('[data-date]').forEach(el => {
+    el.addEventListener('click', () => showCalDay(el.dataset.date, byDate[el.dataset.date]));
+  });
+}
+
+function showCalDay(dateStr, reservations){
+  const SOURCE_LABELS = { web: '🌐 Web', whatsapp: '💬 WhatsApp', presencial: '📍 Presencial' };
+  const list = document.getElementById('calDayList');
+  list.innerHTML = `<h3 style="font-size:16px; margin-bottom:14px; text-transform:capitalize;">${fmtDate(dateStr)}</h3>` +
+    reservations.map(r => {
+      const plan = ALL_PLANS.find(p => p.id === r.pricing_plan_id);
+      return `
+        <div class="res-card">
+          <div class="res-head">
+            <h3>${r.full_name}</h3>
+            <span class="badge ${r.status}">${r.status}</span>
+          </div>
+          <div class="res-meta">
+            <div>⏰ ${r.start_time}-${r.end_time} · 🎉 ${r.event_type}</div>
+            <div>📞 ${r.phone}</div>
+            ${plan ? `<div>💶 Total est. ${reservationTotal(r).toFixed(0)}€</div>` : ''}
+            <div>${SOURCE_LABELS[r.source] || r.source || ''}</div>
+          </div>
+          <div class="res-actions">
+            <button class="btn btn-ghost" data-cal-edit="${r.id}">✏️ Modificar</button>
+          </div>
+        </div>`;
+    }).join('');
+  list.querySelectorAll('[data-cal-edit]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const r = reservations.find(x => x.id === btn.dataset.calEdit);
+      openEditResModal(r);
+    });
+  });
+}
+
+document.getElementById('calPrevBtn').addEventListener('click', () => {
+  calState.month--;
+  if (calState.month < 0){ calState.month = 11; calState.year--; }
+  renderCalendarState();
+});
+document.getElementById('calNextBtn').addEventListener('click', () => {
+  calState.month++;
+  if (calState.month > 11){ calState.month = 0; calState.year++; }
+  renderCalendarState();
+});
+
+// ---------- Clients tab (fidelidad) ----------
+async function renderClients(){
+  const container = document.getElementById('clientsList');
+  container.innerHTML = '<p class="empty-msg">Cargando…</p>';
+
+  const { data, error } = await supabase.from('reservations').select('*').order('event_date', { ascending: false });
+  if (error || !data){
+    container.innerHTML = `<p class="empty-msg">Error cargando clientes: ${error?.message || ''}</p>`;
+    return;
+  }
+
+  const byPhone = {};
+  data.forEach(r => {
+    const key = waNumber(r.phone) || r.phone;
+    if (!byPhone[key]) byPhone[key] = { name: r.full_name, phone: r.phone, confirmed: [], pending: 0 };
+    if (r.status === 'confirmada') byPhone[key].confirmed.push(r);
+    if (r.status === 'pendiente') byPhone[key].pending += 1;
+  });
+
+  const clients = Object.values(byPhone)
+    .map(c => ({
+      ...c,
+      count: c.confirmed.length,
+      total: c.confirmed.reduce((sum, r) => sum + reservationTotal(r), 0),
+      dates: c.confirmed.map(r => r.event_date).sort().reverse(),
+    }))
+    .filter(c => c.count > 0 || c.pending > 0)
+    .sort((a, b) => b.count - a.count || b.total - a.total);
+
+  if (!clients.length){
+    container.innerHTML = '<p class="empty-msg">Todavía no hay reservas de clientes.</p>';
+    return;
+  }
+
+  container.innerHTML = clients.map(c => `
+    <div class="client-card">
+      <div>
+        <div class="name">${c.name} ${c.count >= 3 ? '<span class="frequent-badge">🎖 Cliente frecuente</span>' : ''}</div>
+        <div class="meta">📞 ${c.phone}${c.pending ? ` · ${c.pending} pendiente(s)` : ''}</div>
+        <div class="meta">${c.dates.slice(0,5).map(d => fmtDate(d)).join(' · ') || 'Sin reservas confirmadas'}</div>
+      </div>
+      <div>
+        <div class="count">${c.count}</div>
+        <div class="count-lbl">reservas</div>
+      </div>
+      <div>
+        <div class="count">${c.total.toFixed(0)}€</div>
+        <div class="count-lbl">gastado</div>
+      </div>
+    </div>`).join('');
+}
+
+// ---------- Coupons tab ----------
+const cpTypeSelect = document.getElementById('cp_type');
+const cpValueLabel = document.getElementById('cp_value_label');
+cpTypeSelect.addEventListener('change', () => {
+  cpValueLabel.textContent = cpTypeSelect.value === 'percentage' ? 'Valor (%)' : 'Valor (€)';
+});
+
+document.getElementById('couponForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const msgEl = document.getElementById('couponFormMsg');
+  const payload = {
+    code: document.getElementById('cp_code').value.trim().toUpperCase(),
+    discount_type: cpTypeSelect.value,
+    discount_value: Number(document.getElementById('cp_value').value),
+    description: document.getElementById('cp_description').value.trim() || null,
+    expires_at: document.getElementById('cp_expires').value || null,
+  };
+  const { error } = await supabase.from('coupons').insert(payload);
+  if (error){
+    msgEl.textContent = 'No se ha podido crear: ' + error.message;
+    return;
+  }
+  msgEl.textContent = `Cupón ${payload.code} creado.`;
+  e.target.reset();
+  cpValueLabel.textContent = 'Valor (%)';
+  await renderCoupons();
+});
+
+function formatCouponValue(c){
+  if (c.discount_type === 'percentage') return `${Number(c.discount_value)}%`;
+  if (c.discount_type === 'fixed_amount') return `${Number(c.discount_value).toFixed(0)}€ dto.`;
+  if (c.discount_type === 'fixed_price') return `precio final ${Number(c.discount_value).toFixed(0)}€`;
+  return '';
+}
+
+async function renderCoupons(){
+  const container = document.getElementById('couponsList');
+  const { data, error } = await supabase.from('coupons').select('*').order('created_at', { ascending: false });
+  if (error){
+    container.innerHTML = `<p class="empty-msg">Error cargando cupones: ${error.message}</p>`;
+    return;
+  }
+  if (!data || !data.length){
+    container.innerHTML = '<p class="empty-msg">Todavía no has creado ningún cupón.</p>';
+    return;
+  }
+  container.innerHTML = data.map(c => `
+    <div class="coupon-card">
+      <div>
+        <div class="code">${c.code}</div>
+        <div class="meta">${formatCouponValue(c)}${c.expires_at ? ' · caduca ' + c.expires_at : ''}${c.description ? ' · ' + c.description : ''}</div>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span class="coupon-badge ${c.active ? 'active' : 'inactive'}">${c.active ? 'Activo' : 'Inactivo'}</span>
+        <button class="btn btn-ghost" data-toggle-coupon="${c.id}" data-active="${c.active}">${c.active ? 'Desactivar' : 'Activar'}</button>
+      </div>
+    </div>`).join('');
+
+  container.querySelectorAll('[data-toggle-coupon]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.toggleCoupon;
+      const isActive = btn.dataset.active === 'true';
+      await supabase.from('coupons').update({ active: !isActive }).eq('id', id);
+      await renderCoupons();
+    });
+  });
+}
+
 // ---------- Manual reservation modal ----------
 const newResModal = document.getElementById('newResModal');
 const newResForm = document.getElementById('newResForm');
@@ -549,7 +895,10 @@ function renderNrPlanOptions(dateStr, selectedPlanId){
   updateNrTotal();
 }
 
-function updateNrTotal(){
+let nrAppliedCoupon = null;
+let nrManualDiscount = 0;
+
+function nrBaseTotal(){
   const planRadio = document.querySelector('#nrPlanOptions input[name="nr_pricing_plan"]:checked');
   const plan = planRadio ? ALL_PLANS.find(p => p.id === planRadio.value) : null;
   const wantsCleaning = document.getElementById('nr_wants_cleaning').checked;
@@ -559,9 +908,47 @@ function updateNrTotal(){
   let total = plan ? Number(plan.price) : 0;
   if (wantsCleaning) total += getExtraPrice('limpieza');
   total += kidsCount * getExtraPrice('infantil');
-
-  document.getElementById('nrTotalAmount').textContent = `${total.toFixed(0)}€`;
+  return total;
 }
+
+function nrCurrentDiscount(base){
+  if (nrAppliedCoupon) return computeDiscount(base, nrAppliedCoupon);
+  return nrManualDiscount || 0;
+}
+
+function updateNrTotal(){
+  const base = nrBaseTotal();
+  const discount = nrCurrentDiscount(base);
+  const final = Math.max(0, base - discount);
+  document.getElementById('nrTotalAmount').textContent = `${final.toFixed(0)}€`;
+}
+
+async function nrApplyCoupon(){
+  const input = document.getElementById('nr_coupon_code');
+  const msg = document.getElementById('nrCouponMsg');
+  const code = input.value.trim();
+  if (!code){
+    nrAppliedCoupon = null;
+    nrManualDiscount = 0;
+    msg.textContent = '';
+    updateNrTotal();
+    return;
+  }
+  msg.textContent = 'Comprobando cupón…';
+  const { coupon, notFound } = await lookupCoupon(supabase, code);
+  if (notFound || !coupon){
+    nrAppliedCoupon = null;
+    nrManualDiscount = 0;
+    msg.textContent = 'Ese cupón no existe o ha caducado.';
+  } else {
+    nrAppliedCoupon = coupon;
+    nrManualDiscount = 0;
+    msg.textContent = `¡Cupón válido! ${couponSummary(coupon)}.`;
+  }
+  updateNrTotal();
+}
+
+document.getElementById('nrApplyCouponBtn').addEventListener('click', nrApplyCoupon);
 
 let editingId = null;
 
@@ -571,6 +958,9 @@ function openNewResModal(){
   document.getElementById('nrKidsMenuField').hidden = true;
   document.getElementById('nrDecorationField').hidden = true;
   newResMsg.textContent = '';
+  document.getElementById('nrCouponMsg').textContent = '';
+  nrAppliedCoupon = null;
+  nrManualDiscount = 0;
   document.getElementById('newResTitle').textContent = 'Nueva reserva manual';
   document.getElementById('newResSubmitBtn').textContent = 'Guardar reserva confirmada';
   const dateInput = document.getElementById('nr_event_date');
@@ -606,6 +996,13 @@ function openEditResModal(r){
   document.getElementById('nrDecorationField').hidden = !r.wants_decoration;
   document.getElementById('nr_decoration_theme').value = r.decoration_theme || '';
   document.getElementById('nr_message').value = r.message || '';
+
+  nrAppliedCoupon = null;
+  nrManualDiscount = Number(r.discount_amount || 0);
+  document.getElementById('nr_coupon_code').value = r.coupon_code || '';
+  document.getElementById('nrCouponMsg').textContent = r.coupon_code
+    ? `Cupón registrado: -${nrManualDiscount.toFixed(0)}€. Pulsa "Aplicar" para revalidarlo si el descuento ha cambiado.`
+    : '';
 
   updateNrTotal();
   newResModal.hidden = false;
@@ -658,6 +1055,8 @@ newResForm.addEventListener('submit', async (e) => {
     decoration_theme: wantsDecoration ? (document.getElementById('nr_decoration_theme').value.trim() || null) : null,
     kids_menus_count: wantsKidsMenu ? Number(document.getElementById('nr_kids_menus').value || 1) : 0,
     message: document.getElementById('nr_message').value.trim() || null,
+    coupon_code: nrAppliedCoupon ? nrAppliedCoupon.code : (document.getElementById('nr_coupon_code').value.trim() || null),
+    discount_amount: nrCurrentDiscount(nrBaseTotal()),
   };
 
   const submitBtn = newResForm.querySelector('button[type="submit"]');
@@ -685,6 +1084,7 @@ newResForm.addEventListener('submit', async (e) => {
   editingId = null;
   setActionMsg(successMsg, 'ok');
   await loadReservations();
+  refreshActiveTab();
 });
 </script>
 
