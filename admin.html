@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>Panel de reservas — Mi Pequeño Rincón</title>
+<link rel="manifest" href="admin-manifest.webmanifest">
+<meta name="theme-color" content="#4B5E22">
+<link rel="icon" href="assets/icon-192.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MPR Admin">
+<meta name="mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,500&family=Work+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -160,10 +168,11 @@
 <div id="loginView">
   <p class="eyebrow">Mi Pequeño Rincón</p>
   <h1>Panel de reservas</h1>
-  <p style="color:var(--ink-soft); margin-top:14px; font-size:14.5px;">Introduce tu email para recibir un enlace de acceso.</p>
+  <p style="color:var(--ink-soft); margin-top:14px; font-size:14.5px;">Inicia sesión con tu usuario y contraseña.</p>
   <form id="loginForm">
-    <input type="email" id="loginEmail" placeholder="tu@email.com" required>
-    <button type="submit" class="btn btn-primary" style="width:100%;">Enviar enlace de acceso</button>
+    <input type="email" id="loginEmail" placeholder="tu@email.com" required autocomplete="username">
+    <input type="password" id="loginPassword" placeholder="Contraseña" required autocomplete="current-password">
+    <button type="submit" class="btn btn-primary" style="width:100%;">Entrar</button>
   </form>
   <p id="loginMsg"></p>
 </div>
@@ -368,6 +377,12 @@ const SUPABASE_URL = 'https://ztsdkfwnqrlmsirfvoat.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0c2RrZnducXJsbXNpcmZ2b2F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwOTM5OTksImV4cCI6MjA5ODY2OTk5OX0.ODimfaCqTpK8fkY4Oobk8kSR3rppb_afmoTTXG8H2os';
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+if ('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw-admin.js').catch(() => {});
+  });
+}
+
 const loginView = document.getElementById('loginView');
 const dashView = document.getElementById('dashView');
 const loginForm = document.getElementById('loginForm');
@@ -383,14 +398,14 @@ let FESTIVOS = new Set();
 loginForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const email = document.getElementById('loginEmail').value.trim();
-  loginMsg.textContent = 'Enviando enlace…';
-  const { error } = await supabase.auth.signInWithOtp({
-    email,
-    options: { emailRedirectTo: window.location.origin + window.location.pathname },
-  });
-  loginMsg.textContent = error
-    ? 'No se ha podido enviar el enlace. Inténtalo de nuevo.'
-    : 'Te hemos enviado un enlace a tu email. Ábrelo desde este mismo dispositivo.';
+  const password = document.getElementById('loginPassword').value;
+  loginMsg.textContent = 'Entrando…';
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error){
+    loginMsg.textContent = 'Usuario o contraseña incorrectos.';
+    return;
+  }
+  loginMsg.textContent = '';
 });
 
 document.getElementById('logoutBtn').addEventListener('click', async () => {
