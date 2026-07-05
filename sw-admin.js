@@ -37,3 +37,30 @@ self.addEventListener('fetch', (event) => {
       .catch(() => caches.match(request))
   );
 });
+
+self.addEventListener('push', (event) => {
+  let data = { title: 'Mi Pequeño Rincón', body: 'Tienes una novedad en el panel.', url: './admin.html' };
+  if (event.data){
+    try { data = { ...data, ...event.data.json() }; } catch { /* usa los valores por defecto */ }
+  }
+  event.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      icon: './assets/icon-192.png',
+      badge: './assets/icon-192.png',
+      data: { url: data.url },
+    })
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const targetUrl = new URL(event.notification.data?.url || './admin.html', self.location.href).href;
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientsArr) => {
+      const existing = clientsArr.find((c) => c.url === targetUrl);
+      if (existing) return existing.focus();
+      return self.clients.openWindow(targetUrl);
+    })
+  );
+});

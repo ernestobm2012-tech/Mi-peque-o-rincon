@@ -184,10 +184,12 @@
       <h1>Panel de reservas</h1>
     </div>
     <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+      <button class="btn btn-ghost" id="enableNotifBtn" hidden>🔔 Activar notificaciones</button>
       <button class="btn btn-primary" id="newResBtn">+ Reserva manual</button>
       <button class="btn btn-ghost" id="logoutBtn">Salir</button>
     </div>
   </div>
+  <p id="notifMsg" style="font-size:13px; color:var(--ink-soft); margin-top:-10px; margin-bottom:20px;"></p>
 
   <div class="tabs-row">
     <button class="tab-btn active" data-tab="tabReservas">Reservas</button>
@@ -377,11 +379,77 @@ const SUPABASE_URL = 'https://ztsdkfwnqrlmsirfvoat.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0c2RrZnducXJsbXNpcmZ2b2F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwOTM5OTksImV4cCI6MjA5ODY2OTk5OX0.ODimfaCqTpK8fkY4Oobk8kSR3rppb_afmoTTXG8H2os';
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+const VAPID_PUBLIC_KEY = 'BI2DB0JYsl3IMvs-P7LxCKa5K1niBnsxzC0_vn3DCogMIb7DeTaNVsq54k-jWZTReIHPeaaL9pfvlSpl1J0TDcQ';
+
+let swRegistration = null;
 if ('serviceWorker' in navigator){
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw-admin.js').catch(() => {});
+  window.addEventListener('load', async () => {
+    try { swRegistration = await navigator.serviceWorker.register('./sw-admin.js'); }
+    catch { swRegistration = null; }
   });
 }
+
+function urlBase64ToUint8Array(base64String){
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+}
+
+async function checkNotifButton(){
+  const btn = document.getElementById('enableNotifBtn');
+  if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)){
+    btn.hidden = true;
+    return;
+  }
+  if (!swRegistration){
+    try { swRegistration = await navigator.serviceWorker.ready; } catch { /* noop */ }
+  }
+  if (Notification.permission === 'granted' && swRegistration){
+    const existing = await swRegistration.pushManager.getSubscription();
+    btn.hidden = !!existing;
+  } else {
+    btn.hidden = Notification.permission === 'denied';
+  }
+}
+
+async function enableNotifications(){
+  const notifMsg = document.getElementById('notifMsg');
+  if (!swRegistration){
+    try { swRegistration = await navigator.serviceWorker.ready; } catch { /* noop */ }
+  }
+  if (!swRegistration){
+    notifMsg.textContent = 'No se ha podido activar: el navegador no admite notificaciones aquí.';
+    return;
+  }
+  const permission = await Notification.requestPermission();
+  if (permission !== 'granted'){
+    notifMsg.textContent = 'No se han activado las notificaciones. Puedes activarlas más tarde desde este mismo botón.';
+    return;
+  }
+  try {
+    const subscription = await swRegistration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+    });
+    const json = subscription.toJSON();
+    const { error } = await supabase.from('push_subscriptions').insert({
+      endpoint: json.endpoint,
+      p256dh: json.keys.p256dh,
+      auth: json.keys.auth,
+    });
+    if (error && error.code !== '23505'){
+      notifMsg.textContent = 'No se ha podido guardar la suscripción: ' + error.message;
+      return;
+    }
+    notifMsg.textContent = 'Notificaciones activadas en este dispositivo ✅';
+    await checkNotifButton();
+  } catch (err){
+    notifMsg.textContent = 'No se ha podido activar la notificación: ' + err.message;
+  }
+}
+
+document.getElementById('enableNotifBtn').addEventListener('click', enableNotifications);
 
 const loginView = document.getElementById('loginView');
 const dashView = document.getElementById('dashView');
@@ -706,6 +774,7 @@ async function showDashboard(){
   document.getElementById('nr_event_type').innerHTML = EVENT_TYPES.map(t => `<option value="${t}">${t}</option>`).join('');
 
   await loadReservations();
+  checkNotifButton();
 }
 
 async function init(){
