@@ -168,10 +168,11 @@
 <div id="loginView">
   <p class="eyebrow">Mi Pequeño Rincón</p>
   <h1>Panel de reservas</h1>
-  <p style="color:var(--ink-soft); margin-top:14px; font-size:14.5px;">Introduce tu email para recibir un enlace de acceso.</p>
+  <p style="color:var(--ink-soft); margin-top:14px; font-size:14.5px;">Inicia sesión con tu usuario y contraseña.</p>
   <form id="loginForm">
-    <input type="email" id="loginEmail" placeholder="tu@email.com" required>
-    <button type="submit" class="btn btn-primary" style="width:100%;">Enviar enlace de acceso</button>
+    <input type="email" id="loginEmail" placeholder="tu@email.com" required autocomplete="username">
+    <input type="password" id="loginPassword" placeholder="Contraseña" required autocomplete="current-password">
+    <button type="submit" class="btn btn-primary" style="width:100%;">Entrar</button>
   </form>
   <p id="loginMsg"></p>
 </div>
@@ -397,14 +398,14 @@ let FESTIVOS = new Set();
 loginForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const email = document.getElementById('loginEmail').value.trim();
-  loginMsg.textContent = 'Enviando enlace…';
-  const { error } = await supabase.auth.signInWithOtp({
-    email,
-    options: { emailRedirectTo: window.location.origin + window.location.pathname },
-  });
-  loginMsg.textContent = error
-    ? 'No se ha podido enviar el enlace. Inténtalo de nuevo.'
-    : 'Te hemos enviado un enlace a tu email. Ábrelo desde este mismo dispositivo.';
+  const password = document.getElementById('loginPassword').value;
+  loginMsg.textContent = 'Entrando…';
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error){
+    loginMsg.textContent = 'Usuario o contraseña incorrectos.';
+    return;
+  }
+  loginMsg.textContent = '';
 });
 
 document.getElementById('logoutBtn').addEventListener('click', async () => {
