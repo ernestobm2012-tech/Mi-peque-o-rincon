@@ -319,7 +319,9 @@
         <div class="field">
           <label for="gal_section">Sección de la web</label>
           <select id="gal_section" required>
-            <option value="sala">La sala</option>
+            <option value="sala-juegos">La sala — Zona de juegos</option>
+            <option value="sala-mesas">La sala — Mesas para eventos</option>
+            <option value="sala-escenario">La sala — Proyector, escenario y cocina</option>
             <option value="catas">Catas de vino</option>
             <option value="menu-infantil">Menú infantil</option>
             <option value="decoraciones">Decoraciones</option>
@@ -1162,7 +1164,9 @@ async function renderCoupons(){
 
 // ---------- Gallery (imágenes de la web por sección) ----------
 const GALLERY_SECTION_LABELS = {
-  sala: 'La sala',
+  'sala-juegos': 'La sala — Zona de juegos',
+  'sala-mesas': 'La sala — Mesas para eventos',
+  'sala-escenario': 'La sala — Proyector, escenario y cocina',
   catas: 'Catas de vino',
   'menu-infantil': 'Menú infantil',
   decoraciones: 'Decoraciones',
