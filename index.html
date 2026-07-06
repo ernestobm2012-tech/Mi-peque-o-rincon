@@ -631,6 +631,10 @@
           <label for="decoration_theme">Temática</label>
           <input type="text" id="decoration_theme" placeholder="Ej: unicornio, Naruto, boda rústica...">
         </div>
+
+        <div class="checkbox-row"><input type="checkbox" id="wants_catering"><label for="wants_catering" style="margin:0; text-transform:none; font-size:14px;">Catering (precio a consultar)</label></div>
+        <div class="checkbox-row"><input type="checkbox" id="wants_animation"><label for="wants_animation" style="margin:0; text-transform:none; font-size:14px;">Animación (precio a consultar)</label></div>
+        <p class="field-note">El catering y la animación los presta un colaborador externo — nosotros lo coordinamos con tu reserva; el precio se consulta aparte.</p>
       </div>
       <div class="field">
         <label for="message">Cuéntanos algo más (opcional)</label>
@@ -1175,6 +1179,8 @@ async function initForm(){
       wants_cleaning: wantsCleaning,
       wants_decoration: wantsDecoration,
       decoration_theme: wantsDecoration ? (document.getElementById('decoration_theme').value.trim() || null) : null,
+      wants_catering: document.getElementById('wants_catering').checked,
+      wants_animation: document.getElementById('wants_animation').checked,
       kids_menus_count: kidsCount,
       message: document.getElementById('message').value.trim() || null,
       coupon_code: appliedCoupon ? appliedCoupon.code : null,
