@@ -305,6 +305,9 @@
         <div class="field">
           <label for="gal_section">Sección de la web</label>
           <select id="gal_section" required>
+            <option value="sala">La sala</option>
+            <option value="catas">Catas de vino</option>
+            <option value="menu-infantil">Menú infantil</option>
             <option value="decoraciones">Decoraciones</option>
             <option value="ofertas">Ofertas</option>
           </select>
@@ -1124,7 +1127,13 @@ async function renderCoupons(){
 }
 
 // ---------- Gallery (imágenes de la web por sección) ----------
-const GALLERY_SECTION_LABELS = { decoraciones: 'Decoraciones', ofertas: 'Ofertas' };
+const GALLERY_SECTION_LABELS = {
+  sala: 'La sala',
+  catas: 'Catas de vino',
+  'menu-infantil': 'Menú infantil',
+  decoraciones: 'Decoraciones',
+  ofertas: 'Ofertas',
+};
 
 document.getElementById('galleryForm').addEventListener('submit', async (e) => {
   e.preventDefault();
