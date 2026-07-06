@@ -155,6 +155,13 @@
   .kids-menu-grid img{ width:100%; height:210px; object-fit:cover; display:block; }
   .kids-menu-grid figcaption{ padding:12px 14px; font-size:14px; font-weight:500; text-align:center; }
   .kids-menu-note{ margin-top:28px; display:flex; flex-direction:column; gap:10px; color:var(--ink-soft); font-size:14.5px; max-width:680px; }
+
+  /* ---------- Decorations ---------- */
+  .decor-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:36px; }
+  @media (max-width:760px){ .decor-grid{ grid-template-columns:repeat(2,1fr); } }
+  .decor-grid figure{ margin:0; background:#fff; border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; }
+  .decor-grid img{ width:100%; height:230px; object-fit:cover; display:block; }
+  .decor-grid figcaption{ padding:10px 14px; font-size:13.5px; color:var(--ink-soft); text-align:center; }
   .kids-menu-note strong{ color:var(--ink); }
 
   /* ---------- Pricing ---------- */
@@ -468,6 +475,18 @@
   </div>
 </section>
 
+<section id="decoraciones">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">Ambientación</p>
+      <h2>Decoraciones para tu evento.</h2>
+      <p style="color:var(--ink-soft); margin-top:10px;">Algunas de las decoraciones que hemos preparado para celebraciones en la sala.</p>
+    </div>
+    <div class="decor-grid" id="decorGrid"></div>
+    <p id="decorEmptyMsg" style="color:var(--ink-soft); margin-top:24px;" hidden>Todavía no hay fotos de decoraciones. ¡Vuelve pronto!</p>
+  </div>
+</section>
+
 <section id="precios">
   <div class="wrap">
     <div class="section-head">
@@ -756,6 +775,28 @@ async function loadEventTypes(){
     </div>`).join('');
 
   select.innerHTML = types.map(t => `<option value="${t}">${t}</option>`).join('');
+}
+
+// ---------- Decorations ----------
+async function loadDecorations(){
+  const grid = document.getElementById('decorGrid');
+  const emptyMsg = document.getElementById('decorEmptyMsg');
+  const { data, error } = await supabase.from('decorations').select('*').order('created_at', { ascending: false });
+  if (error || !data || !data.length){
+    grid.innerHTML = '';
+    emptyMsg.hidden = false;
+    return;
+  }
+  emptyMsg.hidden = true;
+  grid.innerHTML = data.map(d => {
+    const { data: pub } = supabase.storage.from('decoraciones').getPublicUrl(d.image_path);
+    const alt = (d.caption || 'Decoración para eventos en Mi Pequeño Rincón').replace(/"/g, '&quot;');
+    return `
+      <figure>
+        <img src="${pub.publicUrl}" alt="${alt}" loading="lazy">
+        ${d.caption ? `<figcaption>${d.caption}</figcaption>` : ''}
+      </figure>`;
+  }).join('');
 }
 
 // ---------- Pricing ----------
@@ -1114,6 +1155,7 @@ async function initForm(){
 
 (async function init(){
   await loadEventTypes();
+  await loadDecorations();
   await loadPricing();
   await loadFestivos();
   await loadAvailability();

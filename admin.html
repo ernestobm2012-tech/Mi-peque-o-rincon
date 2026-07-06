@@ -161,6 +161,13 @@
   .coupon-badge{ font-size:11px; text-transform:uppercase; letter-spacing:.05em; padding:3px 10px; border-radius:999px; font-weight:600; }
   .coupon-badge.active{ background:#EAF0E2; color:var(--olive-dark); }
   .coupon-badge.inactive{ background:#F6E4E0; color:#7A2E22; }
+
+  /* ---------- Decorations ---------- */
+  .decor-admin-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:14px; }
+  .decor-admin-card{ background:#fff; border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; }
+  .decor-admin-card img{ width:100%; height:140px; object-fit:cover; display:block; }
+  .decor-admin-card .decor-admin-meta{ padding:10px 12px; }
+  .decor-admin-card .decor-admin-meta p{ font-size:12.5px; color:var(--ink-soft); margin:0 0 8px; min-height:1.3em; }
 </style>
 </head>
 <body>
@@ -196,6 +203,7 @@
     <button class="tab-btn" data-tab="tabCalendario">Calendario</button>
     <button class="tab-btn" data-tab="tabClientes">Clientes</button>
     <button class="tab-btn" data-tab="tabCupones">Cupones</button>
+    <button class="tab-btn" data-tab="tabDecoraciones">Decoraciones</button>
   </div>
 
   <p id="actionMsg" style="display:none; font-size:13.5px; padding:10px 14px; margin-bottom:18px; border-radius:2px;"></p>
@@ -281,6 +289,25 @@
       </form>
     </div>
     <div id="couponsList"></div>
+  </div>
+
+  <div id="tabDecoraciones" class="tab-panel" hidden>
+    <div class="res-card" style="margin-bottom:24px;">
+      <h3 style="margin-bottom:16px;">Añadir foto de decoración</h3>
+      <form id="decorForm">
+        <div class="field">
+          <label for="decor_file">Foto</label>
+          <input type="file" id="decor_file" accept="image/*" required>
+        </div>
+        <div class="field">
+          <label for="decor_caption">Descripción (opcional)</label>
+          <input type="text" id="decor_caption" placeholder="Ej: Decoración cumpleaños temática unicornio">
+        </div>
+        <button type="submit" class="btn btn-primary" id="decorSubmitBtn">Subir foto</button>
+        <p id="decorFormMsg" style="font-size:13.5px; margin-top:10px; color:var(--ink-soft);"></p>
+      </form>
+    </div>
+    <div class="decor-admin-grid" id="decorAdminList"></div>
   </div>
 </div>
 
@@ -800,6 +827,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     if (btn.dataset.tab === 'tabCalendario') renderCalendarState();
     if (btn.dataset.tab === 'tabClientes') renderClients();
     if (btn.dataset.tab === 'tabCupones') renderCoupons();
+    if (btn.dataset.tab === 'tabDecoraciones') renderDecorations();
   });
 });
 
@@ -1013,6 +1041,78 @@ async function renderCoupons(){
       const isActive = btn.dataset.active === 'true';
       await supabase.from('coupons').update({ active: !isActive }).eq('id', id);
       await renderCoupons();
+    });
+  });
+}
+
+// ---------- Decorations ----------
+document.getElementById('decorForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const fileInput = document.getElementById('decor_file');
+  const file = fileInput.files[0];
+  const msgEl = document.getElementById('decorFormMsg');
+  const submitBtn = document.getElementById('decorSubmitBtn');
+  if (!file) return;
+
+  submitBtn.disabled = true;
+  msgEl.textContent = 'Subiendo foto…';
+
+  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
+  const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+
+  const { error: uploadError } = await supabase.storage.from('decoraciones').upload(path, file);
+  if (uploadError){
+    msgEl.textContent = 'No se ha podido subir la foto: ' + uploadError.message;
+    submitBtn.disabled = false;
+    return;
+  }
+
+  const caption = document.getElementById('decor_caption').value.trim() || null;
+  const { error: insertError } = await supabase.from('decorations').insert({ image_path: path, caption });
+  if (insertError){
+    msgEl.textContent = 'No se ha podido guardar la foto: ' + insertError.message;
+    submitBtn.disabled = false;
+    return;
+  }
+
+  msgEl.textContent = 'Foto añadida ✅';
+  e.target.reset();
+  submitBtn.disabled = false;
+  await renderDecorations();
+});
+
+async function renderDecorations(){
+  const container = document.getElementById('decorAdminList');
+  const { data, error } = await supabase.from('decorations').select('*').order('created_at', { ascending: false });
+  if (error){
+    container.innerHTML = `<p class="empty-msg">Error cargando decoraciones: ${error.message}</p>`;
+    return;
+  }
+  if (!data || !data.length){
+    container.innerHTML = '<p class="empty-msg">Todavía no has añadido ninguna foto de decoración.</p>';
+    return;
+  }
+  container.innerHTML = data.map(d => {
+    const { data: pub } = supabase.storage.from('decoraciones').getPublicUrl(d.image_path);
+    return `
+      <div class="decor-admin-card">
+        <img src="${pub.publicUrl}" alt="${(d.caption || 'Decoración').replace(/"/g, '&quot;')}">
+        <div class="decor-admin-meta">
+          <p>${d.caption || ''}</p>
+          <button class="btn btn-deny" data-delete-decor="${d.id}" data-path="${d.image_path}" style="font-size:11.5px; padding:5px 10px;">🗑️ Borrar</button>
+        </div>
+      </div>`;
+  }).join('');
+
+  container.querySelectorAll('[data-delete-decor]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('¿Borrar esta foto de decoración? No se puede deshacer.')) return;
+      btn.disabled = true;
+      const id = btn.dataset.deleteDecor;
+      const path = btn.dataset.path;
+      await supabase.storage.from('decoraciones').remove([path]);
+      await supabase.from('decorations').delete().eq('id', id);
+      await renderDecorations();
     });
   });
 }
