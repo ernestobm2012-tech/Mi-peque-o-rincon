@@ -30,3 +30,14 @@ export function couponSummary(coupon){
   if (coupon.discount_type === 'fixed_price') return `precio final de ${formatPrice(coupon.discount_value)}`;
   return '';
 }
+
+export const COUPON_SCOPE_LABELS = {
+  todos: 'todas las tarifas',
+  lunes_jueves: 'tarifa de entre semana',
+  viernes_domingo_festivos: 'tarifa de fin de semana, festivos y vísperas',
+};
+
+export function couponAppliesTo(coupon, dayGroup){
+  if (!coupon || !coupon.applies_to || coupon.applies_to === 'todos') return true;
+  return coupon.applies_to === dayGroup;
+}

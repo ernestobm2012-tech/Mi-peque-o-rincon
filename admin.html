@@ -285,6 +285,14 @@
           </div>
         </div>
         <div class="field">
+          <label for="cp_applies_to">Aplica a</label>
+          <select id="cp_applies_to">
+            <option value="todos">Todas las tarifas</option>
+            <option value="lunes_jueves">Solo entre semana (lunes a jueves)</option>
+            <option value="viernes_domingo_festivos">Solo fin de semana, festivos y vísperas</option>
+          </select>
+        </div>
+        <div class="field">
           <label for="cp_description">Descripción interna (opcional)</label>
           <input type="text" id="cp_description" placeholder="Ej: promo Instagram julio, cliente fiel Laura...">
         </div>
@@ -417,7 +425,7 @@
 
 <script type="module">
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { computeDiscount, lookupCoupon, couponSummary, formatPrice } from './assets/coupons.js';
+import { computeDiscount, lookupCoupon, couponSummary, formatPrice, couponAppliesTo, COUPON_SCOPE_LABELS } from './assets/coupons.js';
 
 const SUPABASE_URL = 'https://ztsdkfwnqrlmsirfvoat.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0c2RrZnducXJsbXNpcmZ2b2F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwOTM5OTksImV4cCI6MjA5ODY2OTk5OX0.ODimfaCqTpK8fkY4Oobk8kSR3rppb_afmoTTXG8H2os';
@@ -1014,6 +1022,7 @@ function startEditCoupon(c){
   cpValueLabel.textContent = c.discount_type === 'percentage' ? 'Valor (%)' : 'Valor (€)';
   document.getElementById('cp_value').value = c.discount_value;
   document.getElementById('cp_expires').value = c.expires_at || '';
+  document.getElementById('cp_applies_to').value = c.applies_to || 'todos';
   document.getElementById('cp_description').value = c.description || '';
   couponFormTitle.textContent = `Editar cupón ${c.code}`;
   couponSubmitBtn.textContent = 'Guardar cambios';
@@ -1041,6 +1050,7 @@ document.getElementById('couponForm').addEventListener('submit', async (e) => {
     code: document.getElementById('cp_code').value.trim().toUpperCase(),
     discount_type: cpTypeSelect.value,
     discount_value: Number(document.getElementById('cp_value').value),
+    applies_to: document.getElementById('cp_applies_to').value,
     description: document.getElementById('cp_description').value.trim() || null,
     expires_at: document.getElementById('cp_expires').value || null,
   };
@@ -1083,7 +1093,7 @@ async function renderCoupons(){
     <div class="coupon-card">
       <div>
         <div class="code">${c.code}</div>
-        <div class="meta">${formatCouponValue(c)}${c.expires_at ? ' · caduca ' + c.expires_at : ''}${c.description ? ' · ' + c.description : ''}</div>
+        <div class="meta">${formatCouponValue(c)}${c.applies_to && c.applies_to !== 'todos' ? ' · ' + COUPON_SCOPE_LABELS[c.applies_to] : ''}${c.expires_at ? ' · caduca ' + c.expires_at : ''}${c.description ? ' · ' + c.description : ''}</div>
       </div>
       <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
         <span class="coupon-badge ${c.active ? 'active' : 'inactive'}">${c.active ? 'Activo' : 'Inactivo'}</span>
@@ -1287,10 +1297,15 @@ async function nrApplyCoupon(){
   }
   msg.textContent = 'Comprobando cupón…';
   const { coupon, notFound } = await lookupCoupon(supabase, code);
+  const eventDate = document.getElementById('nr_event_date').value;
   if (notFound || !coupon){
     nrAppliedCoupon = null;
     nrManualDiscount = 0;
     msg.textContent = 'Ese cupón no existe o ha caducado.';
+  } else if (eventDate && !couponAppliesTo(coupon, dayGroupFor(eventDate))){
+    nrAppliedCoupon = null;
+    nrManualDiscount = 0;
+    msg.textContent = `Ese cupón solo es válido para ${COUPON_SCOPE_LABELS[coupon.applies_to]}.`;
   } else {
     nrAppliedCoupon = coupon;
     nrManualDiscount = 0;

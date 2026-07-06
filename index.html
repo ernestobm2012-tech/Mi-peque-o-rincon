@@ -784,7 +784,7 @@
 
 <script type="module">
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { computeDiscount, lookupCoupon, couponSummary, formatPrice } from './assets/coupons.js';
+import { computeDiscount, lookupCoupon, couponSummary, formatPrice, couponAppliesTo, COUPON_SCOPE_LABELS } from './assets/coupons.js';
 
 const SUPABASE_URL = 'https://ztsdkfwnqrlmsirfvoat.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0c2RrZnducXJsbXNpcmZ2b2F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwOTM5OTksImV4cCI6MjA5ODY2OTk5OX0.ODimfaCqTpK8fkY4Oobk8kSR3rppb_afmoTTXG8H2os';
@@ -1080,6 +1080,9 @@ async function applyCoupon(){
   if (notFound || !coupon){
     appliedCoupon = null;
     msg.textContent = 'Ese cupón no existe o ha caducado.';
+  } else if (!couponAppliesTo(coupon, dayGroupFor(selectedDate))){
+    appliedCoupon = null;
+    msg.textContent = `Ese cupón solo es válido para ${COUPON_SCOPE_LABELS[coupon.applies_to]}.`;
   } else {
     appliedCoupon = coupon;
     msg.textContent = `¡Cupón válido! ${couponSummary(coupon)}.`;
