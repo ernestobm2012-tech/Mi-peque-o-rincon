@@ -42,6 +42,7 @@
     padding:12px 22px; font-size:14px; font-weight:500; border-radius:var(--radius); border:1px solid transparent;
     text-decoration:none;
   }
+  .btn[hidden]{ display:none; }
   .btn-primary{ background:var(--olive-dark); color:var(--cream); }
   .btn-primary:hover{ background:var(--ink); }
   .btn-deny{ background:#7A2E22; color:#fff; }
@@ -140,11 +141,12 @@
   .cal-day.clickable:hover{ background:var(--cream-2); }
   .cal-day.empty{ background:none; border:none; }
   .cal-day .daynum{ font-weight:600; }
-  .cal-day .dots{ display:flex; gap:3px; flex-wrap:wrap; }
-  .cal-dot{ width:7px; height:7px; border-radius:50%; display:inline-block; }
-  .cal-dot.pendiente{ background:#C9A227; }
-  .cal-dot.confirmada{ background:var(--olive-dark); }
-  .cal-dot.cancelada{ background:#B3554A; }
+  .cal-day.status-pendiente{ background:#C9A227; border-color:#C9A227; }
+  .cal-day.status-pendiente .daynum{ color:#221F19; }
+  .cal-day.status-pendiente.clickable:hover{ background:#b3901f; }
+  .cal-day.status-confirmada{ background:var(--olive-dark); border-color:var(--olive-dark); }
+  .cal-day.status-confirmada .daynum{ color:var(--cream); }
+  .cal-day.status-confirmada.clickable:hover{ background:#3c4b1b; }
 
   /* ---------- Clients ---------- */
   .client-card{ background:#fff; border:1px solid var(--line); padding:16px 20px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap; }
@@ -161,6 +163,13 @@
   .coupon-badge{ font-size:11px; text-transform:uppercase; letter-spacing:.05em; padding:3px 10px; border-radius:999px; font-weight:600; }
   .coupon-badge.active{ background:#EAF0E2; color:var(--olive-dark); }
   .coupon-badge.inactive{ background:#F6E4E0; color:#7A2E22; }
+
+  /* ---------- Decorations ---------- */
+  .decor-admin-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:14px; }
+  .decor-admin-card{ background:#fff; border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; }
+  .decor-admin-card img{ width:100%; height:140px; object-fit:cover; display:block; }
+  .decor-admin-card .decor-admin-meta{ padding:10px 12px; }
+  .decor-admin-card .decor-admin-meta p{ font-size:12.5px; color:var(--ink-soft); margin:0 0 8px; min-height:1.3em; }
 </style>
 </head>
 <body>
@@ -196,6 +205,7 @@
     <button class="tab-btn" data-tab="tabCalendario">Calendario</button>
     <button class="tab-btn" data-tab="tabClientes">Clientes</button>
     <button class="tab-btn" data-tab="tabCupones">Cupones</button>
+    <button class="tab-btn" data-tab="tabDecoraciones">Decoraciones</button>
   </div>
 
   <p id="actionMsg" style="display:none; font-size:13.5px; padding:10px 14px; margin-bottom:18px; border-radius:2px;"></p>
@@ -246,7 +256,7 @@
 
   <div id="tabCupones" class="tab-panel" hidden>
     <div class="res-card" style="margin-bottom:24px;">
-      <h3 style="margin-bottom:16px;">Nuevo cupón</h3>
+      <h3 style="margin-bottom:16px;" id="couponFormTitle">Nuevo cupón</h3>
       <form id="couponForm">
         <div class="field-row">
           <div class="field">
@@ -276,11 +286,33 @@
           <label for="cp_description">Descripción interna (opcional)</label>
           <input type="text" id="cp_description" placeholder="Ej: promo Instagram julio, cliente fiel Laura...">
         </div>
-        <button type="submit" class="btn btn-primary">Crear cupón</button>
+        <div style="display:flex; gap:10px; align-items:center;">
+          <button type="submit" class="btn btn-primary" id="couponSubmitBtn">Crear cupón</button>
+          <button type="button" class="btn btn-ghost" id="couponCancelEditBtn" hidden>Cancelar edición</button>
+        </div>
         <p id="couponFormMsg" style="font-size:13.5px; margin-top:10px; color:var(--ink-soft);"></p>
       </form>
     </div>
     <div id="couponsList"></div>
+  </div>
+
+  <div id="tabDecoraciones" class="tab-panel" hidden>
+    <div class="res-card" style="margin-bottom:24px;">
+      <h3 style="margin-bottom:16px;">Añadir foto de decoración</h3>
+      <form id="decorForm">
+        <div class="field">
+          <label for="decor_file">Foto</label>
+          <input type="file" id="decor_file" accept="image/*" required>
+        </div>
+        <div class="field">
+          <label for="decor_caption">Descripción (opcional)</label>
+          <input type="text" id="decor_caption" placeholder="Ej: Decoración cumpleaños temática unicornio">
+        </div>
+        <button type="submit" class="btn btn-primary" id="decorSubmitBtn">Subir foto</button>
+        <p id="decorFormMsg" style="font-size:13.5px; margin-top:10px; color:var(--ink-soft);"></p>
+      </form>
+    </div>
+    <div class="decor-admin-grid" id="decorAdminList"></div>
   </div>
 </div>
 
@@ -800,6 +832,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     if (btn.dataset.tab === 'tabCalendario') renderCalendarState();
     if (btn.dataset.tab === 'tabClientes') renderClients();
     if (btn.dataset.tab === 'tabCupones') renderCoupons();
+    if (btn.dataset.tab === 'tabDecoraciones') renderDecorations();
   });
 });
 
@@ -841,11 +874,12 @@ async function renderCalendarState(){
   for (let day = 1; day <= daysInMonth; day++){
     const key = ymd(new Date(calState.year, calState.month, day));
     const dayRes = byDate[key] || [];
-    const dots = dayRes.map(r => `<span class="cal-dot ${r.status}"></span>`).join('');
-    const cls = 'cal-day' + (dayRes.length ? ' clickable' : '');
+    const dayStatus = dayRes.some(r => r.status === 'confirmada') ? 'confirmada'
+      : dayRes.some(r => r.status === 'pendiente') ? 'pendiente'
+      : null;
+    const cls = 'cal-day' + (dayRes.length ? ' clickable' : '') + (dayStatus ? ` status-${dayStatus}` : '');
     html += `<div class="${cls}" ${dayRes.length ? `data-date="${key}"` : ''}>
         <span class="daynum">${day}</span>
-        <span class="dots">${dots}</span>
       </div>`;
   }
   const grid = document.getElementById('calGrid');
@@ -956,6 +990,38 @@ cpTypeSelect.addEventListener('change', () => {
   cpValueLabel.textContent = cpTypeSelect.value === 'percentage' ? 'Valor (%)' : 'Valor (€)';
 });
 
+let editingCouponId = null;
+const couponFormTitle = document.getElementById('couponFormTitle');
+const couponSubmitBtn = document.getElementById('couponSubmitBtn');
+const couponCancelEditBtn = document.getElementById('couponCancelEditBtn');
+
+function startEditCoupon(c){
+  editingCouponId = c.id;
+  document.getElementById('cp_code').value = c.code;
+  cpTypeSelect.value = c.discount_type;
+  cpValueLabel.textContent = c.discount_type === 'percentage' ? 'Valor (%)' : 'Valor (€)';
+  document.getElementById('cp_value').value = c.discount_value;
+  document.getElementById('cp_expires').value = c.expires_at || '';
+  document.getElementById('cp_description').value = c.description || '';
+  couponFormTitle.textContent = `Editar cupón ${c.code}`;
+  couponSubmitBtn.textContent = 'Guardar cambios';
+  couponCancelEditBtn.hidden = false;
+  document.getElementById('couponFormMsg').textContent = '';
+  document.getElementById('couponForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function cancelEditCoupon(){
+  editingCouponId = null;
+  document.getElementById('couponForm').reset();
+  cpValueLabel.textContent = 'Valor (%)';
+  couponFormTitle.textContent = 'Nuevo cupón';
+  couponSubmitBtn.textContent = 'Crear cupón';
+  couponCancelEditBtn.hidden = true;
+  document.getElementById('couponFormMsg').textContent = '';
+}
+
+couponCancelEditBtn.addEventListener('click', cancelEditCoupon);
+
 document.getElementById('couponForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const msgEl = document.getElementById('couponFormMsg');
@@ -966,14 +1032,20 @@ document.getElementById('couponForm').addEventListener('submit', async (e) => {
     description: document.getElementById('cp_description').value.trim() || null,
     expires_at: document.getElementById('cp_expires').value || null,
   };
-  const { error } = await supabase.from('coupons').insert(payload);
+  const { error } = editingCouponId
+    ? await supabase.from('coupons').update(payload).eq('id', editingCouponId)
+    : await supabase.from('coupons').insert(payload);
   if (error){
-    msgEl.textContent = 'No se ha podido crear: ' + error.message;
+    msgEl.textContent = 'No se ha podido guardar: ' + error.message;
     return;
   }
-  msgEl.textContent = `Cupón ${payload.code} creado.`;
+  msgEl.textContent = editingCouponId ? `Cupón ${payload.code} actualizado.` : `Cupón ${payload.code} creado.`;
+  editingCouponId = null;
   e.target.reset();
   cpValueLabel.textContent = 'Valor (%)';
+  couponFormTitle.textContent = 'Nuevo cupón';
+  couponSubmitBtn.textContent = 'Crear cupón';
+  couponCancelEditBtn.hidden = true;
   await renderCoupons();
 });
 
@@ -1001,9 +1073,11 @@ async function renderCoupons(){
         <div class="code">${c.code}</div>
         <div class="meta">${formatCouponValue(c)}${c.expires_at ? ' · caduca ' + c.expires_at : ''}${c.description ? ' · ' + c.description : ''}</div>
       </div>
-      <div style="display:flex; align-items:center; gap:10px;">
+      <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
         <span class="coupon-badge ${c.active ? 'active' : 'inactive'}">${c.active ? 'Activo' : 'Inactivo'}</span>
         <button class="btn btn-ghost" data-toggle-coupon="${c.id}" data-active="${c.active}">${c.active ? 'Desactivar' : 'Activar'}</button>
+        <button class="btn btn-ghost" data-edit-coupon="${c.id}">✏️ Editar</button>
+        <button class="btn btn-deny" data-delete-coupon="${c.id}">🗑️ Borrar</button>
       </div>
     </div>`).join('');
 
@@ -1013,6 +1087,101 @@ async function renderCoupons(){
       const isActive = btn.dataset.active === 'true';
       await supabase.from('coupons').update({ active: !isActive }).eq('id', id);
       await renderCoupons();
+    });
+  });
+
+  container.querySelectorAll('[data-edit-coupon]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const c = data.find(x => x.id === btn.dataset.editCoupon);
+      if (c) startEditCoupon(c);
+    });
+  });
+
+  container.querySelectorAll('[data-delete-coupon]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const c = data.find(x => x.id === btn.dataset.deleteCoupon);
+      if (!confirm(`¿Borrar definitivamente el cupón ${c.code}? Esta acción no se puede deshacer.`)) return;
+      btn.disabled = true;
+      const { error } = await supabase.from('coupons').delete().eq('id', c.id);
+      if (error){
+        alert('No se ha podido borrar: ' + error.message);
+        btn.disabled = false;
+        return;
+      }
+      if (editingCouponId === c.id) cancelEditCoupon();
+      await renderCoupons();
+    });
+  });
+}
+
+// ---------- Decorations ----------
+document.getElementById('decorForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const fileInput = document.getElementById('decor_file');
+  const file = fileInput.files[0];
+  const msgEl = document.getElementById('decorFormMsg');
+  const submitBtn = document.getElementById('decorSubmitBtn');
+  if (!file) return;
+
+  submitBtn.disabled = true;
+  msgEl.textContent = 'Subiendo foto…';
+
+  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
+  const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+
+  const { error: uploadError } = await supabase.storage.from('decoraciones').upload(path, file);
+  if (uploadError){
+    msgEl.textContent = 'No se ha podido subir la foto: ' + uploadError.message;
+    submitBtn.disabled = false;
+    return;
+  }
+
+  const caption = document.getElementById('decor_caption').value.trim() || null;
+  const { error: insertError } = await supabase.from('decorations').insert({ image_path: path, caption });
+  if (insertError){
+    msgEl.textContent = 'No se ha podido guardar la foto: ' + insertError.message;
+    submitBtn.disabled = false;
+    return;
+  }
+
+  msgEl.textContent = 'Foto añadida ✅';
+  e.target.reset();
+  submitBtn.disabled = false;
+  await renderDecorations();
+});
+
+async function renderDecorations(){
+  const container = document.getElementById('decorAdminList');
+  const { data, error } = await supabase.from('decorations').select('*').order('created_at', { ascending: false });
+  if (error){
+    container.innerHTML = `<p class="empty-msg">Error cargando decoraciones: ${error.message}</p>`;
+    return;
+  }
+  if (!data || !data.length){
+    container.innerHTML = '<p class="empty-msg">Todavía no has añadido ninguna foto de decoración.</p>';
+    return;
+  }
+  container.innerHTML = data.map(d => {
+    const { data: pub } = supabase.storage.from('decoraciones').getPublicUrl(d.image_path);
+    return `
+      <div class="decor-admin-card">
+        <img src="${pub.publicUrl}" alt="${(d.caption || 'Decoración').replace(/"/g, '&quot;')}">
+        <div class="decor-admin-meta">
+          <p>${d.caption || ''}</p>
+          <button class="btn btn-deny" data-delete-decor="${d.id}" data-path="${d.image_path}" style="font-size:11.5px; padding:5px 10px;">🗑️ Borrar</button>
+        </div>
+      </div>`;
+  }).join('');
+
+  container.querySelectorAll('[data-delete-decor]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('¿Borrar esta foto de decoración? No se puede deshacer.')) return;
+      btn.disabled = true;
+      const id = btn.dataset.deleteDecor;
+      const path = btn.dataset.path;
+      await supabase.storage.from('decoraciones').remove([path]);
+      await supabase.from('decorations').delete().eq('id', id);
+      await renderDecorations();
     });
   });
 }
