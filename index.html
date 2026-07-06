@@ -784,7 +784,7 @@
 
 <script type="module">
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { computeDiscount, lookupCoupon, couponSummary } from './assets/coupons.js';
+import { computeDiscount, lookupCoupon, couponSummary, formatPrice } from './assets/coupons.js';
 
 const SUPABASE_URL = 'https://ztsdkfwnqrlmsirfvoat.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0c2RrZnducXJsbXNpcmZ2b2F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwOTM5OTksImV4cCI6MjA5ODY2OTk5OX0.ODimfaCqTpK8fkY4Oobk8kSR3rppb_afmoTTXG8H2os';
@@ -897,12 +897,12 @@ async function loadPricing(){
       ${g.rows.map(r => `
         <div class="price-row">
           <div><span class="lbl">${r.label}</span><span class="hrs">${r.hours_range}</span></div>
-          <div class="amt">${Number(r.price).toFixed(0)}€</div>
+          <div class="amt">${formatPrice(r.price)}</div>
         </div>`).join('')}
     </div>`).join('');
 
   if (extras && extras.length){
-    note.innerHTML = 'Extras: <br>' + `<ul class="extras-list">${extras.map(e => `<li><span>${e.name}</span><span>${e.unit==='a_consultar' ? 'a consultar' : Number(e.price).toFixed(2).replace('.00','') + '€' + (e.unit==='hora' ? '/hora' : e.unit==='por_nino' ? '/niño' : '')}</span></li>`).join('')}</ul>`;
+    note.innerHTML = 'Extras: <br>' + `<ul class="extras-list">${extras.map(e => `<li><span>${e.name}</span><span>${e.unit==='a_consultar' ? 'a consultar' : formatPrice(e.price) + (e.unit==='hora' ? '/hora' : e.unit==='por_nino' ? '/niño' : '')}</span></li>`).join('')}</ul>`;
   } else {
     note.textContent = '';
   }
@@ -1012,7 +1012,7 @@ function renderPlanOptions(dateStr){
     return `
       <label class="plan-option">
         <span><input type="radio" name="pricing_plan" value="${p.id}" data-start="${start}" data-end="${end}" ${i===0?'checked':''}> ${p.label} <span style="color:var(--ink-soft); font-size:12.5px;">(${p.hours_range})</span></span>
-        <span class="amt">${Number(p.price).toFixed(0)}€</span>
+        <span class="amt">${formatPrice(p.price)}</span>
       </label>`;
   }).join('');
 
@@ -1049,13 +1049,13 @@ function updateSummary(){
   const discount = appliedCoupon ? computeDiscount(total, appliedCoupon) : 0;
   const finalTotal = Math.max(0, total - discount);
 
-  document.getElementById('totalAmount').textContent = `${finalTotal.toFixed(0)}€`;
+  document.getElementById('totalAmount').textContent = formatPrice(finalTotal);
   document.getElementById('totalDecoNote').hidden = !wantsDeco;
 
   const couponNote = document.getElementById('couponAppliedNote');
   if (appliedCoupon && discount > 0){
     couponNote.hidden = false;
-    couponNote.innerHTML = `Cupón <strong>${appliedCoupon.code}</strong> aplicado (${couponSummary(appliedCoupon)}): descuento de ${discount.toFixed(0)}€ sobre ${total.toFixed(0)}€.`;
+    couponNote.innerHTML = `Cupón <strong>${appliedCoupon.code}</strong> aplicado (${couponSummary(appliedCoupon)}): descuento de ${formatPrice(discount)} sobre ${formatPrice(total)}.`;
   } else {
     couponNote.hidden = true;
   }

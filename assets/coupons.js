@@ -1,5 +1,9 @@
 // Lógica de cupones de descuento, compartida entre index.html y admin.html.
 
+export function formatPrice(n){
+  return `${Number(n).toFixed(2).replace(/\.00$/, '')}€`;
+}
+
 export function computeDiscount(baseTotal, coupon){
   if (!coupon) return 0;
   const value = Number(coupon.discount_value);
@@ -22,7 +26,7 @@ export async function lookupCoupon(supabase, codeRaw){
 export function couponSummary(coupon){
   if (!coupon) return '';
   if (coupon.discount_type === 'percentage') return `${Number(coupon.discount_value)}% de descuento`;
-  if (coupon.discount_type === 'fixed_amount') return `${Number(coupon.discount_value).toFixed(0)}€ de descuento`;
-  if (coupon.discount_type === 'fixed_price') return `precio final de ${Number(coupon.discount_value).toFixed(0)}€`;
+  if (coupon.discount_type === 'fixed_amount') return `${formatPrice(coupon.discount_value)} de descuento`;
+  if (coupon.discount_type === 'fixed_price') return `precio final de ${formatPrice(coupon.discount_value)}`;
   return '';
 }
