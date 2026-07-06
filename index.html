@@ -281,6 +281,19 @@
   }
   .modal-close:hover{ color:var(--ink); }
   #privacyModal{ z-index:101; }
+  /* ---------- Lightbox de galería ---------- */
+  .decor-grid img, .sala-gallery img{ cursor:zoom-in; }
+  .lightbox-overlay{
+    position:fixed; inset:0; background:rgba(20,18,14,.9); z-index:200;
+    display:flex; align-items:center; justify-content:center; padding:20px;
+  }
+  .lightbox-overlay[hidden]{ display:none; }
+  .lightbox-overlay img{ max-width:100%; max-height:90vh; width:auto; height:auto; object-fit:contain; display:block; }
+  .lightbox-close{
+    position:absolute; top:16px; right:20px; background:none; border:none; cursor:pointer;
+    font-size:34px; line-height:1; color:#fff; padding:4px 10px;
+  }
+  .lightbox-close:hover{ opacity:.8; }
   .checkbox-row.privacy{ align-items:flex-start; margin:18px 0 10px; font-size:13.5px; color:var(--ink-soft); }
   .checkbox-row.privacy input{ margin-top:3px; }
   .checkbox-row.privacy a{ color:var(--olive-dark); text-decoration:underline; }
@@ -786,6 +799,11 @@
   </div>
 </div>
 
+<div class="lightbox-overlay" id="lightboxOverlay" hidden>
+  <button type="button" class="lightbox-close" id="lightboxClose" aria-label="Cerrar">×</button>
+  <img id="lightboxImg" src="" alt="">
+</div>
+
 <div class="cookie-banner" id="cookieBanner" hidden>
   <p>Usamos cookies propias necesarias para el funcionamiento de la web. El muro de Facebook y el mapa de Google, más abajo, solo se cargan si los aceptas y en ese caso pueden instalar sus propias cookies. Más información en nuestra <a href="#" id="cookiePolicyLinkBanner">política de cookies</a>.</p>
   <div class="cookie-banner-actions">
@@ -985,6 +1003,26 @@ function initCookieConsent(){
 }
 
 initCookieConsent();
+
+// ---------- Lightbox de galería ----------
+const lightboxOverlay = document.getElementById('lightboxOverlay');
+const lightboxImg = document.getElementById('lightboxImg');
+function openLightbox(src, alt){
+  lightboxImg.src = src;
+  lightboxImg.alt = alt || '';
+  lightboxOverlay.hidden = false;
+}
+function closeLightbox(){
+  lightboxOverlay.hidden = true;
+  lightboxImg.src = '';
+}
+document.addEventListener('click', (e) => {
+  const img = e.target.closest('.decor-grid img, .sala-gallery img');
+  if (img) openLightbox(img.src, img.alt);
+});
+document.getElementById('lightboxClose').addEventListener('click', closeLightbox);
+lightboxOverlay.addEventListener('click', (e) => { if (e.target === lightboxOverlay) closeLightbox(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !lightboxOverlay.hidden) closeLightbox(); });
 
 const EVENT_ICONS = {
   default: '<path d="M12 3v18M4 8h16M4 16h16" stroke="currentColor" stroke-width="1.4" fill="none"/>'
