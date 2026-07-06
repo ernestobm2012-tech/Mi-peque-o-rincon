@@ -105,7 +105,8 @@
     display:grid; grid-template-columns: 1.1fr .9fr; gap:56px; align-items:center;
   }
   @media (max-width:860px){ .hero-grid{ grid-template-columns:1fr; gap:36px; } }
-  .hero-logo{ height:92px; width:auto; display:block; margin-bottom:20px; }
+  .hero-logo{ height:170px; width:auto; display:block; margin:0 auto; }
+  .hero-logo-divider{ margin:14px 0 26px; }
   .hero h1{ font-size:clamp(34px, 5vw, 58px); line-height:1.04; }
   .hero h1 em{ font-style:italic; color:var(--olive-dark); }
   .hero p.lead{ margin-top:20px; font-size:17px; color:var(--ink-soft); max-width:46ch;}
@@ -400,6 +401,16 @@
   <div class="wrap hero-grid">
     <div>
       <img src="assets/logo-mpr.jpg" alt="Mi Pequeño Rincón" class="hero-logo">
+      <div class="branch-divider hero-logo-divider" aria-hidden="true">
+        <svg viewBox="0 0 180 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M2 14 C 45 4, 135 24, 178 14" stroke="#7C9A44" stroke-width="1.2"/>
+          <ellipse cx="30" cy="9" rx="7" ry="3.2" transform="rotate(-24 30 9)" fill="#7C9A44"/>
+          <ellipse cx="60" cy="21" rx="7" ry="3.2" transform="rotate(20 60 21)" fill="#7C9A44"/>
+          <ellipse cx="95" cy="9" rx="7" ry="3.2" transform="rotate(-18 95 9)" fill="#B4924E"/>
+          <ellipse cx="128" cy="20" rx="7" ry="3.2" transform="rotate(22 128 20)" fill="#7C9A44"/>
+          <ellipse cx="155" cy="10" rx="7" ry="3.2" transform="rotate(-20 155 10)" fill="#7C9A44"/>
+        </svg>
+      </div>
       <p class="eyebrow">Chozas de Canales · Sala de eventos</p>
       <h1>Tu celebración,<br><em>a tu manera</em>.</h1>
       <p class="lead">Sala actual y versátil, <strong>climatizada por conducto todo el año</strong>, acondicionada para bodas, comuniones, bautizos, cumpleaños y todo tipo de eventos. Nos ocupamos del espacio para que tú solo te ocupes de disfrutar.</p>
