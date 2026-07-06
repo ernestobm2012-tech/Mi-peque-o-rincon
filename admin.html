@@ -216,7 +216,7 @@
     <div class="stats-row">
       <div class="stat-card">
         <span class="num" id="statIncome">0€</span>
-        <span class="lbl">Ingresos totales (confirmadas)</span>
+        <span class="lbl">Ingresos totales de alquiler (sin menús)</span>
       </div>
       <div class="stat-card">
         <span class="num" id="statConfirmed">0</span>
@@ -225,6 +225,14 @@
       <div class="stat-card">
         <span class="num" id="statPending">0</span>
         <span class="lbl">Reservas pendientes</span>
+      </div>
+      <div class="stat-card">
+        <span class="num" id="statKidsMenus">0 · 0€</span>
+        <span class="lbl">Menús infantiles (subcontratado, aparte)</span>
+      </div>
+      <div class="stat-card">
+        <span class="num" id="statDecorCost">0 · 0€</span>
+        <span class="lbl">Decoraciones (coste interno)</span>
       </div>
     </div>
     <details class="stats-months">
@@ -397,7 +405,12 @@
         <div class="conditional-field" id="nrDecorationField" hidden>
           <label for="nr_decoration_theme">Temática</label>
           <input type="text" id="nr_decoration_theme">
+          <label for="nr_decoration_cost" style="margin-top:10px;">Coste interno de la decoración (opcional, solo visible aquí)</label>
+          <input type="number" id="nr_decoration_cost" min="0" step="0.01">
         </div>
+
+        <div class="checkbox-row"><input type="checkbox" id="nr_wants_catering"><label for="nr_wants_catering" style="margin:0; text-transform:none; font-size:14px;">Catering (precio a consultar)</label></div>
+        <div class="checkbox-row"><input type="checkbox" id="nr_wants_animation"><label for="nr_wants_animation" style="margin:0; text-transform:none; font-size:14px;">Animación (precio a consultar)</label></div>
       </div>
       <div class="field">
         <label for="nr_message">Notas (opcional)</label>
@@ -599,17 +612,28 @@ function reservationTotal(r){
   return Math.max(0, total);
 }
 
+function kidsMenuRevenue(r){
+  return (r.kids_menus_count || 0) * getExtraPrice('infantil');
+}
+
 async function updateStats(){
   const { data, error } = await supabase.from('reservations').select('*');
   if (error || !data) return;
 
   const confirmed = data.filter(r => r.status === 'confirmada');
   const pending = data.filter(r => r.status === 'pendiente');
-  const totalIncome = confirmed.reduce((sum, r) => sum + reservationTotal(r), 0);
+  const totalIncome = confirmed.reduce((sum, r) => sum + reservationTotal(r) - kidsMenuRevenue(r), 0);
+
+  const kidsMenuCount = confirmed.reduce((sum, r) => sum + (r.kids_menus_count || 0), 0);
+  const kidsMenuTotal = confirmed.reduce((sum, r) => sum + kidsMenuRevenue(r), 0);
+  const decorReservations = confirmed.filter(r => r.wants_decoration);
+  const decorCostTotal = decorReservations.reduce((sum, r) => sum + Number(r.decoration_cost || 0), 0);
 
   document.getElementById('statIncome').textContent = formatPrice(totalIncome);
   document.getElementById('statConfirmed').textContent = confirmed.length;
   document.getElementById('statPending').textContent = pending.length;
+  document.getElementById('statKidsMenus').textContent = `${kidsMenuCount} · ${formatPrice(kidsMenuTotal)}`;
+  document.getElementById('statDecorCost').textContent = `${decorReservations.length} · ${formatPrice(decorCostTotal)}`;
 
   const byMonth = {};
   confirmed.forEach(r => {
@@ -617,7 +641,7 @@ async function updateStats(){
     if (!key) return;
     if (!byMonth[key]) byMonth[key] = { count: 0, total: 0 };
     byMonth[key].count += 1;
-    byMonth[key].total += reservationTotal(r);
+    byMonth[key].total += reservationTotal(r) - kidsMenuRevenue(r);
   });
   const months = Object.keys(byMonth).sort().reverse();
   const table = document.getElementById('statsMonthsTable');
@@ -679,8 +703,10 @@ async function loadReservations(){
     const plan = ALL_PLANS.find(p => p.id === r.pricing_plan_id);
     const extras = [];
     if (r.wants_cleaning) extras.push('Limpieza');
-    if (r.wants_decoration) extras.push(`Decoración${r.decoration_theme ? ' (' + r.decoration_theme + ')' : ''}`);
+    if (r.wants_decoration) extras.push(`Decoración${r.decoration_theme ? ' (' + r.decoration_theme + ')' : ''}${r.decoration_cost ? ' — coste interno ' + formatPrice(r.decoration_cost) : ''}`);
     if (r.kids_menus_count) extras.push(`${r.kids_menus_count} menú(s) infantil(es)`);
+    if (r.wants_catering) extras.push('Catering');
+    if (r.wants_animation) extras.push('Animación');
 
     const actions = `<div class="res-actions">
         ${r.status === 'pendiente'
@@ -1361,6 +1387,9 @@ function openEditResModal(r){
   document.getElementById('nr_wants_decoration').checked = !!r.wants_decoration;
   document.getElementById('nrDecorationField').hidden = !r.wants_decoration;
   document.getElementById('nr_decoration_theme').value = r.decoration_theme || '';
+  document.getElementById('nr_decoration_cost').value = r.decoration_cost ?? '';
+  document.getElementById('nr_wants_catering').checked = !!r.wants_catering;
+  document.getElementById('nr_wants_animation').checked = !!r.wants_animation;
   document.getElementById('nr_message').value = r.message || '';
 
   nrAppliedCoupon = null;
@@ -1419,6 +1448,11 @@ newResForm.addEventListener('submit', async (e) => {
     wants_cleaning: document.getElementById('nr_wants_cleaning').checked,
     wants_decoration: wantsDecoration,
     decoration_theme: wantsDecoration ? (document.getElementById('nr_decoration_theme').value.trim() || null) : null,
+    decoration_cost: wantsDecoration && document.getElementById('nr_decoration_cost').value
+      ? Number(document.getElementById('nr_decoration_cost').value)
+      : null,
+    wants_catering: document.getElementById('nr_wants_catering').checked,
+    wants_animation: document.getElementById('nr_wants_animation').checked,
     kids_menus_count: wantsKidsMenu ? Number(document.getElementById('nr_kids_menus').value || 1) : 0,
     message: document.getElementById('nr_message').value.trim() || null,
     coupon_code: nrAppliedCoupon ? nrAppliedCoupon.code : (document.getElementById('nr_coupon_code').value.trim() || null),
