@@ -263,6 +263,7 @@
     font-family:'Work Sans',sans-serif; font-size:14.5px; color:var(--ink); border-radius:var(--radius);
   }
   .field textarea{ resize:vertical; min-height:80px; }
+  .field input[readonly]{ background:var(--cream-2); color:var(--ink-soft); cursor:default; }
   .field-row{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
   @media (max-width:600px){ .field-row{ grid-template-columns:1fr; } }
   .checkbox-row{ display:flex; align-items:center; gap:8px; font-size:14px; margin-bottom:10px;}
@@ -606,8 +607,16 @@
         <label>Tarifa</label>
         <div class="plan-options" id="planOptions"></div>
       </div>
-      <input type="hidden" id="start_time">
-      <input type="hidden" id="end_time">
+      <div class="field-row">
+        <div class="field">
+          <label for="start_time">Hora de inicio</label>
+          <input type="time" id="start_time" readonly>
+        </div>
+        <div class="field">
+          <label for="end_time">Hora de fin</label>
+          <input type="time" id="end_time" readonly>
+        </div>
+      </div>
       <div class="field">
         <label>Extras</label>
         <div class="checkbox-row"><input type="checkbox" id="wants_cleaning"><label for="wants_cleaning" style="margin:0; text-transform:none; font-size:14px;">Servicio de limpieza (+25€)</label></div>
