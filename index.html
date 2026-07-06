@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mi Pequeño Rincón — Sala de eventos en Chozas de Canales</title>
-<meta name="description" content="Sala de eventos en Chozas de Canales. Bodas, comuniones, bautizos, cumpleaños, catas de vino y reuniones de empresa. Reserva tu fecha online.">
+<meta name="description" content="Sala de eventos climatizada en Chozas de Canales. Bodas, comuniones, bautizos, cumpleaños, catas de vino y reuniones de empresa. Reserva tu fecha online.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,500&family=Work+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -108,6 +108,7 @@
   .hero h1{ font-size:clamp(34px, 5vw, 58px); line-height:1.04; }
   .hero h1 em{ font-style:italic; color:var(--olive-dark); }
   .hero p.lead{ margin-top:20px; font-size:17px; color:var(--ink-soft); max-width:46ch;}
+  .hero p.lead strong{ color:var(--olive-dark); font-weight:600; }
   .hero .cta-row{ display:flex; gap:14px; margin-top:32px; flex-wrap:wrap;}
   .btn{
     display:inline-flex; align-items:center; gap:8px;
@@ -126,6 +127,7 @@
   @media (max-width:860px){ .hero-figure img{ max-height:280px; } }
   .hero-tags{ display:flex; gap:10px; margin-top:22px; flex-wrap:wrap; }
   .tag{ font-size:12px; letter-spacing:.04em; border:1px solid var(--line); padding:6px 12px; color:var(--ink-soft); }
+  .tag.tag-highlight{ border-color:var(--olive-dark); color:var(--olive-dark); font-weight:600; background:var(--cream-2); }
 
   /* ---------- Sections generic ---------- */
   section{ padding:88px 0; }
@@ -137,6 +139,7 @@
   .about-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:56px; align-items:start; }
   @media (max-width:860px){ .about-grid{ grid-template-columns:1fr; gap:28px; } }
   .about-grid p{ color:var(--ink-soft); font-size:16px; }
+  .about-grid p strong{ color:var(--olive-dark); font-weight:600; }
   .stat-row{ display:flex; gap:36px; margin-top:32px; flex-wrap:wrap; }
   .stat b{ display:block; font-family:'Fraunces',serif; font-size:34px; color:var(--olive-dark); }
   .stat span{ font-size:12.5px; color:var(--ink-soft); letter-spacing:.03em; }
@@ -372,18 +375,18 @@
   <div class="wrap hero-grid">
     <div>
       <p class="eyebrow">Chozas de Canales · Sala de eventos</p>
-      <h1>Tu celebración,<br><em>a tu manera</em>, en tu pueblo.</h1>
-      <p class="lead">Sala actual y versátil, acondicionada para bodas, comuniones, bautizos, cumpleaños, catas de vino y reuniones de empresa. Nos ocupamos del espacio para que tú solo te ocupes de disfrutar.</p>
+      <h1>Tu celebración,<br><em>a tu manera</em>.</h1>
+      <p class="lead">Sala actual y versátil, <strong>climatizada por conducto todo el año</strong>, acondicionada para bodas, comuniones, bautizos, cumpleaños, catas de vino y reuniones de empresa. Nos ocupamos del espacio para que tú solo te ocupes de disfrutar.</p>
       <div class="cta-row">
         <a href="#reserva" class="btn btn-primary">Consultar disponibilidad</a>
         <a href="#precios" class="btn btn-ghost">Ver precios</a>
       </div>
       <div class="hero-tags">
+        <span class="tag tag-highlight">❄️ Climatizada, verano e invierno</span>
         <span class="tag">Hasta 12 horas seguidas</span>
         <span class="tag">Findes y festivos</span>
         <span class="tag">Menús infantiles</span>
         <span class="tag">Decoración a medida</span>
-        <span class="tag">Climatizada, verano e invierno</span>
       </div>
     </div>
     <div class="hero-figure">
@@ -410,7 +413,7 @@
       <h2>Un rincón con espacio<br>para cada tipo de plan.</h2>
     </div>
     <div>
-      <p>Mi Pequeño Rincón es una sala de eventos en Chozas de Canales, pensada para que cada celebración tenga el espacio, el tiempo y la tranquilidad que necesita. Está acondicionada y adaptada para la comodidad de nuestros clientes, con climatización por conducto que mantiene la sala a gusto tanto en verano como en invierno, horarios flexibles de lunes a domingo y franjas especiales para findes y vísperas de festivo.</p>
+      <p>Mi Pequeño Rincón es una sala de eventos en Chozas de Canales con <strong>climatización por conducto en toda la sala</strong>, así que da igual si tu celebración es en pleno agosto o en enero: siempre se está a gusto. Está pensada para que cada celebración tenga el espacio, el tiempo y la tranquilidad que necesita, con horarios flexibles de lunes a domingo y franjas especiales para findes y vísperas de festivo.</p>
       <p>Ya sea una comida familiar de tres horas o un día completo con la Franja Golden hasta medianoche, tú eliges cuánto tiempo necesitas y nosotros preparamos la sala.</p>
       <div class="stat-row">
         <div class="stat"><b>7</b><span>días a la semana</span></div>
@@ -781,7 +784,7 @@
 
 <script type="module">
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { computeDiscount, lookupCoupon, couponSummary } from './assets/coupons.js';
+import { computeDiscount, lookupCoupon, couponSummary, formatPrice, couponAppliesTo, COUPON_SCOPE_LABELS } from './assets/coupons.js';
 
 const SUPABASE_URL = 'https://ztsdkfwnqrlmsirfvoat.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0c2RrZnducXJsbXNpcmZ2b2F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwOTM5OTksImV4cCI6MjA5ODY2OTk5OX0.ODimfaCqTpK8fkY4Oobk8kSR3rppb_afmoTTXG8H2os';
@@ -894,12 +897,12 @@ async function loadPricing(){
       ${g.rows.map(r => `
         <div class="price-row">
           <div><span class="lbl">${r.label}</span><span class="hrs">${r.hours_range}</span></div>
-          <div class="amt">${Number(r.price).toFixed(0)}€</div>
+          <div class="amt">${formatPrice(r.price)}</div>
         </div>`).join('')}
     </div>`).join('');
 
   if (extras && extras.length){
-    note.innerHTML = 'Extras: <br>' + `<ul class="extras-list">${extras.map(e => `<li><span>${e.name}</span><span>${e.unit==='a_consultar' ? 'a consultar' : Number(e.price).toFixed(2).replace('.00','') + '€' + (e.unit==='hora' ? '/hora' : e.unit==='por_nino' ? '/niño' : '')}</span></li>`).join('')}</ul>`;
+    note.innerHTML = 'Extras: <br>' + `<ul class="extras-list">${extras.map(e => `<li><span>${e.name}</span><span>${e.unit==='a_consultar' ? 'a consultar' : formatPrice(e.price) + (e.unit==='hora' ? '/hora' : e.unit==='por_nino' ? '/niño' : '')}</span></li>`).join('')}</ul>`;
   } else {
     note.textContent = '';
   }
@@ -1009,7 +1012,7 @@ function renderPlanOptions(dateStr){
     return `
       <label class="plan-option">
         <span><input type="radio" name="pricing_plan" value="${p.id}" data-start="${start}" data-end="${end}" ${i===0?'checked':''}> ${p.label} <span style="color:var(--ink-soft); font-size:12.5px;">(${p.hours_range})</span></span>
-        <span class="amt">${Number(p.price).toFixed(0)}€</span>
+        <span class="amt">${formatPrice(p.price)}</span>
       </label>`;
   }).join('');
 
@@ -1046,13 +1049,13 @@ function updateSummary(){
   const discount = appliedCoupon ? computeDiscount(total, appliedCoupon) : 0;
   const finalTotal = Math.max(0, total - discount);
 
-  document.getElementById('totalAmount').textContent = `${finalTotal.toFixed(0)}€`;
+  document.getElementById('totalAmount').textContent = formatPrice(finalTotal);
   document.getElementById('totalDecoNote').hidden = !wantsDeco;
 
   const couponNote = document.getElementById('couponAppliedNote');
   if (appliedCoupon && discount > 0){
     couponNote.hidden = false;
-    couponNote.innerHTML = `Cupón <strong>${appliedCoupon.code}</strong> aplicado (${couponSummary(appliedCoupon)}): descuento de ${discount.toFixed(0)}€ sobre ${total.toFixed(0)}€.`;
+    couponNote.innerHTML = `Cupón <strong>${appliedCoupon.code}</strong> aplicado (${couponSummary(appliedCoupon)}): descuento de ${formatPrice(discount)} sobre ${formatPrice(total)}.`;
   } else {
     couponNote.hidden = true;
   }
@@ -1077,6 +1080,9 @@ async function applyCoupon(){
   if (notFound || !coupon){
     appliedCoupon = null;
     msg.textContent = 'Ese cupón no existe o ha caducado.';
+  } else if (!couponAppliesTo(coupon, dayGroupFor(selectedDate))){
+    appliedCoupon = null;
+    msg.textContent = `Ese cupón solo es válido para ${COUPON_SCOPE_LABELS[coupon.applies_to]}.`;
   } else {
     appliedCoupon = coupon;
     msg.textContent = `¡Cupón válido! ${couponSummary(coupon)}.`;

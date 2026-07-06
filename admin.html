@@ -285,6 +285,14 @@
           </div>
         </div>
         <div class="field">
+          <label for="cp_applies_to">Aplica a</label>
+          <select id="cp_applies_to">
+            <option value="todos">Todas las tarifas</option>
+            <option value="lunes_jueves">Solo entre semana (lunes a jueves)</option>
+            <option value="viernes_domingo_festivos">Solo fin de semana, festivos y vísperas</option>
+          </select>
+        </div>
+        <div class="field">
           <label for="cp_description">Descripción interna (opcional)</label>
           <input type="text" id="cp_description" placeholder="Ej: promo Instagram julio, cliente fiel Laura...">
         </div>
@@ -417,7 +425,7 @@
 
 <script type="module">
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { computeDiscount, lookupCoupon, couponSummary } from './assets/coupons.js';
+import { computeDiscount, lookupCoupon, couponSummary, formatPrice, couponAppliesTo, COUPON_SCOPE_LABELS } from './assets/coupons.js';
 
 const SUPABASE_URL = 'https://ztsdkfwnqrlmsirfvoat.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0c2RrZnducXJsbXNpcmZ2b2F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwOTM5OTksImV4cCI6MjA5ODY2OTk5OX0.ODimfaCqTpK8fkY4Oobk8kSR3rppb_afmoTTXG8H2os';
@@ -541,8 +549,8 @@ function waNumber(phone){
 function buildConfirmMessage(r, plan){
   const total = plan ? reservationTotal(r) : null;
   let msg = `Hola ${r.full_name} 👋 Te confirmamos tu reserva en *Mi Pequeño Rincón* para el ${fmtDate(r.event_date)}, de ${r.start_time} a ${r.end_time} (${r.event_type}).`;
-  if (total != null) msg += `\n\nTotal estimado: ${total.toFixed(0)}€.`;
-  if (r.coupon_code && Number(r.discount_amount) > 0) msg += ` (incluye descuento del cupón *${r.coupon_code}*: -${Number(r.discount_amount).toFixed(0)}€)`;
+  if (total != null) msg += `\n\nTotal estimado: ${formatPrice(total)}.`;
+  if (r.coupon_code && Number(r.discount_amount) > 0) msg += ` (incluye descuento del cupón *${r.coupon_code}*: -${formatPrice(r.discount_amount)})`;
   msg += `\n\nPara cerrar la reserva pedimos una señal de 20€ (efectivo o Bizum)`;
   if (r.wants_decoration) msg += `, más otros 20€ de señal por la decoración personalizada`;
   msg += `. El día del evento se pide además una fianza de 50€, que se devuelve si la sala queda en las mismas condiciones.\n\n¡Te esperamos! 🌿`;
@@ -599,7 +607,7 @@ async function updateStats(){
   const pending = data.filter(r => r.status === 'pendiente');
   const totalIncome = confirmed.reduce((sum, r) => sum + reservationTotal(r), 0);
 
-  document.getElementById('statIncome').textContent = `${totalIncome.toFixed(0)}€`;
+  document.getElementById('statIncome').textContent = formatPrice(totalIncome);
   document.getElementById('statConfirmed').textContent = confirmed.length;
   document.getElementById('statPending').textContent = pending.length;
 
@@ -617,7 +625,7 @@ async function updateStats(){
     ? months.map(m => {
         const label = new Date(m + '-01T00:00:00').toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
         const info = byMonth[m];
-        return `<tr><td>${label}</td><td>${info.count} reserva(s)</td><td>${info.total.toFixed(0)}€</td></tr>`;
+        return `<tr><td>${label}</td><td>${info.count} reserva(s)</td><td>${formatPrice(info.total)}</td></tr>`;
       }).join('')
     : '<tr><td>Todavía no hay reservas confirmadas.</td></tr>';
 }
@@ -694,9 +702,9 @@ async function loadReservations(){
           <div>📅 ${fmtDate(r.event_date)} · ⏰ ${r.start_time}-${r.end_time}</div>
           <div>🎉 ${r.event_type}${r.guests_estimate ? ' · 👥 ' + r.guests_estimate + ' invitados' : ''}</div>
           <div>📞 ${r.phone}${r.email ? ' · ' + r.email : ''}</div>
-          ${plan ? `<div>💶 ${plan.label} — ${Number(plan.price).toFixed(0)}€ · Total est. ${reservationTotal(r).toFixed(0)}€</div>` : ''}
+          ${plan ? `<div>💶 ${plan.label} — ${formatPrice(plan.price)} · Total est. ${formatPrice(reservationTotal(r))}</div>` : ''}
           ${extras.length ? `<div>➕ ${extras.join(', ')}</div>` : ''}
-          ${r.coupon_code ? `<div>🏷️ Cupón ${r.coupon_code} (-${Number(r.discount_amount || 0).toFixed(0)}€)</div>` : ''}
+          ${r.coupon_code ? `<div>🏷️ Cupón ${r.coupon_code} (-${formatPrice(r.discount_amount || 0)})</div>` : ''}
           ${r.message ? `<div>💬 “${r.message}”</div>` : ''}
           <div>${SOURCE_LABELS[r.source] || r.source || ''}</div>
         </div>
@@ -916,7 +924,7 @@ function showCalDay(dateStr, reservations){
           <div class="res-meta">
             <div>⏰ ${r.start_time}-${r.end_time} · 🎉 ${r.event_type}</div>
             <div>📞 ${r.phone}</div>
-            ${plan ? `<div>💶 Total est. ${reservationTotal(r).toFixed(0)}€</div>` : ''}
+            ${plan ? `<div>💶 Total est. ${formatPrice(reservationTotal(r))}</div>` : ''}
             <div>${SOURCE_LABELS[r.source] || r.source || ''}</div>
           </div>
           <div class="res-actions">
@@ -989,7 +997,7 @@ async function renderClients(){
         <div class="count-lbl">reservas</div>
       </div>
       <div>
-        <div class="count">${c.total.toFixed(0)}€</div>
+        <div class="count">${formatPrice(c.total)}</div>
         <div class="count-lbl">gastado</div>
       </div>
     </div>`).join('');
@@ -1014,6 +1022,7 @@ function startEditCoupon(c){
   cpValueLabel.textContent = c.discount_type === 'percentage' ? 'Valor (%)' : 'Valor (€)';
   document.getElementById('cp_value').value = c.discount_value;
   document.getElementById('cp_expires').value = c.expires_at || '';
+  document.getElementById('cp_applies_to').value = c.applies_to || 'todos';
   document.getElementById('cp_description').value = c.description || '';
   couponFormTitle.textContent = `Editar cupón ${c.code}`;
   couponSubmitBtn.textContent = 'Guardar cambios';
@@ -1041,6 +1050,7 @@ document.getElementById('couponForm').addEventListener('submit', async (e) => {
     code: document.getElementById('cp_code').value.trim().toUpperCase(),
     discount_type: cpTypeSelect.value,
     discount_value: Number(document.getElementById('cp_value').value),
+    applies_to: document.getElementById('cp_applies_to').value,
     description: document.getElementById('cp_description').value.trim() || null,
     expires_at: document.getElementById('cp_expires').value || null,
   };
@@ -1063,8 +1073,8 @@ document.getElementById('couponForm').addEventListener('submit', async (e) => {
 
 function formatCouponValue(c){
   if (c.discount_type === 'percentage') return `${Number(c.discount_value)}%`;
-  if (c.discount_type === 'fixed_amount') return `${Number(c.discount_value).toFixed(0)}€ dto.`;
-  if (c.discount_type === 'fixed_price') return `precio final ${Number(c.discount_value).toFixed(0)}€`;
+  if (c.discount_type === 'fixed_amount') return `${formatPrice(c.discount_value)} dto.`;
+  if (c.discount_type === 'fixed_price') return `precio final ${formatPrice(c.discount_value)}`;
   return '';
 }
 
@@ -1083,7 +1093,7 @@ async function renderCoupons(){
     <div class="coupon-card">
       <div>
         <div class="code">${c.code}</div>
-        <div class="meta">${formatCouponValue(c)}${c.expires_at ? ' · caduca ' + c.expires_at : ''}${c.description ? ' · ' + c.description : ''}</div>
+        <div class="meta">${formatCouponValue(c)}${c.applies_to && c.applies_to !== 'todos' ? ' · ' + COUPON_SCOPE_LABELS[c.applies_to] : ''}${c.expires_at ? ' · caduca ' + c.expires_at : ''}${c.description ? ' · ' + c.description : ''}</div>
       </div>
       <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
         <span class="coupon-badge ${c.active ? 'active' : 'inactive'}">${c.active ? 'Activo' : 'Inactivo'}</span>
@@ -1227,7 +1237,7 @@ function renderNrPlanOptions(dateStr, selectedPlanId){
     return `
       <label class="plan-option">
         <span><input type="radio" name="nr_pricing_plan" value="${p.id}" data-start="${start}" data-end="${end}" ${checked?'checked':''}> ${p.label} <span style="color:var(--ink-soft); font-size:12.5px;">(${p.hours_range})</span></span>
-        <span class="amt">${Number(p.price).toFixed(0)}€</span>
+        <span class="amt">${formatPrice(p.price)}</span>
       </label>`;
   }).join('');
 
@@ -1271,7 +1281,7 @@ function updateNrTotal(){
   const base = nrBaseTotal();
   const discount = nrCurrentDiscount(base);
   const final = Math.max(0, base - discount);
-  document.getElementById('nrTotalAmount').textContent = `${final.toFixed(0)}€`;
+  document.getElementById('nrTotalAmount').textContent = formatPrice(final);
 }
 
 async function nrApplyCoupon(){
@@ -1287,10 +1297,15 @@ async function nrApplyCoupon(){
   }
   msg.textContent = 'Comprobando cupón…';
   const { coupon, notFound } = await lookupCoupon(supabase, code);
+  const eventDate = document.getElementById('nr_event_date').value;
   if (notFound || !coupon){
     nrAppliedCoupon = null;
     nrManualDiscount = 0;
     msg.textContent = 'Ese cupón no existe o ha caducado.';
+  } else if (eventDate && !couponAppliesTo(coupon, dayGroupFor(eventDate))){
+    nrAppliedCoupon = null;
+    nrManualDiscount = 0;
+    msg.textContent = `Ese cupón solo es válido para ${COUPON_SCOPE_LABELS[coupon.applies_to]}.`;
   } else {
     nrAppliedCoupon = coupon;
     nrManualDiscount = 0;
@@ -1352,7 +1367,7 @@ function openEditResModal(r){
   nrManualDiscount = Number(r.discount_amount || 0);
   document.getElementById('nr_coupon_code').value = r.coupon_code || '';
   document.getElementById('nrCouponMsg').textContent = r.coupon_code
-    ? `Cupón registrado: -${nrManualDiscount.toFixed(0)}€. Pulsa "Aplicar" para revalidarlo si el descuento ha cambiado.`
+    ? `Cupón registrado: -${formatPrice(nrManualDiscount)}. Pulsa "Aplicar" para revalidarlo si el descuento ha cambiado.`
     : '';
 
   updateNrTotal();
