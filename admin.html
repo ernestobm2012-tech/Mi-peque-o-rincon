@@ -85,6 +85,8 @@
   .stats-months table{ width:100%; border-collapse:collapse; margin-top:10px; }
   .stats-months td{ padding:4px 0; border-bottom:1px dashed var(--line); }
   .stats-months td:last-child{ text-align:right; }
+  .stats-extra-row{ display:flex; flex-direction:column; gap:6px; margin-top:12px; padding-top:12px; border-top:1px dashed var(--line); }
+  .stats-extra-row strong{ color:var(--olive-dark); }
 
   /* ---------- Manual reservation modal ---------- */
   .modal-overlay{
@@ -226,17 +228,13 @@
         <span class="num" id="statPending">0</span>
         <span class="lbl">Reservas pendientes</span>
       </div>
-      <div class="stat-card">
-        <span class="num" id="statKidsMenus">0 · 0€</span>
-        <span class="lbl">Menús infantiles (subcontratado, aparte)</span>
-      </div>
-      <div class="stat-card">
-        <span class="num" id="statDecorCost">0 · 0€</span>
-        <span class="lbl">Decoraciones (coste interno)</span>
-      </div>
     </div>
     <details class="stats-months">
       <summary>Ver ingresos por mes</summary>
+      <div class="stats-extra-row">
+        <span>🍕 Menús infantiles (subcontratado, aparte): <strong id="statKidsMenus">0 unidades · 0€</strong></span>
+        <span>🎈 Decoración (coste interno): <strong id="statDecorCost">0 reservas · 0€</strong></span>
+      </div>
       <table id="statsMonthsTable"></table>
     </details>
 
@@ -632,8 +630,8 @@ async function updateStats(){
   document.getElementById('statIncome').textContent = formatPrice(totalIncome);
   document.getElementById('statConfirmed').textContent = confirmed.length;
   document.getElementById('statPending').textContent = pending.length;
-  document.getElementById('statKidsMenus').textContent = `${kidsMenuCount} · ${formatPrice(kidsMenuTotal)}`;
-  document.getElementById('statDecorCost').textContent = `${decorReservations.length} · ${formatPrice(decorCostTotal)}`;
+  document.getElementById('statKidsMenus').textContent = `${kidsMenuCount} unidades · ${formatPrice(kidsMenuTotal)}`;
+  document.getElementById('statDecorCost').textContent = `${decorReservations.length} reservas · ${formatPrice(decorCostTotal)}`;
 
   const byMonth = {};
   confirmed.forEach(r => {
