@@ -481,6 +481,18 @@
   </div>
 </section>
 
+<section class="section-alt" id="ofertas">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">Promociones</p>
+      <h2>Ofertas del momento.</h2>
+      <p style="color:var(--ink-soft); margin-top:10px;">Descuentos y promociones especiales activas ahora mismo.</p>
+    </div>
+    <div class="decor-grid" id="ofertasGrid"></div>
+    <p id="ofertasEmptyMsg" style="color:var(--ink-soft); margin-top:24px;" hidden>Ahora mismo no hay ofertas activas. ¡Vuelve pronto!</p>
+  </div>
+</section>
+
 <section id="precios">
   <div class="wrap">
     <div class="section-head">
@@ -767,11 +779,11 @@ async function loadEventTypes(){
   select.innerHTML = types.map(t => `<option value="${t}">${t}</option>`).join('');
 }
 
-// ---------- Decorations ----------
-async function loadDecorations(){
-  const grid = document.getElementById('decorGrid');
-  const emptyMsg = document.getElementById('decorEmptyMsg');
-  const { data, error } = await supabase.from('decorations').select('*').order('created_at', { ascending: false });
+// ---------- Gallery sections (decoraciones, ofertas) ----------
+async function loadGallerySection(section, gridId, emptyMsgId, defaultAlt){
+  const grid = document.getElementById(gridId);
+  const emptyMsg = document.getElementById(emptyMsgId);
+  const { data, error } = await supabase.from('gallery_images').select('*').eq('section', section).order('created_at', { ascending: false });
   if (error || !data || !data.length){
     grid.innerHTML = '';
     emptyMsg.hidden = false;
@@ -779,14 +791,22 @@ async function loadDecorations(){
   }
   emptyMsg.hidden = true;
   grid.innerHTML = data.map(d => {
-    const { data: pub } = supabase.storage.from('decoraciones').getPublicUrl(d.image_path);
-    const alt = (d.caption || 'Decoración para eventos en Mi Pequeño Rincón').replace(/"/g, '&quot;');
+    const { data: pub } = supabase.storage.from('galeria').getPublicUrl(d.image_path);
+    const alt = (d.caption || defaultAlt).replace(/"/g, '&quot;');
     return `
       <figure>
         <img src="${pub.publicUrl}" alt="${alt}" loading="lazy">
         ${d.caption ? `<figcaption>${d.caption}</figcaption>` : ''}
       </figure>`;
   }).join('');
+}
+
+async function loadDecorations(){
+  await loadGallerySection('decoraciones', 'decorGrid', 'decorEmptyMsg', 'Decoración para eventos en Mi Pequeño Rincón');
+}
+
+async function loadOfertas(){
+  await loadGallerySection('ofertas', 'ofertasGrid', 'ofertasEmptyMsg', 'Oferta especial de Mi Pequeño Rincón');
 }
 
 // ---------- Pricing ----------
@@ -1127,6 +1147,7 @@ async function initForm(){
 (async function init(){
   await loadEventTypes();
   await loadDecorations();
+  await loadOfertas();
   await loadPricing();
   await loadFestivos();
   await loadAvailability();
