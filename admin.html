@@ -164,12 +164,14 @@
   .coupon-badge.active{ background:#EAF0E2; color:var(--olive-dark); }
   .coupon-badge.inactive{ background:#F6E4E0; color:#7A2E22; }
 
-  /* ---------- Decorations ---------- */
-  .decor-admin-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:14px; }
-  .decor-admin-card{ background:#fff; border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; }
-  .decor-admin-card img{ width:100%; height:140px; object-fit:cover; display:block; }
-  .decor-admin-card .decor-admin-meta{ padding:10px 12px; }
-  .decor-admin-card .decor-admin-meta p{ font-size:12.5px; color:var(--ink-soft); margin:0 0 8px; min-height:1.3em; }
+  /* ---------- Gallery ---------- */
+  .gallery-section-title{ margin:28px 0 14px; font-size:16px; }
+  .gallery-section-title:first-child{ margin-top:0; }
+  .gallery-admin-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:14px; }
+  .gallery-admin-card{ background:#fff; border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; }
+  .gallery-admin-card img{ width:100%; height:140px; object-fit:cover; display:block; }
+  .gallery-admin-card .gallery-admin-meta{ padding:10px 12px; }
+  .gallery-admin-card .gallery-admin-meta p{ font-size:12.5px; color:var(--ink-soft); margin:0 0 8px; min-height:1.3em; }
 </style>
 </head>
 <body>
@@ -205,7 +207,7 @@
     <button class="tab-btn" data-tab="tabCalendario">Calendario</button>
     <button class="tab-btn" data-tab="tabClientes">Clientes</button>
     <button class="tab-btn" data-tab="tabCupones">Cupones</button>
-    <button class="tab-btn" data-tab="tabDecoraciones">Decoraciones</button>
+    <button class="tab-btn" data-tab="tabGaleria">Galería web</button>
   </div>
 
   <p id="actionMsg" style="display:none; font-size:13.5px; padding:10px 14px; margin-bottom:18px; border-radius:2px;"></p>
@@ -296,23 +298,30 @@
     <div id="couponsList"></div>
   </div>
 
-  <div id="tabDecoraciones" class="tab-panel" hidden>
+  <div id="tabGaleria" class="tab-panel" hidden>
     <div class="res-card" style="margin-bottom:24px;">
-      <h3 style="margin-bottom:16px;">Añadir foto de decoración</h3>
-      <form id="decorForm">
+      <h3 style="margin-bottom:16px;">Añadir foto a la web</h3>
+      <form id="galleryForm">
         <div class="field">
-          <label for="decor_file">Foto</label>
-          <input type="file" id="decor_file" accept="image/*" required>
+          <label for="gal_section">Sección de la web</label>
+          <select id="gal_section" required>
+            <option value="decoraciones">Decoraciones</option>
+            <option value="ofertas">Ofertas</option>
+          </select>
         </div>
         <div class="field">
-          <label for="decor_caption">Descripción (opcional)</label>
-          <input type="text" id="decor_caption" placeholder="Ej: Decoración cumpleaños temática unicornio">
+          <label for="gal_file">Foto</label>
+          <input type="file" id="gal_file" accept="image/*" required>
         </div>
-        <button type="submit" class="btn btn-primary" id="decorSubmitBtn">Subir foto</button>
-        <p id="decorFormMsg" style="font-size:13.5px; margin-top:10px; color:var(--ink-soft);"></p>
+        <div class="field">
+          <label for="gal_caption">Descripción (opcional)</label>
+          <input type="text" id="gal_caption" placeholder="Ej: Decoración cumpleaños temática unicornio">
+        </div>
+        <button type="submit" class="btn btn-primary" id="galSubmitBtn">Subir foto</button>
+        <p id="galFormMsg" style="font-size:13.5px; margin-top:10px; color:var(--ink-soft);"></p>
       </form>
     </div>
-    <div class="decor-admin-grid" id="decorAdminList"></div>
+    <div id="galleryAdminSections"></div>
   </div>
 </div>
 
@@ -832,7 +841,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     if (btn.dataset.tab === 'tabCalendario') renderCalendarState();
     if (btn.dataset.tab === 'tabClientes') renderClients();
     if (btn.dataset.tab === 'tabCupones') renderCoupons();
-    if (btn.dataset.tab === 'tabDecoraciones') renderDecorations();
+    if (btn.dataset.tab === 'tabGaleria') renderGallery();
   });
 });
 
@@ -1114,30 +1123,33 @@ async function renderCoupons(){
   });
 }
 
-// ---------- Decorations ----------
-document.getElementById('decorForm').addEventListener('submit', async (e) => {
+// ---------- Gallery (imágenes de la web por sección) ----------
+const GALLERY_SECTION_LABELS = { decoraciones: 'Decoraciones', ofertas: 'Ofertas' };
+
+document.getElementById('galleryForm').addEventListener('submit', async (e) => {
   e.preventDefault();
-  const fileInput = document.getElementById('decor_file');
+  const fileInput = document.getElementById('gal_file');
   const file = fileInput.files[0];
-  const msgEl = document.getElementById('decorFormMsg');
-  const submitBtn = document.getElementById('decorSubmitBtn');
+  const section = document.getElementById('gal_section').value;
+  const msgEl = document.getElementById('galFormMsg');
+  const submitBtn = document.getElementById('galSubmitBtn');
   if (!file) return;
 
   submitBtn.disabled = true;
   msgEl.textContent = 'Subiendo foto…';
 
   const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
-  const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const path = `${section}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
 
-  const { error: uploadError } = await supabase.storage.from('decoraciones').upload(path, file);
+  const { error: uploadError } = await supabase.storage.from('galeria').upload(path, file);
   if (uploadError){
     msgEl.textContent = 'No se ha podido subir la foto: ' + uploadError.message;
     submitBtn.disabled = false;
     return;
   }
 
-  const caption = document.getElementById('decor_caption').value.trim() || null;
-  const { error: insertError } = await supabase.from('decorations').insert({ image_path: path, caption });
+  const caption = document.getElementById('gal_caption').value.trim() || null;
+  const { error: insertError } = await supabase.from('gallery_images').insert({ section, image_path: path, caption });
   if (insertError){
     msgEl.textContent = 'No se ha podido guardar la foto: ' + insertError.message;
     submitBtn.disabled = false;
@@ -1147,41 +1159,45 @@ document.getElementById('decorForm').addEventListener('submit', async (e) => {
   msgEl.textContent = 'Foto añadida ✅';
   e.target.reset();
   submitBtn.disabled = false;
-  await renderDecorations();
+  await renderGallery();
 });
 
-async function renderDecorations(){
-  const container = document.getElementById('decorAdminList');
-  const { data, error } = await supabase.from('decorations').select('*').order('created_at', { ascending: false });
+async function renderGallery(){
+  const container = document.getElementById('galleryAdminSections');
+  const { data, error } = await supabase.from('gallery_images').select('*').order('created_at', { ascending: false });
   if (error){
-    container.innerHTML = `<p class="empty-msg">Error cargando decoraciones: ${error.message}</p>`;
+    container.innerHTML = `<p class="empty-msg">Error cargando la galería: ${error.message}</p>`;
     return;
   }
-  if (!data || !data.length){
-    container.innerHTML = '<p class="empty-msg">Todavía no has añadido ninguna foto de decoración.</p>';
-    return;
-  }
-  container.innerHTML = data.map(d => {
-    const { data: pub } = supabase.storage.from('decoraciones').getPublicUrl(d.image_path);
-    return `
-      <div class="decor-admin-card">
-        <img src="${pub.publicUrl}" alt="${(d.caption || 'Decoración').replace(/"/g, '&quot;')}">
-        <div class="decor-admin-meta">
-          <p>${d.caption || ''}</p>
-          <button class="btn btn-deny" data-delete-decor="${d.id}" data-path="${d.image_path}" style="font-size:11.5px; padding:5px 10px;">🗑️ Borrar</button>
-        </div>
-      </div>`;
+
+  const sections = Object.keys(GALLERY_SECTION_LABELS);
+  container.innerHTML = sections.map(section => {
+    const items = (data || []).filter(d => d.section === section);
+    const grid = items.length
+      ? items.map(d => {
+          const { data: pub } = supabase.storage.from('galeria').getPublicUrl(d.image_path);
+          return `
+            <div class="gallery-admin-card">
+              <img src="${pub.publicUrl}" alt="${(d.caption || GALLERY_SECTION_LABELS[section]).replace(/"/g, '&quot;')}">
+              <div class="gallery-admin-meta">
+                <p>${d.caption || ''}</p>
+                <button class="btn btn-deny" data-delete-gallery="${d.id}" data-path="${d.image_path}" style="font-size:11.5px; padding:5px 10px;">🗑️ Borrar</button>
+              </div>
+            </div>`;
+        }).join('')
+      : '<p class="empty-msg">Todavía no has añadido ninguna foto en esta sección.</p>';
+    return `<h4 class="gallery-section-title">${GALLERY_SECTION_LABELS[section]}</h4><div class="gallery-admin-grid">${grid}</div>`;
   }).join('');
 
-  container.querySelectorAll('[data-delete-decor]').forEach(btn => {
+  container.querySelectorAll('[data-delete-gallery]').forEach(btn => {
     btn.addEventListener('click', async () => {
-      if (!confirm('¿Borrar esta foto de decoración? No se puede deshacer.')) return;
+      if (!confirm('¿Borrar esta foto de la web? No se puede deshacer.')) return;
       btn.disabled = true;
-      const id = btn.dataset.deleteDecor;
+      const id = btn.dataset.deleteGallery;
       const path = btn.dataset.path;
-      await supabase.storage.from('decoraciones').remove([path]);
-      await supabase.from('decorations').delete().eq('id', id);
-      await renderDecorations();
+      await supabase.storage.from('galeria').remove([path]);
+      await supabase.from('gallery_images').delete().eq('id', id);
+      await renderGallery();
     });
   });
 }
