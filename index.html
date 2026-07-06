@@ -353,6 +353,8 @@
     <ul class="navlist" id="navList">
       <li><a class="navlink" href="#sobre">La sala</a></li>
       <li><a class="navlink" href="#eventos">Eventos</a></li>
+      <li><a class="navlink" href="#menu-infantil">Para los peques</a></li>
+      <li><a class="navlink" href="#ofertas">Ofertas</a></li>
       <li><a class="navlink" href="#precios">Precios</a></li>
       <li><a class="navlink" href="#reserva">Disponibilidad</a></li>
       <li><a class="navlink" href="#contacto">Contacto</a></li>
@@ -423,6 +425,9 @@
     <img src="assets/climatizacion-conductos.jpg" alt="Conductos de climatización en el techo de la sala, con difusores de aire acondicionado">
     <img src="assets/climatizacion-mando.jpg" alt="Mando de pared de la climatización por conducto de la sala">
   </div>
+  <div class="wrap">
+    <div class="decor-grid" id="salaGrid" style="margin-top:24px;"></div>
+  </div>
 </section>
 
 <section class="section-alt" id="eventos">
@@ -457,6 +462,7 @@
         <figcaption>Menú de maridaje de nuestra última cata</figcaption>
       </figure>
     </div>
+    <div class="decor-grid" id="catasGrid" style="margin-top:24px;"></div>
   </div>
 </section>
 
@@ -489,6 +495,7 @@
       <p>Los menús infantiles los prepara y sirve, a la hora que convengáis, un <strong>colaborador externo</strong> especializado — nosotros nos encargamos de coordinarlo con tu reserva.</p>
       <p>🥤 Por <strong>cada 6 menús infantiles</strong> pedidos, podéis elegir <strong>3 refrescos de 2 litros</strong> para la mesa.</p>
     </div>
+    <div class="decor-grid" id="menuInfantilGrid" style="margin-top:24px;"></div>
   </div>
 </section>
 
@@ -818,14 +825,14 @@ async function loadEventTypes(){
 // ---------- Gallery sections (decoraciones, ofertas) ----------
 async function loadGallerySection(section, gridId, emptyMsgId, defaultAlt){
   const grid = document.getElementById(gridId);
-  const emptyMsg = document.getElementById(emptyMsgId);
+  const emptyMsg = emptyMsgId ? document.getElementById(emptyMsgId) : null;
   const { data, error } = await supabase.from('gallery_images').select('*').eq('section', section).order('created_at', { ascending: false });
   if (error || !data || !data.length){
     grid.innerHTML = '';
-    emptyMsg.hidden = false;
+    if (emptyMsg) emptyMsg.hidden = false;
     return;
   }
-  emptyMsg.hidden = true;
+  if (emptyMsg) emptyMsg.hidden = true;
   grid.innerHTML = data.map(d => {
     const { data: pub } = supabase.storage.from('galeria').getPublicUrl(d.image_path);
     const alt = (d.caption || defaultAlt).replace(/"/g, '&quot;');
@@ -843,6 +850,18 @@ async function loadDecorations(){
 
 async function loadOfertas(){
   await loadGallerySection('ofertas', 'ofertasGrid', 'ofertasEmptyMsg', 'Oferta especial de Mi Pequeño Rincón');
+}
+
+async function loadSalaGallery(){
+  await loadGallerySection('sala', 'salaGrid', null, 'Foto de la sala de Mi Pequeño Rincón');
+}
+
+async function loadCatasGallery(){
+  await loadGallerySection('catas', 'catasGrid', null, 'Foto de una cata de vino en Mi Pequeño Rincón');
+}
+
+async function loadMenuInfantilGallery(){
+  await loadGallerySection('menu-infantil', 'menuInfantilGrid', null, 'Foto del menú infantil de Mi Pequeño Rincón');
 }
 
 // ---------- Pricing ----------
@@ -1182,6 +1201,9 @@ async function initForm(){
 
 (async function init(){
   await loadEventTypes();
+  await loadSalaGallery();
+  await loadCatasGallery();
+  await loadMenuInfantilGallery();
   await loadDecorations();
   await loadOfertas();
   await loadPricing();
