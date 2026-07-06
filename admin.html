@@ -141,11 +141,12 @@
   .cal-day.clickable:hover{ background:var(--cream-2); }
   .cal-day.empty{ background:none; border:none; }
   .cal-day .daynum{ font-weight:600; }
-  .cal-day .dots{ display:flex; gap:3px; flex-wrap:wrap; }
-  .cal-dot{ width:7px; height:7px; border-radius:50%; display:inline-block; }
-  .cal-dot.pendiente{ background:#C9A227; }
-  .cal-dot.confirmada{ background:var(--olive-dark); }
-  .cal-dot.cancelada{ background:#B3554A; }
+  .cal-day.status-pendiente{ background:#C9A227; border-color:#C9A227; }
+  .cal-day.status-pendiente .daynum{ color:#221F19; }
+  .cal-day.status-pendiente.clickable:hover{ background:#b3901f; }
+  .cal-day.status-confirmada{ background:var(--olive-dark); border-color:var(--olive-dark); }
+  .cal-day.status-confirmada .daynum{ color:var(--cream); }
+  .cal-day.status-confirmada.clickable:hover{ background:#3c4b1b; }
 
   /* ---------- Clients ---------- */
   .client-card{ background:#fff; border:1px solid var(--line); padding:16px 20px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap; }
@@ -873,11 +874,12 @@ async function renderCalendarState(){
   for (let day = 1; day <= daysInMonth; day++){
     const key = ymd(new Date(calState.year, calState.month, day));
     const dayRes = byDate[key] || [];
-    const dots = dayRes.map(r => `<span class="cal-dot ${r.status}"></span>`).join('');
-    const cls = 'cal-day' + (dayRes.length ? ' clickable' : '');
+    const dayStatus = dayRes.some(r => r.status === 'confirmada') ? 'confirmada'
+      : dayRes.some(r => r.status === 'pendiente') ? 'pendiente'
+      : null;
+    const cls = 'cal-day' + (dayRes.length ? ' clickable' : '') + (dayStatus ? ` status-${dayStatus}` : '');
     html += `<div class="${cls}" ${dayRes.length ? `data-date="${key}"` : ''}>
         <span class="daynum">${day}</span>
-        <span class="dots">${dots}</span>
       </div>`;
   }
   const grid = document.getElementById('calGrid');

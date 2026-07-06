@@ -200,12 +200,6 @@
   .cal-day.clickable:hover{ background:var(--cream-2); }
   .cal-day.today{ border:1px solid var(--olive-dark); }
   .cal-day.past{ color:var(--line); }
-  .cal-day.pending{ background:var(--cream-2); }
-  .cal-day.pending svg{ position:absolute; top:1px; right:1px; width:9px; height:9px; }
-  .cal-day.confirmed{ background:var(--olive-dark); color:var(--cream); }
-  .cal-legend{ display:flex; gap:16px; margin-top:14px; font-size:12px; color:var(--ink-soft); align-items:center; flex-wrap:wrap; }
-  .legend-dot{ width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:6px; background:var(--cream-2); border:1px solid var(--line);}
-  .legend-dot.confirmed{ background:var(--olive-dark); border-color:var(--olive-dark); }
 
   /* ---------- Booking modal ---------- */
   .modal-overlay{
@@ -516,10 +510,6 @@
         </div>
         <div class="cal-grid" id="calGrid"></div>
       </div>
-    </div>
-    <div class="cal-legend">
-      <span><span class="legend-dot"></span>Pendiente de confirmar</span>
-      <span><span class="legend-dot confirmed"></span>Reserva confirmada</span>
     </div>
   </div>
 </section>
@@ -868,7 +858,7 @@ function dayGroupFor(dateStr){
   return (isWeekend || isFestivo || isVisperaFestivo) ? 'viernes_domingo_festivos' : 'lunes_jueves';
 }
 
-function buildCalendar(container, year, month, statusByDate){
+function buildCalendar(container, year, month){
   const first = new Date(year, month, 1);
   const startOffset = (first.getDay() + 6) % 7; // Monday-first
   const daysInMonth = new Date(year, month+1, 0).getDate();
@@ -882,20 +872,14 @@ function buildCalendar(container, year, month, statusByDate){
     const key = ymd(d);
     const isPast = d < today;
     const isToday = key === ymd(today);
-    const status = statusByDate[key];
     const cls = [
       'cal-day',
       isPast ? 'past' : 'clickable',
-      isToday ? 'today' : '',
-      status === 'confirmada' ? 'confirmed' : '',
-      status === 'pendiente' ? 'pending' : ''
+      isToday ? 'today' : ''
     ].filter(Boolean).join(' ');
     const tag = isPast ? 'span' : 'button';
     const attrs = isPast ? '' : `type="button" data-date="${key}"`;
-    html += `<${tag} class="${cls}" ${attrs}>
-      ${day}
-      ${status === 'pendiente' ? '<svg viewBox="0 0 24 24" fill="#7C9A44"><ellipse cx="12" cy="12" rx="9" ry="4" transform="rotate(-30 12 12)"/></svg>' : ''}
-    </${tag}>`;
+    html += `<${tag} class="${cls}" ${attrs}>${day}</${tag}>`;
   }
   container.innerHTML = html;
 
@@ -909,11 +893,10 @@ function buildCalendar(container, year, month, statusByDate){
 }
 
 const calState = { year:0, month:0, baseYear:0, baseMonth:0 };
-let CURRENT_STATUS_BY_DATE = {};
 
 function renderCalendarState(){
   document.getElementById('calLabel').textContent = `${MONTH_NAMES[calState.month]} ${calState.year}`;
-  buildCalendar(document.getElementById('calGrid'), calState.year, calState.month, CURRENT_STATUS_BY_DATE);
+  buildCalendar(document.getElementById('calGrid'), calState.year, calState.month);
   document.getElementById('calPrevBtn').disabled = (calState.year === calState.baseYear && calState.month === calState.baseMonth);
 }
 
@@ -924,18 +907,8 @@ function changeCalMonth(delta){
   renderCalendarState();
 }
 
-async function fetchAvailability(){
-  const { data } = await supabase.from('availability').select('event_date, status');
-  const statusByDate = {};
-  (data||[]).forEach(r => {
-    if (!statusByDate[r.event_date] || r.status === 'confirmada') statusByDate[r.event_date] = r.status;
-  });
-  CURRENT_STATUS_BY_DATE = statusByDate;
-}
-
 async function loadAvailability(){
   const now = new Date();
-  await fetchAvailability();
   calState.year = calState.baseYear = now.getFullYear();
   calState.month = calState.baseMonth = now.getMonth();
   renderCalendarState();
@@ -1147,8 +1120,6 @@ async function initForm(){
     }
 
     setMsg('¡Solicitud enviada! Es una reserva provisional (pendiente): te confirmamos por teléfono en menos de 24-48h.', 'ok');
-    await fetchAvailability();
-    renderCalendarState();
     setTimeout(closeBookingModal, 2400);
   });
 }
