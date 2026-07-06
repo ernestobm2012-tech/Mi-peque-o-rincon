@@ -534,7 +534,8 @@
     <div class="sala-tabs" role="tablist">
       <button type="button" class="sala-tab active" data-tab="juegos">Zona de juegos</button>
       <button type="button" class="sala-tab" data-tab="mesas">Mesas para eventos</button>
-      <button type="button" class="sala-tab" data-tab="escenario">Proyector, escenario y cocina</button>
+      <button type="button" class="sala-tab" data-tab="escenario">Zona de proyector, escenario y photocall</button>
+      <button type="button" class="sala-tab" data-tab="aseo">Aseo</button>
     </div>
     <div class="sala-tab-panel" data-tab-panel="juegos">
       <div class="decor-grid" id="salaGridJuegos" style="margin-top:24px;"></div>
@@ -547,6 +548,10 @@
     <div class="sala-tab-panel" data-tab-panel="escenario" hidden>
       <div class="decor-grid" id="salaGridEscenario" style="margin-top:24px;"></div>
       <p class="empty-msg" id="salaEscenarioEmptyMsg" hidden>Todavía no hay fotos en esta zona.</p>
+    </div>
+    <div class="sala-tab-panel" data-tab-panel="aseo" hidden>
+      <div class="decor-grid" id="salaGridAseo" style="margin-top:24px;"></div>
+      <p class="empty-msg" id="salaAseoEmptyMsg" hidden>Todavía no hay fotos en esta zona.</p>
     </div>
   </div>
 </section>
@@ -1102,7 +1107,8 @@ async function loadOfertas(){
 async function loadSalaGallery(){
   await loadGallerySection('sala-juegos', 'salaGridJuegos', 'salaJuegosEmptyMsg', 'Zona de juegos de Mi Pequeño Rincón');
   await loadGallerySection('sala-mesas', 'salaGridMesas', 'salaMesasEmptyMsg', 'Mesas preparadas para un evento en Mi Pequeño Rincón');
-  await loadGallerySection('sala-escenario', 'salaGridEscenario', 'salaEscenarioEmptyMsg', 'Zona de proyector y escenario de Mi Pequeño Rincón');
+  await loadGallerySection('sala-escenario', 'salaGridEscenario', 'salaEscenarioEmptyMsg', 'Zona de proyector, escenario y photocall de Mi Pequeño Rincón');
+  await loadGallerySection('sala-aseo', 'salaGridAseo', 'salaAseoEmptyMsg', 'Aseo de Mi Pequeño Rincón');
 }
 
 document.querySelectorAll('.sala-tab').forEach(tabBtn => {
