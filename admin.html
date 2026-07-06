@@ -42,6 +42,7 @@
     padding:12px 22px; font-size:14px; font-weight:500; border-radius:var(--radius); border:1px solid transparent;
     text-decoration:none;
   }
+  .btn[hidden]{ display:none; }
   .btn-primary{ background:var(--olive-dark); color:var(--cream); }
   .btn-primary:hover{ background:var(--ink); }
   .btn-deny{ background:#7A2E22; color:#fff; }
@@ -254,7 +255,7 @@
 
   <div id="tabCupones" class="tab-panel" hidden>
     <div class="res-card" style="margin-bottom:24px;">
-      <h3 style="margin-bottom:16px;">Nuevo cupón</h3>
+      <h3 style="margin-bottom:16px;" id="couponFormTitle">Nuevo cupón</h3>
       <form id="couponForm">
         <div class="field-row">
           <div class="field">
@@ -284,7 +285,10 @@
           <label for="cp_description">Descripción interna (opcional)</label>
           <input type="text" id="cp_description" placeholder="Ej: promo Instagram julio, cliente fiel Laura...">
         </div>
-        <button type="submit" class="btn btn-primary">Crear cupón</button>
+        <div style="display:flex; gap:10px; align-items:center;">
+          <button type="submit" class="btn btn-primary" id="couponSubmitBtn">Crear cupón</button>
+          <button type="button" class="btn btn-ghost" id="couponCancelEditBtn" hidden>Cancelar edición</button>
+        </div>
         <p id="couponFormMsg" style="font-size:13.5px; margin-top:10px; color:var(--ink-soft);"></p>
       </form>
     </div>
@@ -984,6 +988,38 @@ cpTypeSelect.addEventListener('change', () => {
   cpValueLabel.textContent = cpTypeSelect.value === 'percentage' ? 'Valor (%)' : 'Valor (€)';
 });
 
+let editingCouponId = null;
+const couponFormTitle = document.getElementById('couponFormTitle');
+const couponSubmitBtn = document.getElementById('couponSubmitBtn');
+const couponCancelEditBtn = document.getElementById('couponCancelEditBtn');
+
+function startEditCoupon(c){
+  editingCouponId = c.id;
+  document.getElementById('cp_code').value = c.code;
+  cpTypeSelect.value = c.discount_type;
+  cpValueLabel.textContent = c.discount_type === 'percentage' ? 'Valor (%)' : 'Valor (€)';
+  document.getElementById('cp_value').value = c.discount_value;
+  document.getElementById('cp_expires').value = c.expires_at || '';
+  document.getElementById('cp_description').value = c.description || '';
+  couponFormTitle.textContent = `Editar cupón ${c.code}`;
+  couponSubmitBtn.textContent = 'Guardar cambios';
+  couponCancelEditBtn.hidden = false;
+  document.getElementById('couponFormMsg').textContent = '';
+  document.getElementById('couponForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function cancelEditCoupon(){
+  editingCouponId = null;
+  document.getElementById('couponForm').reset();
+  cpValueLabel.textContent = 'Valor (%)';
+  couponFormTitle.textContent = 'Nuevo cupón';
+  couponSubmitBtn.textContent = 'Crear cupón';
+  couponCancelEditBtn.hidden = true;
+  document.getElementById('couponFormMsg').textContent = '';
+}
+
+couponCancelEditBtn.addEventListener('click', cancelEditCoupon);
+
 document.getElementById('couponForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const msgEl = document.getElementById('couponFormMsg');
@@ -994,14 +1030,20 @@ document.getElementById('couponForm').addEventListener('submit', async (e) => {
     description: document.getElementById('cp_description').value.trim() || null,
     expires_at: document.getElementById('cp_expires').value || null,
   };
-  const { error } = await supabase.from('coupons').insert(payload);
+  const { error } = editingCouponId
+    ? await supabase.from('coupons').update(payload).eq('id', editingCouponId)
+    : await supabase.from('coupons').insert(payload);
   if (error){
-    msgEl.textContent = 'No se ha podido crear: ' + error.message;
+    msgEl.textContent = 'No se ha podido guardar: ' + error.message;
     return;
   }
-  msgEl.textContent = `Cupón ${payload.code} creado.`;
+  msgEl.textContent = editingCouponId ? `Cupón ${payload.code} actualizado.` : `Cupón ${payload.code} creado.`;
+  editingCouponId = null;
   e.target.reset();
   cpValueLabel.textContent = 'Valor (%)';
+  couponFormTitle.textContent = 'Nuevo cupón';
+  couponSubmitBtn.textContent = 'Crear cupón';
+  couponCancelEditBtn.hidden = true;
   await renderCoupons();
 });
 
@@ -1029,9 +1071,11 @@ async function renderCoupons(){
         <div class="code">${c.code}</div>
         <div class="meta">${formatCouponValue(c)}${c.expires_at ? ' · caduca ' + c.expires_at : ''}${c.description ? ' · ' + c.description : ''}</div>
       </div>
-      <div style="display:flex; align-items:center; gap:10px;">
+      <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
         <span class="coupon-badge ${c.active ? 'active' : 'inactive'}">${c.active ? 'Activo' : 'Inactivo'}</span>
         <button class="btn btn-ghost" data-toggle-coupon="${c.id}" data-active="${c.active}">${c.active ? 'Desactivar' : 'Activar'}</button>
+        <button class="btn btn-ghost" data-edit-coupon="${c.id}">✏️ Editar</button>
+        <button class="btn btn-deny" data-delete-coupon="${c.id}">🗑️ Borrar</button>
       </div>
     </div>`).join('');
 
@@ -1040,6 +1084,29 @@ async function renderCoupons(){
       const id = btn.dataset.toggleCoupon;
       const isActive = btn.dataset.active === 'true';
       await supabase.from('coupons').update({ active: !isActive }).eq('id', id);
+      await renderCoupons();
+    });
+  });
+
+  container.querySelectorAll('[data-edit-coupon]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const c = data.find(x => x.id === btn.dataset.editCoupon);
+      if (c) startEditCoupon(c);
+    });
+  });
+
+  container.querySelectorAll('[data-delete-coupon]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const c = data.find(x => x.id === btn.dataset.deleteCoupon);
+      if (!confirm(`¿Borrar definitivamente el cupón ${c.code}? Esta acción no se puede deshacer.`)) return;
+      btn.disabled = true;
+      const { error } = await supabase.from('coupons').delete().eq('id', c.id);
+      if (error){
+        alert('No se ha podido borrar: ' + error.message);
+        btn.disabled = false;
+        return;
+      }
+      if (editingCouponId === c.id) cancelEditCoupon();
       await renderCoupons();
     });
   });
