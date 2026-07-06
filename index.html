@@ -105,7 +105,8 @@
     display:grid; grid-template-columns: 1.1fr .9fr; gap:56px; align-items:center;
   }
   @media (max-width:860px){ .hero-grid{ grid-template-columns:1fr; gap:36px; } }
-  .hero-logo{ height:92px; width:auto; display:block; margin-bottom:20px; }
+  .hero-logo{ height:170px; width:auto; display:block; margin:0 auto; }
+  .hero-logo-divider{ margin:14px 0 26px; }
   .hero h1{ font-size:clamp(34px, 5vw, 58px); line-height:1.04; }
   .hero h1 em{ font-style:italic; color:var(--olive-dark); }
   .hero p.lead{ margin-top:20px; font-size:17px; color:var(--ink-soft); max-width:46ch;}
@@ -286,6 +287,27 @@
   .social-embed-card{ background:var(--cream); border:1px solid var(--line); padding:24px; display:flex; flex-direction:column; align-items:center; gap:16px; }
   .social-embed-card h3{ font-size:15px; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-soft); }
   .social-embed-card iframe{ max-width:100%; border:none; }
+  .embed-placeholder{
+    border:1px dashed var(--line); background:var(--cream-2); padding:24px 18px; width:100%;
+    display:flex; flex-direction:column; align-items:center; gap:14px; text-align:center;
+  }
+  .embed-placeholder p{ margin:0; font-size:13px; color:var(--ink-soft); }
+  .mapbox .embed-placeholder{ height:100%; justify-content:center; }
+
+  /* ---------- Cookie consent ---------- */
+  .cookie-banner{
+    position:fixed; left:0; right:0; bottom:0; z-index:200;
+    background:var(--ink); color:var(--cream);
+    padding:18px 28px; display:flex; gap:20px; align-items:center; flex-wrap:wrap;
+    box-shadow:0 -6px 20px rgba(0,0,0,.18);
+  }
+  .cookie-banner p{ flex:1 1 320px; font-size:13.5px; margin:0; color:#EFE9D8; }
+  .cookie-banner a{ color:var(--cream); text-decoration:underline; }
+  .cookie-banner-actions{ display:flex; gap:10px; flex-wrap:wrap; }
+  .cookie-banner .btn-ghost{ border-color:var(--cream); color:var(--cream); }
+  .cookie-banner .btn-ghost:hover{ background:var(--cream); color:var(--ink); }
+  @media (max-width:600px){ .cookie-banner{ flex-direction:column; align-items:stretch; } }
+  .cookie-banner[hidden]{ display:none; }
   .instagram-follow{
     display:flex; flex-direction:column; align-items:center; gap:14px; text-decoration:none; color:var(--ink);
     padding:56px 20px; width:100%;
@@ -379,6 +401,16 @@
   <div class="wrap hero-grid">
     <div>
       <img src="assets/logo-mpr.jpg" alt="Mi Pequeño Rincón" class="hero-logo">
+      <div class="branch-divider hero-logo-divider" aria-hidden="true">
+        <svg viewBox="0 0 180 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M2 14 C 45 4, 135 24, 178 14" stroke="#7C9A44" stroke-width="1.2"/>
+          <ellipse cx="30" cy="9" rx="7" ry="3.2" transform="rotate(-24 30 9)" fill="#7C9A44"/>
+          <ellipse cx="60" cy="21" rx="7" ry="3.2" transform="rotate(20 60 21)" fill="#7C9A44"/>
+          <ellipse cx="95" cy="9" rx="7" ry="3.2" transform="rotate(-18 95 9)" fill="#B4924E"/>
+          <ellipse cx="128" cy="20" rx="7" ry="3.2" transform="rotate(22 128 20)" fill="#7C9A44"/>
+          <ellipse cx="155" cy="10" rx="7" ry="3.2" transform="rotate(-20 155 10)" fill="#7C9A44"/>
+        </svg>
+      </div>
       <p class="eyebrow">Chozas de Canales · Sala de eventos</p>
       <h1>Tu celebración,<br><em>a tu manera</em>.</h1>
       <p class="lead">Sala actual y versátil, <strong>climatizada por conducto todo el año</strong>, acondicionada para bodas, comuniones, bautizos, cumpleaños y todo tipo de eventos. Nos ocupamos del espacio para que tú solo te ocupes de disfrutar.</p>
@@ -685,6 +717,40 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="legalModal" hidden>
+  <div class="modal-box">
+    <button type="button" class="modal-close" id="legalClose" aria-label="Cerrar">×</button>
+    <h3 style="font-size:20px; margin-bottom:16px;">Aviso legal</h3>
+    <p style="color:var(--ink-soft); font-size:14.5px; margin:0 0 14px;">En cumplimiento del artículo 10 de la Ley 34/2002, de 11 de julio, de Servicios de la Sociedad de la Información y de Comercio Electrónico (LSSI-CE), se informa de los siguientes datos: Titular: <strong>Mi Pequeño Rincón</strong> — NIF: <strong>47497563X</strong> — Domicilio: Calle Guadalajara, 15, Chozas de Canales (Toledo) — Contacto: <a href="tel:+34624297877">624 29 78 77</a> — Actividad: alquiler de sala de eventos.</p>
+    <p style="color:var(--ink-soft); font-size:14.5px; margin:0 0 14px;">El presente aviso legal regula el acceso y uso del sitio web. El mero acceso implica la aceptación de estas condiciones; si no estás de acuerdo, debes abstenerte de utilizar el sitio.</p>
+    <p style="color:var(--ink-soft); font-size:14.5px; margin:0 0 14px;">Los contenidos del sitio (textos, imágenes, logotipo y diseño) son propiedad de <strong>Mi Pequeño Rincón</strong> o se utilizan con la debida autorización, y están protegidos por la normativa de propiedad intelectual e industrial. No está permitida su reproducción o distribución sin autorización previa.</p>
+    <p style="color:var(--ink-soft); font-size:14.5px; margin:0 0 14px;"><strong>Mi Pequeño Rincón</strong> no se hace responsable de la disponibilidad continua del sitio web ni del contenido de los sitios de terceros a los que se enlaza (Facebook, Instagram, Google Maps), sobre los que no tiene control.</p>
+    <p style="color:var(--ink-soft); font-size:14.5px; margin:0;">Este aviso legal se rige por la legislación española. Para el tratamiento de tus datos personales, consulta nuestra <a href="#" id="legalToPrivacyLink">política de privacidad</a>, y para las cookies, nuestra <a href="#" id="legalToCookiesLink">política de cookies</a>.</p>
+  </div>
+</div>
+
+<div class="modal-overlay" id="cookiesModal" hidden>
+  <div class="modal-box">
+    <button type="button" class="modal-close" id="cookiesClose" aria-label="Cerrar">×</button>
+    <h3 style="font-size:20px; margin-bottom:16px;">Política de cookies</h3>
+    <p style="color:var(--ink-soft); font-size:14.5px; margin:0 0 14px;">Esta web utiliza únicamente cookies propias estrictamente necesarias para su funcionamiento (por ejemplo, para recordar tu decisión sobre esta misma política). No usamos cookies propias de análisis ni publicidad.</p>
+    <p style="color:var(--ink-soft); font-size:14.5px; margin:0 0 14px;">Además, algunas secciones incluyen contenido de terceros que solo se carga si nos das tu consentimiento, y que en ese caso puede instalar sus propias cookies:</p>
+    <p style="color:var(--ink-soft); font-size:14.5px; margin:0 0 14px;"><strong>Facebook</strong> (Meta Platforms Ireland Ltd.): para mostrar el muro de publicaciones de nuestra página. Más información en su <a href="https://www.facebook.com/privacy/policy/" target="_blank" rel="noopener">política de privacidad</a>.</p>
+    <p style="color:var(--ink-soft); font-size:14.5px; margin:0 0 14px;"><strong>Google Maps</strong> (Google Ireland Ltd.): para mostrar el mapa de cómo llegar a la sala. Más información en su <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">política de privacidad</a>.</p>
+    <p style="color:var(--ink-soft); font-size:14.5px; margin:0 0 14px;">También cargamos las tipografías de la web desde <strong>Google Fonts</strong>, lo que implica una conexión de tu navegador a servidores de Google (con tu dirección IP) pero sin instalar cookies de seguimiento.</p>
+    <p style="color:var(--ink-soft); font-size:14.5px; margin:0 0 14px;">Puedes aceptar o rechazar las cookies no esenciales en el aviso que aparece al entrar en la web. Si las rechazas, el resto de la web funciona con normalidad; simplemente el muro de Facebook y el mapa de Google no se cargarán hasta que pulses manualmente "Cargar..." en cada uno. También puedes borrar las cookies ya instaladas y bloquear las futuras desde la configuración de tu navegador.</p>
+    <button type="button" class="btn btn-ghost" id="reopenCookieBannerBtn">Cambiar mis preferencias de cookies</button>
+  </div>
+</div>
+
+<div class="cookie-banner" id="cookieBanner" hidden>
+  <p>Usamos cookies propias necesarias para el funcionamiento de la web. El muro de Facebook y el mapa de Google, más abajo, solo se cargan si los aceptas y en ese caso pueden instalar sus propias cookies. Más información en nuestra <a href="#" id="cookiePolicyLinkBanner">política de cookies</a>.</p>
+  <div class="cookie-banner-actions">
+    <button type="button" class="btn btn-ghost" id="cookieRejectBtn">Rechazar no esenciales</button>
+    <button type="button" class="btn btn-primary" id="cookieAcceptBtn">Aceptar todas</button>
+  </div>
+</div>
+
 <div class="branch-divider" aria-hidden="true">
   <svg viewBox="0 0 180 28" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M2 14 C 45 24, 135 4, 178 14" stroke="#7C9A44" stroke-width="1.2"/>
@@ -705,10 +771,12 @@
     <div class="social-embeds">
       <div class="social-embed-card">
         <h3>Facebook</h3>
-        <iframe src="https://www.facebook.com/plugins/page.php?href=https%3A%2F%2Fwww.facebook.com%2FMi.pq.rincon%2F&tabs=timeline&width=350&height=500&small_header=false&adapt_container_width=true&hide_cover=false&show_facepile=true"
-          width="350" height="500" style="border:none;overflow:hidden;max-width:100%;" scrolling="no" frameborder="0"
-          allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share" loading="lazy"
-          title="Publicaciones de Facebook de Mi Pequeño Rincón"></iframe>
+        <div id="fbEmbedWrap">
+          <div class="embed-placeholder" id="fbEmbedPlaceholder">
+            <p>Este contenido lo sirve Facebook y puede instalar sus propias cookies.</p>
+            <button type="button" class="btn btn-ghost" id="loadFbEmbedBtn">Cargar publicaciones de Facebook</button>
+          </div>
+        </div>
       </div>
       <div class="social-embed-card">
         <h3>Instagram</h3>
@@ -772,8 +840,11 @@
         <a href="https://maps.app.goo.gl/wHq6ftuXBNFsV68i9?g_st=ac" target="_blank" rel="noopener">Google Maps</a>
       </div>
     </div>
-    <div class="mapbox">
-      <iframe loading="lazy" src="https://www.google.com/maps?q=Mi+Peque%C3%B1o+Rinc%C3%B3n,+Calle+Guadalajara+15,+Chozas+de+Canales&output=embed" allowfullscreen></iframe>
+    <div class="mapbox" id="mapsEmbedWrap">
+      <div class="embed-placeholder" id="mapsEmbedPlaceholder">
+        <p>El mapa lo sirve Google y puede instalar sus propias cookies.</p>
+        <button type="button" class="btn btn-ghost" id="loadMapsEmbedBtn">Cargar mapa de Google</button>
+      </div>
     </div>
   </div>
 </section>
@@ -787,7 +858,9 @@
   <div class="wrap footer-row">
     <span>© <span id="year"></span> Mi Pequeño Rincón — Sala de eventos, Chozas de Canales.</span>
     <a href="tel:+34624297877">624 29 78 77</a>
+    <a href="#" id="legalLinkFooter">Aviso legal</a>
     <a href="#" id="privacyLinkFooter">Política de privacidad</a>
+    <a href="#" id="cookiesLinkFooter">Política de cookies</a>
   </div>
 </footer>
 
@@ -813,6 +886,62 @@ navToggleBtn.addEventListener('click', () => {
   navToggleBtn.setAttribute('aria-expanded', String(isOpen));
 });
 navList.querySelectorAll('a.navlink').forEach(a => a.addEventListener('click', closeNavMenu));
+
+// ---------- Cookie consent ----------
+const COOKIE_CONSENT_KEY = 'mpr_cookie_consent';
+const COOKIE_FB_KEY = 'mpr_cookie_fb';
+const COOKIE_MAPS_KEY = 'mpr_cookie_maps';
+
+function loadFbEmbed(){
+  const wrap = document.getElementById('fbEmbedWrap');
+  wrap.innerHTML = `<iframe src="https://www.facebook.com/plugins/page.php?href=https%3A%2F%2Fwww.facebook.com%2FMi.pq.rincon%2F&tabs=timeline&width=350&height=500&small_header=false&adapt_container_width=true&hide_cover=false&show_facepile=true"
+    width="350" height="500" style="border:none;overflow:hidden;max-width:100%;" scrolling="no" frameborder="0"
+    allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share" loading="lazy"
+    title="Publicaciones de Facebook de Mi Pequeño Rincón"></iframe>`;
+  localStorage.setItem(COOKIE_FB_KEY, '1');
+}
+
+function loadMapsEmbed(){
+  const wrap = document.getElementById('mapsEmbedWrap');
+  wrap.innerHTML = `<iframe loading="lazy" src="https://www.google.com/maps?q=Mi+Peque%C3%B1o+Rinc%C3%B3n,+Calle+Guadalajara+15,+Chozas+de+Canales&output=embed" allowfullscreen></iframe>`;
+  localStorage.setItem(COOKIE_MAPS_KEY, '1');
+}
+
+function initCookieConsent(){
+  const banner = document.getElementById('cookieBanner');
+  const consent = localStorage.getItem(COOKIE_CONSENT_KEY);
+
+  document.getElementById('cookieAcceptBtn').addEventListener('click', () => {
+    localStorage.setItem(COOKIE_CONSENT_KEY, 'accepted');
+    loadFbEmbed();
+    loadMapsEmbed();
+    banner.hidden = true;
+  });
+  document.getElementById('cookieRejectBtn').addEventListener('click', () => {
+    localStorage.setItem(COOKIE_CONSENT_KEY, 'rejected');
+    banner.hidden = true;
+  });
+  document.getElementById('loadFbEmbedBtn').addEventListener('click', loadFbEmbed);
+  document.getElementById('loadMapsEmbedBtn').addEventListener('click', loadMapsEmbed);
+
+  const cookiesModal = document.getElementById('cookiesModal');
+  const openCookiesModal = (e) => { e.preventDefault(); cookiesModal.hidden = false; };
+  document.getElementById('cookiesLinkFooter').addEventListener('click', openCookiesModal);
+  document.getElementById('cookiePolicyLinkBanner').addEventListener('click', openCookiesModal);
+  document.getElementById('cookiesClose').addEventListener('click', () => { cookiesModal.hidden = true; });
+  cookiesModal.addEventListener('click', (e) => { if (e.target === cookiesModal) cookiesModal.hidden = true; });
+  document.getElementById('reopenCookieBannerBtn').addEventListener('click', () => {
+    cookiesModal.hidden = true;
+    banner.hidden = false;
+  });
+
+  if (localStorage.getItem(COOKIE_FB_KEY) === '1') loadFbEmbed();
+  if (localStorage.getItem(COOKIE_MAPS_KEY) === '1') loadMapsEmbed();
+
+  if (!consent) banner.hidden = false;
+}
+
+initCookieConsent();
 
 const EVENT_ICONS = {
   default: '<path d="M12 3v18M4 8h16M4 16h16" stroke="currentColor" stroke-width="1.4" fill="none"/>'
@@ -1138,6 +1267,18 @@ async function initForm(){
   document.getElementById('privacyLinkFooter').addEventListener('click', openPrivacyModal);
   document.getElementById('privacyClose').addEventListener('click', () => { privacyModal.hidden = true; });
   privacyModal.addEventListener('click', (e) => { if (e.target === privacyModal) privacyModal.hidden = true; });
+
+  const legalModal = document.getElementById('legalModal');
+  const openLegalModal = (e) => { e.preventDefault(); legalModal.hidden = false; };
+  document.getElementById('legalLinkFooter').addEventListener('click', openLegalModal);
+  document.getElementById('legalClose').addEventListener('click', () => { legalModal.hidden = true; });
+  legalModal.addEventListener('click', (e) => { if (e.target === legalModal) legalModal.hidden = true; });
+  document.getElementById('legalToPrivacyLink').addEventListener('click', (e) => { legalModal.hidden = true; openPrivacyModal(e); });
+  document.getElementById('legalToCookiesLink').addEventListener('click', (e) => {
+    legalModal.hidden = true;
+    e.preventDefault();
+    document.getElementById('cookiesModal').hidden = false;
+  });
   document.getElementById('wants_cleaning').addEventListener('change', updateSummary);
   document.getElementById('wants_kids_menu').addEventListener('change', (e) => {
     document.getElementById('kidsMenuField').hidden = !e.target.checked;
