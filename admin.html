@@ -351,6 +351,7 @@
   </div>
 
   <div id="tabAnulaciones" class="tab-panel" hidden>
+    <button type="button" class="btn btn-ghost" id="pcBackBtn" style="margin-bottom:18px;">← Volver a Reservas</button>
     <div class="stats-row">
       <div class="stat-card">
         <span class="num" id="pcConfirmedTotal">0€</span>
@@ -395,17 +396,15 @@
   <div class="modal-box" style="max-width:420px;">
     <button type="button" class="modal-close" id="partialCancelClose" aria-label="Cerrar">×</button>
     <h3 style="font-size:18px; margin-bottom:16px;">Anulación parcial</h3>
-    <p id="partialCancelResName" style="font-size:13.5px; color:var(--ink-soft); margin-bottom:16px;"></p>
+    <p id="partialCancelResName" style="font-size:13.5px; color:var(--ink-soft); margin-bottom:4px;"></p>
+    <p id="partialCancelResAmount" style="font-size:13.5px; color:var(--olive-dark); font-weight:600; margin-bottom:16px;"></p>
     <form id="partialCancelForm">
-      <div class="field">
-        <label for="pc_amount">Importe anulado (€)</label>
-        <input type="number" id="pc_amount" min="0.01" step="0.01" required>
-      </div>
       <div class="field">
         <label for="pc_note">Motivo (opcional)</label>
         <input type="text" id="pc_note" placeholder="Ej: el cliente canceló el catering">
       </div>
-      <button type="submit" class="btn btn-primary" id="partialCancelSubmitBtn">Guardar anulación</button>
+      <p style="font-size:12.5px; color:var(--ink-soft); margin:-6px 0 14px;">Al confirmar, la reserva se anulará y desaparecerá de Reservas y Calendario. Solo quedará registrada en el panel oculto.</p>
+      <button type="submit" class="btn btn-primary" id="partialCancelSubmitBtn">Confirmar anulación</button>
       <p id="partialCancelMsg" style="font-size:13px; margin-top:10px; color:var(--ink-soft);"></p>
     </form>
   </div>
@@ -594,6 +593,16 @@ let ALL_PLANS = [];
 let ALL_EXTRAS = [];
 let EVENT_TYPES = [];
 let FESTIVOS = new Set();
+let HIDDEN_RESERVATION_IDS = new Set();
+
+async function refreshHiddenReservationIds(){
+  const { data } = await supabase.from('partial_cancellations').select('reservation_id');
+  HIDDEN_RESERVATION_IDS = new Set((data || []).map(c => c.reservation_id));
+}
+
+function visibleReservations(list){
+  return (list || []).filter(r => !HIDDEN_RESERVATION_IDS.has(r.id));
+}
 
 loginForm.addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -684,8 +693,9 @@ function kidsMenuRevenue(r){
 }
 
 async function updateStats(){
-  const { data, error } = await supabase.from('reservations').select('*');
-  if (error || !data) return;
+  const { data: rawData, error } = await supabase.from('reservations').select('*');
+  if (error || !rawData) return;
+  const data = visibleReservations(rawData);
 
   const confirmed = data.filter(r => r.status === 'confirmada');
   const pending = data.filter(r => r.status === 'pendiente');
@@ -751,7 +761,8 @@ async function loadReservations(){
   const filter = statusFilter.value;
   let query = supabase.from('reservations').select('*').order('event_date', { ascending: true });
   if (filter !== 'todas') query = query.eq('status', filter);
-  const { data, error } = await query;
+  const { data: rawData, error } = await query;
+  const data = visibleReservations(rawData);
 
   await updateStats();
 
@@ -921,6 +932,7 @@ async function showDashboard(){
 
   document.getElementById('nr_event_type').innerHTML = EVENT_TYPES.map(t => `<option value="${t}">${t}</option>`).join('');
 
+  await refreshHiddenReservationIds();
   await loadReservations();
   checkNotifButton();
   checkHiddenHash();
@@ -971,9 +983,10 @@ async function renderCalendarState(){
   document.getElementById('calLabel').textContent = `${MONTH_NAMES[calState.month]} ${calState.year}`;
   document.getElementById('calDayList').innerHTML = '';
 
-  const { data, error } = await supabase.from('reservations').select('*')
+  const { data: rawData, error } = await supabase.from('reservations').select('*')
     .gte('event_date', `${calState.year}-${String(calState.month+1).padStart(2,'0')}-01`)
     .lt('event_date', calState.month === 11 ? `${calState.year+1}-01-01` : `${calState.year}-${String(calState.month+2).padStart(2,'0')}-01`);
+  const data = visibleReservations(rawData);
 
   const byDate = {};
   (data || []).forEach(r => {
@@ -1050,16 +1063,17 @@ document.getElementById('calNextBtn').addEventListener('click', () => {
 
 // ---------- Anulaciones parciales (panel oculto) ----------
 const ADMIN_HIDDEN_PIN = '2195';
-let partialCancelResId = null;
+let partialCancelRes = null;
 const partialCancelModal = document.getElementById('partialCancelModal');
 const pinModal = document.getElementById('pinModal');
 const pcCalState = { year: new Date().getFullYear(), month: new Date().getMonth() };
 
 function openPartialCancelModal(r){
-  partialCancelResId = r.id;
+  partialCancelRes = r;
   document.getElementById('partialCancelForm').reset();
   document.getElementById('partialCancelMsg').textContent = '';
   document.getElementById('partialCancelResName').textContent = `${r.full_name} — ${fmtDate(r.event_date)}`;
+  document.getElementById('partialCancelResAmount').textContent = `Importe que se registrará: ${formatPrice(reservationTotal(r))}`;
   partialCancelModal.hidden = false;
 }
 document.getElementById('partialCancelClose').addEventListener('click', () => { partialCancelModal.hidden = true; });
@@ -1067,24 +1081,31 @@ partialCancelModal.addEventListener('click', (e) => { if (e.target === partialCa
 
 document.getElementById('partialCancelForm').addEventListener('submit', async (e) => {
   e.preventDefault();
-  const amount = Number(document.getElementById('pc_amount').value);
+  const r = partialCancelRes;
+  const amount = reservationTotal(r);
   const note = document.getElementById('pc_note').value.trim() || null;
   const msgEl = document.getElementById('partialCancelMsg');
   const submitBtn = document.getElementById('partialCancelSubmitBtn');
-  if (!amount || amount <= 0){
-    msgEl.textContent = 'Introduce un importe válido.';
+  submitBtn.disabled = true;
+
+  const { error: updateError } = await supabase.from('reservations').update({ status: 'cancelada' }).eq('id', r.id).select();
+  if (updateError){
+    msgEl.textContent = 'No se ha podido anular la reserva: ' + updateError.message;
+    submitBtn.disabled = false;
     return;
   }
-  submitBtn.disabled = true;
-  const { error } = await supabase.from('partial_cancellations').insert({ reservation_id: partialCancelResId, amount, note });
-  if (error){
-    msgEl.textContent = 'No se ha podido guardar: ' + error.message;
+  const { error: insertError } = await supabase.from('partial_cancellations').insert({ reservation_id: r.id, amount, note });
+  if (insertError){
+    msgEl.textContent = 'La reserva se anuló pero no se ha podido registrar en el panel oculto: ' + insertError.message;
     submitBtn.disabled = false;
     return;
   }
   partialCancelModal.hidden = true;
   submitBtn.disabled = false;
-  setActionMsg('Anulación parcial registrada.', 'ok');
+  await refreshHiddenReservationIds();
+  setActionMsg(`Reserva de ${r.full_name} anulada y movida al panel oculto.`, 'ok');
+  await loadReservations();
+  refreshActiveTab();
 });
 
 function checkHiddenHash(){
@@ -1116,6 +1137,14 @@ window.addEventListener('hashchange', () => { if (!dashView.hidden) checkHiddenH
 document.getElementById('hiddenPanelBtn').addEventListener('click', () => {
   location.hash = '#anulaciones';
   checkHiddenHash();
+});
+document.getElementById('pcBackBtn').addEventListener('click', () => {
+  history.replaceState(null, '', location.pathname + location.search);
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.hidden = true);
+  document.querySelector('.tab-btn[data-tab="tabReservas"]').classList.add('active');
+  document.getElementById('tabReservas').hidden = false;
+  loadReservations();
 });
 
 async function renderPartialCancellations(){
@@ -1231,11 +1260,12 @@ async function renderClients(){
   const container = document.getElementById('clientsList');
   container.innerHTML = '<p class="empty-msg">Cargando…</p>';
 
-  const { data, error } = await supabase.from('reservations').select('*').order('event_date', { ascending: false });
-  if (error || !data){
+  const { data: rawData, error } = await supabase.from('reservations').select('*').order('event_date', { ascending: false });
+  if (error || !rawData){
     container.innerHTML = `<p class="empty-msg">Error cargando clientes: ${error?.message || ''}</p>`;
     return;
   }
+  const data = visibleReservations(rawData);
 
   const byPhone = {};
   data.forEach(r => {
