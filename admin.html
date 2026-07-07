@@ -740,7 +740,7 @@ function buildConfirmMessage(r, plan){
   if (r.coupon_code && Number(r.discount_amount) > 0) msg += ` (incluye descuento del cupón *${r.coupon_code}*: -${formatPrice(r.discount_amount)})`;
   msg += `\n\nPara cerrar la reserva pedimos una señal de 20€ (efectivo o Bizum)`;
   if (r.wants_decoration) msg += `, más otros 20€ de señal por la decoración personalizada`;
-  msg += `. El día del evento se pide además una fianza de 50€, que se devuelve si la sala queda en las mismas condiciones.\n\n¡Te esperamos! 🌿`;
+  msg += `. El día del evento se pide además una fianza de 50€, que se devuelve si la sala queda en las mismas condiciones, sin falta de limpieza ni uso indebido. Está prohibido pegar en las paredes cualquier tipo de decoración; hacerlo conllevará la pérdida total de la fianza.\n\n¡Te esperamos! 🌿`;
   return msg;
 }
 
