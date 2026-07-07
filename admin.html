@@ -56,6 +56,7 @@
     width:100%; padding:12px 14px; border:1px solid var(--line); background:#fff; font-size:14.5px;
     border-radius:var(--radius); margin:18px 0; font-family:inherit;
   }
+  #loginView input[type="checkbox"]{ width:auto; padding:0; margin:0; }
   #loginMsg{ margin-top:14px; font-size:13.5px; color:var(--ink-soft); min-height:1.4em; }
 
   .top-row{ display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:28px; flex-wrap:wrap; }
@@ -203,6 +204,9 @@
   <form id="loginForm">
     <input type="email" id="loginEmail" placeholder="tu@email.com" required autocomplete="username">
     <input type="password" id="loginPassword" placeholder="Contraseña" required autocomplete="current-password">
+    <label style="display:flex; align-items:center; gap:8px; font-size:13.5px; color:var(--ink-soft); margin:10px 0; justify-content:center;">
+      <input type="checkbox" id="loginRemember" style="width:auto;"> Recordar contraseña en este dispositivo
+    </label>
     <button type="submit" class="btn btn-primary" style="width:100%;">Entrar</button>
   </form>
   <p id="loginMsg"></p>
@@ -618,15 +622,31 @@ function visibleReservations(list){
   return (list || []).filter(r => !HIDDEN_RESERVATION_IDS.has(r.id));
 }
 
+const LOGIN_REMEMBER_KEY = 'mpr_admin_remember';
+(function restoreRememberedLogin(){
+  const saved = JSON.parse(localStorage.getItem(LOGIN_REMEMBER_KEY) || 'null');
+  if (saved){
+    document.getElementById('loginEmail').value = saved.email || '';
+    document.getElementById('loginPassword').value = saved.password || '';
+    document.getElementById('loginRemember').checked = true;
+  }
+})();
+
 loginForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const email = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value;
+  const remember = document.getElementById('loginRemember').checked;
   loginMsg.textContent = 'Entrando…';
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error){
     loginMsg.textContent = 'Usuario o contraseña incorrectos.';
     return;
+  }
+  if (remember){
+    localStorage.setItem(LOGIN_REMEMBER_KEY, JSON.stringify({ email, password }));
+  } else {
+    localStorage.removeItem(LOGIN_REMEMBER_KEY);
   }
   loginMsg.textContent = '';
 });
