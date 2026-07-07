@@ -152,7 +152,20 @@
   .cal-day.status-cancelada{ background:#7A2E22; border-color:#7A2E22; }
   .cal-day.status-cancelada .daynum{ color:var(--cream); }
   .cal-day.status-cancelada.clickable:hover{ background:#5c2119; }
-  .cal-day.has-partial{ box-shadow:inset 0 0 0 3px #E2762E; }
+
+  /* ---------- Calendario del panel oculto (colores propios) ---------- */
+  .cal-day.pc-pendiente{ background:#C9AEE0; border-color:#C9AEE0; }
+  .cal-day.pc-pendiente .daynum{ color:#3B2A4D; }
+  .cal-day.pc-pendiente.clickable:hover{ background:#b697d1; }
+  .cal-day.pc-confirmada{ background:var(--olive-dark); border-color:var(--olive-dark); }
+  .cal-day.pc-confirmada .daynum{ color:var(--cream); }
+  .cal-day.pc-confirmada.clickable:hover{ background:#3c4b1b; }
+  .cal-day.pc-parcial{ background:#E2762E; border-color:#E2762E; }
+  .cal-day.pc-parcial .daynum{ color:#fff; }
+  .cal-day.pc-parcial.clickable:hover{ background:#c9631f; }
+  .cal-day.pc-cancelada{ background:#7A2E22; border-color:#7A2E22; }
+  .cal-day.pc-cancelada .daynum{ color:var(--cream); }
+  .cal-day.pc-cancelada.clickable:hover{ background:#5c2119; }
 
   /* ---------- Clients ---------- */
   .client-card{ background:#fff; border:1px solid var(--line); padding:16px 20px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap; }
@@ -1198,12 +1211,13 @@ async function renderPartialCancellations(){
   for (let day = 1; day <= daysInMonth; day++){
     const key = ymd(new Date(pcCalState.year, pcCalState.month, day));
     const dayRes = byDate[key] || [];
-    const dayStatus = dayRes.some(r => r.status === 'confirmada') ? 'confirmada'
+    const hasPartial = dayRes.some(r => (cancelsByRes[r.id] || []).length);
+    const dayStatus = hasPartial ? 'parcial'
+      : dayRes.some(r => r.status === 'confirmada') ? 'confirmada'
       : dayRes.some(r => r.status === 'pendiente') ? 'pendiente'
       : dayRes.some(r => r.status === 'cancelada') ? 'cancelada'
       : null;
-    const hasPartial = dayRes.some(r => (cancelsByRes[r.id] || []).length);
-    const cls = 'cal-day' + (dayRes.length ? ' clickable' : '') + (dayStatus ? ` status-${dayStatus}` : '') + (hasPartial ? ' has-partial' : '');
+    const cls = 'cal-day' + (dayRes.length ? ' clickable' : '') + (dayStatus ? ` pc-${dayStatus}` : '');
     html += `<div class="${cls}" ${dayRes.length ? `data-date="${key}"` : ''}>
         <span class="daynum">${day}</span>
       </div>`;
