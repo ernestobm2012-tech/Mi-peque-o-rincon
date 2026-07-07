@@ -212,6 +212,8 @@
   .tax-table th:first-child, .tax-table td:first-child{ text-align:left; }
   .tax-table td{ padding:8px 6px; border-bottom:1px dashed var(--line); text-align:right; }
   .tax-table tfoot td{ font-weight:600; border-top:1px solid var(--line); border-bottom:none; }
+  .tax-table tr.quarter-header td{ text-align:left; text-transform:capitalize; font-weight:600; color:var(--olive-dark); background:var(--cream-2); padding-top:12px; border-bottom:none; }
+  .tax-table tr.quarter-subtotal td{ font-weight:600; border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
 </style>
 </head>
 <body>
@@ -849,6 +851,19 @@ async function renderGraficos(){
   }).join('');
 }
 
+const QUARTER_NAMES = ['1er trimestre', '2º trimestre', '3er trimestre', '4º trimestre'];
+
+function quarterKeyForMonth(monthKey){
+  const [y, m] = monthKey.split('-').map(Number);
+  const q = Math.ceil(m / 3);
+  return `${y}-Q${q}`;
+}
+
+function quarterLabel(quarterKey){
+  const [y, q] = quarterKey.split('-Q');
+  return `${QUARTER_NAMES[Number(q) - 1]} ${y}`;
+}
+
 async function renderImpuestos(){
   const { data: rawData, error } = await supabase.from('reservations').select('*');
   if (error || !rawData) return;
@@ -872,13 +887,33 @@ async function renderImpuestos(){
     table.innerHTML = '<tr><td>Todavía no hay reservas confirmadas.</td></tr>';
     return;
   }
+
+  const byQuarter = {};
+  months.forEach(m => {
+    const qKey = quarterKeyForMonth(m);
+    if (!byQuarter[qKey]) byQuarter[qKey] = { months: [], net: 0, iva: 0, gross: 0 };
+    byQuarter[qKey].months.push(m);
+    byQuarter[qKey].net += byMonth[m].net;
+    byQuarter[qKey].iva += byMonth[m].iva;
+    byQuarter[qKey].gross += byMonth[m].gross;
+  });
+  const quarters = Object.keys(byQuarter).sort().reverse();
+
   table.innerHTML = `
     <thead><tr><th>Mes</th><th>Base imponible</th><th>IVA (21%)</th><th>Total con IVA</th></tr></thead>
     <tbody>
-      ${months.map(m => {
-        const label = new Date(m + '-01T00:00:00').toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
-        const info = byMonth[m];
-        return `<tr><td style="text-transform:capitalize;">${label}</td><td>${formatPrice(info.net)}</td><td>${formatPrice(info.iva)}</td><td>${formatPrice(info.gross)}</td></tr>`;
+      ${quarters.map(q => {
+        const qInfo = byQuarter[q];
+        const monthRows = qInfo.months.map(m => {
+          const label = new Date(m + '-01T00:00:00').toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+          const info = byMonth[m];
+          return `<tr><td style="text-transform:capitalize; padding-left:18px;">${label}</td><td>${formatPrice(info.net)}</td><td>${formatPrice(info.iva)}</td><td>${formatPrice(info.gross)}</td></tr>`;
+        }).join('');
+        return `
+          <tr class="quarter-header"><td colspan="4">${quarterLabel(q)}</td></tr>
+          ${monthRows}
+          <tr class="quarter-subtotal"><td>Subtotal ${quarterLabel(q)}</td><td>${formatPrice(qInfo.net)}</td><td>${formatPrice(qInfo.iva)}</td><td>${formatPrice(qInfo.gross)}</td></tr>
+        `;
       }).join('')}
     </tbody>
     <tfoot>
