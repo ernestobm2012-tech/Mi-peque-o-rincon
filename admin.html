@@ -389,6 +389,9 @@
         <span class="lbl">Anuladas parcialmente (<span id="pcCount">0</span>)</span>
       </div>
     </div>
+    <div class="stats-extra-row" style="margin-bottom:24px;">
+      <span>🧹 Limpieza (aparte): <strong id="pcCleaning">0 reservas · 0€</strong></span>
+    </div>
     <div class="cal-nav">
       <button type="button" class="btn btn-ghost" id="pcCalPrevBtn">← Mes anterior</button>
       <h2 id="pcCalLabel" style="font-size:18px; text-transform:capitalize;"></h2>
@@ -1222,8 +1225,10 @@ async function renderPartialCancellations(){
   const confirmed = reservations.filter(r => r.status === 'confirmada');
   const pending = reservations.filter(r => r.status === 'pendiente');
   const cancelled = reservations.filter(r => r.status === 'cancelada' && !(cancelsByRes[r.id] || []).length);
-  const sumTotal = (list) => list.reduce((sum, r) => sum + reservationTotal(r) - kidsMenuRevenue(r), 0);
+  const sumTotal = (list) => list.reduce((sum, r) => sum + reservationTotal(r) - kidsMenuRevenue(r) - cleaningRevenue(r), 0);
   const partialTotal = cancels.reduce((sum, c) => sum + Number(c.amount), 0);
+  const cleaningReservations = reservations.filter(r => r.wants_cleaning);
+  const cleaningTotal = cleaningReservations.reduce((sum, r) => sum + cleaningRevenue(r), 0);
 
   document.getElementById('pcConfirmedTotal').textContent = formatPrice(sumTotal(confirmed));
   document.getElementById('pcConfirmedCount').textContent = confirmed.length;
@@ -1233,6 +1238,7 @@ async function renderPartialCancellations(){
   document.getElementById('pcCancelledCount').textContent = cancelled.length;
   document.getElementById('pcTotal').textContent = formatPrice(partialTotal);
   document.getElementById('pcCount').textContent = cancels.length;
+  document.getElementById('pcCleaning').textContent = `${cleaningReservations.length} reservas · ${formatPrice(cleaningTotal)}`;
 
   const monthStart = `${pcCalState.year}-${String(pcCalState.month+1).padStart(2,'0')}-01`;
   const monthEnd = pcCalState.month === 11 ? `${pcCalState.year+1}-01-01` : `${pcCalState.year}-${String(pcCalState.month+2).padStart(2,'0')}-01`;
