@@ -703,7 +703,7 @@ function buildDepositMessage(r, method){
 function addDays(dateStr, n){
   const d = new Date(dateStr + 'T00:00:00');
   d.setDate(d.getDate() + n);
-  return d.toISOString().slice(0,10);
+  return ymd(d);
 }
 
 function dayGroupFor(dateStr){
@@ -1019,7 +1019,12 @@ const MONTH_NAMES = ['enero','febrero','marzo','abril','mayo','junio','julio','a
 const DOWS = ['L','M','X','J','V','S','D'];
 const calState = { year: new Date().getFullYear(), month: new Date().getMonth() };
 
-function ymd(d){ return d.toISOString().slice(0,10); }
+function ymd(d){
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
 
 async function renderCalendarState(){
   document.getElementById('calLabel').textContent = `${MONTH_NAMES[calState.month]} ${calState.year}`;
@@ -1684,7 +1689,7 @@ function openNewResModal(){
   document.getElementById('newResTitle').textContent = 'Nueva reserva manual';
   document.getElementById('newResSubmitBtn').textContent = 'Guardar reserva confirmada';
   const dateInput = document.getElementById('nr_event_date');
-  dateInput.value = new Date().toISOString().slice(0,10);
+  dateInput.value = ymd(new Date());
   renderNrPlanOptions(dateInput.value);
   newResModal.hidden = false;
 }
