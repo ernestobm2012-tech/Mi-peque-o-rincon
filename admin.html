@@ -152,7 +152,7 @@
   .cal-day.status-cancelada{ background:#7A2E22; border-color:#7A2E22; }
   .cal-day.status-cancelada .daynum{ color:var(--cream); }
   .cal-day.status-cancelada.clickable:hover{ background:#5c2119; }
-  .cal-day.has-partial{ box-shadow:inset 0 0 0 3px var(--gold); }
+  .cal-day.has-partial{ box-shadow:inset 0 0 0 3px #E2762E; }
 
   /* ---------- Clients ---------- */
   .client-card{ background:#fff; border:1px solid var(--line); padding:16px 20px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap; }
@@ -204,6 +204,7 @@
       <button class="btn btn-ghost" id="enableNotifBtn" hidden>🔔 Activar notificaciones</button>
       <button class="btn btn-primary" id="newResBtn">+ Reserva manual</button>
       <button class="btn btn-ghost" id="logoutBtn">Salir</button>
+      <button class="btn btn-ghost" id="hiddenPanelBtn" style="font-size:11px; padding:5px 8px;" title="Acceso restringido">🔒</button>
     </div>
   </div>
   <p id="notifMsg" style="font-size:13px; color:var(--ink-soft); margin-top:-10px; margin-bottom:20px;"></p>
@@ -1112,6 +1113,10 @@ document.getElementById('pinForm').addEventListener('submit', (e) => {
   }
 });
 window.addEventListener('hashchange', () => { if (!dashView.hidden) checkHiddenHash(); });
+document.getElementById('hiddenPanelBtn').addEventListener('click', () => {
+  location.hash = '#anulaciones';
+  checkHiddenHash();
+});
 
 async function renderPartialCancellations(){
   document.getElementById('pcCalLabel').textContent = `${MONTH_NAMES[pcCalState.month]} ${pcCalState.year}`;
