@@ -255,6 +255,7 @@
     <details class="stats-months">
       <summary>Ver ingresos por mes</summary>
       <div class="stats-extra-row">
+        <span>🧹 Limpieza (aparte): <strong id="statCleaning">0 reservas · 0€</strong></span>
         <span>🍕 Menús infantiles (subcontratado, aparte): <strong id="statKidsMenus">0 unidades · 0€</strong></span>
         <span>🎈 Decoración (coste interno): <strong id="statDecorCost">0 reservas · 0€</strong></span>
       </div>
@@ -733,6 +734,10 @@ function kidsMenuRevenue(r){
   return (r.kids_menus_count || 0) * getExtraPrice('infantil');
 }
 
+function cleaningRevenue(r){
+  return r.wants_cleaning ? getExtraPrice('limpieza') : 0;
+}
+
 async function updateStats(){
   const { data: rawData, error } = await supabase.from('reservations').select('*');
   if (error || !rawData) return;
@@ -740,16 +745,19 @@ async function updateStats(){
 
   const confirmed = data.filter(r => r.status === 'confirmada');
   const pending = data.filter(r => r.status === 'pendiente');
-  const totalIncome = confirmed.reduce((sum, r) => sum + reservationTotal(r) - kidsMenuRevenue(r), 0);
+  const totalIncome = confirmed.reduce((sum, r) => sum + reservationTotal(r) - kidsMenuRevenue(r) - cleaningRevenue(r), 0);
 
   const kidsMenuCount = confirmed.reduce((sum, r) => sum + (r.kids_menus_count || 0), 0);
   const kidsMenuTotal = confirmed.reduce((sum, r) => sum + kidsMenuRevenue(r), 0);
   const decorReservations = confirmed.filter(r => r.wants_decoration);
   const decorCostTotal = decorReservations.reduce((sum, r) => sum + Number(r.decoration_cost || 0), 0);
+  const cleaningReservations = confirmed.filter(r => r.wants_cleaning);
+  const cleaningTotal = cleaningReservations.reduce((sum, r) => sum + cleaningRevenue(r), 0);
 
   document.getElementById('statIncome').textContent = formatPrice(totalIncome);
   document.getElementById('statConfirmed').textContent = confirmed.length;
   document.getElementById('statPending').textContent = pending.length;
+  document.getElementById('statCleaning').textContent = `${cleaningReservations.length} reservas · ${formatPrice(cleaningTotal)}`;
   document.getElementById('statKidsMenus').textContent = `${kidsMenuCount} unidades · ${formatPrice(kidsMenuTotal)}`;
   document.getElementById('statDecorCost').textContent = `${decorReservations.length} reservas · ${formatPrice(decorCostTotal)}`;
 
@@ -759,7 +767,7 @@ async function updateStats(){
     if (!key) return;
     if (!byMonth[key]) byMonth[key] = { count: 0, total: 0 };
     byMonth[key].count += 1;
-    byMonth[key].total += reservationTotal(r) - kidsMenuRevenue(r);
+    byMonth[key].total += reservationTotal(r) - kidsMenuRevenue(r) - cleaningRevenue(r);
   });
   const months = Object.keys(byMonth).sort().reverse();
   const table = document.getElementById('statsMonthsTable');
