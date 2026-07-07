@@ -1351,6 +1351,24 @@ document.getElementById('partialCancelForm').addEventListener('submit', async (e
   refreshActiveTab();
 });
 
+async function revertPartialCancellation(resId, resName){
+  if (!confirm(`¿Revertir la anulación parcial de ${resName}? La reserva volverá a "confirmada" y aparecerá de nuevo en el calendario normal.`)) return;
+  const { error: delError } = await supabase.from('partial_cancellations').delete().eq('reservation_id', resId);
+  if (delError){
+    setActionMsg('No se ha podido revertir la anulación parcial: ' + delError.message, 'err');
+    return;
+  }
+  const { error: updError } = await supabase.from('reservations').update({ status: 'confirmada' }).eq('id', resId).select();
+  if (updError){
+    setActionMsg('Se ha eliminado el registro de anulación parcial, pero no se ha podido restaurar el estado de la reserva: ' + updError.message, 'err');
+    return;
+  }
+  await refreshHiddenReservationIds();
+  setActionMsg(`Reserva de ${resName} restaurada como confirmada.`, 'ok');
+  await loadReservations();
+  renderPartialCancellations();
+}
+
 function checkHiddenHash(){
   if (location.hash === '#anulaciones'){
     document.getElementById('pinInput').value = '';
@@ -1488,9 +1506,14 @@ function showPcDay(dateStr, reservations, cancelsByRes){
           <div class="res-meta" style="margin-top:10px; padding-top:10px; border-top:1px dashed var(--line);">
             <div>💸 Anulado parcialmente: ${formatPrice(cancelsTotal)}</div>
             ${resCancels.map(c => `<div style="font-size:12.5px;">– ${formatPrice(c.amount)}${c.note ? ' · ' + c.note : ''} (${fmtDate(c.created_at.slice(0,10))})</div>`).join('')}
+            <button type="button" class="btn btn-ghost" data-action="revert-partial" data-id="${r.id}" data-name="${r.full_name}" style="margin-top:10px; font-size:11.5px; padding:5px 10px;">↩️ Revertir anulación parcial</button>
           </div>` : ''}
         </div>`;
     }).join('');
+
+  list.querySelectorAll('button[data-action="revert-partial"]').forEach(btn => {
+    btn.addEventListener('click', () => revertPartialCancellation(btn.dataset.id, btn.dataset.name));
+  });
 }
 
 document.getElementById('pcCalPrevBtn').addEventListener('click', () => {
