@@ -780,9 +780,21 @@ function setActionMsg(html, type){
 }
 
 function openWhatsApp(phone, text){
+  const send = confirm('¿Enviar el mensaje de WhatsApp al cliente desde este dispositivo?\n\nSolo acepta si este dispositivo tiene el WhatsApp de la sala. Si no, pulsa "Cancelar" y podrás enviarlo luego desde el dispositivo correcto.');
+  if (!send) return 'declined';
   const url = `https://wa.me/${waNumber(phone)}?text=${encodeURIComponent(text)}`;
   const win = window.open(url, '_blank', 'noopener');
-  return !!win;
+  return win ? 'sent' : 'blocked';
+}
+
+function waManualLink(phone, text){
+  return `<a href="https://wa.me/${waNumber(phone)}?text=${encodeURIComponent(text)}" target="_blank" rel="noopener">Abrir WhatsApp manualmente</a>`;
+}
+
+function waResultSuffix(status, phone, text){
+  if (status === 'sent') return 'Se ha abierto WhatsApp para enviar el mensaje.';
+  if (status === 'declined') return `No se ha enviado el WhatsApp desde este dispositivo. ${waManualLink(phone, text)} cuando quieras enviarlo desde el dispositivo correcto.`;
+  return `El navegador ha bloqueado la ventana de WhatsApp. ${waManualLink(phone, text)}.`;
 }
 
 async function updateStatus(id, status){
@@ -881,11 +893,9 @@ async function loadReservations(){
         const msg = action === 'accept' ? buildConfirmMessage(r, plan) : buildDenyMessage(r);
         const saved = await updateStatus(id, status);
         if (saved){
-          const opened = openWhatsApp(r.phone, msg);
+          const waStatus = openWhatsApp(r.phone, msg);
           setActionMsg(
-            opened
-              ? `Reserva de ${r.full_name} marcada como <strong>${label}</strong> en Supabase. Se ha abierto WhatsApp para que envíes el mensaje.`
-              : `Reserva de ${r.full_name} marcada como <strong>${label}</strong> en Supabase, pero el navegador ha bloqueado la ventana de WhatsApp. <a href="https://wa.me/${waNumber(r.phone)}?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">Ábrela manualmente aquí</a>.`,
+            `Reserva de ${r.full_name} marcada como <strong>${label}</strong> en Supabase. ${waResultSuffix(waStatus, r.phone, msg)}`,
             'ok'
           );
         }
@@ -893,19 +903,17 @@ async function loadReservations(){
         refreshActiveTab();
       } else if (action === 'resend'){
         const msg = r.status === 'confirmada' ? buildConfirmMessage(r, plan) : buildDenyMessage(r);
-        const opened = openWhatsApp(r.phone, msg);
-        if (!opened) setActionMsg(`El navegador ha bloqueado la ventana. <a href="https://wa.me/${waNumber(r.phone)}?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">Ábrela manualmente aquí</a>.`, 'ok');
+        const waStatus = openWhatsApp(r.phone, msg);
+        setActionMsg(waResultSuffix(waStatus, r.phone, msg), 'ok');
       } else if (action === 'cancel'){
         if (!confirm(`¿Seguro que quieres anular la reserva de ${r.full_name} (${fmtDate(r.event_date)})?`)) return;
         btn.disabled = true;
         const msg = buildCancelMessage(r);
         const saved = await updateStatus(id, 'cancelada');
         if (saved){
-          const opened = openWhatsApp(r.phone, msg);
+          const waStatus = openWhatsApp(r.phone, msg);
           setActionMsg(
-            opened
-              ? `Reserva de ${r.full_name} anulada en Supabase. Se ha abierto WhatsApp para avisar al cliente.`
-              : `Reserva de ${r.full_name} anulada en Supabase, pero el navegador ha bloqueado la ventana de WhatsApp. <a href="https://wa.me/${waNumber(r.phone)}?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">Ábrela manualmente aquí</a>.`,
+            `Reserva de ${r.full_name} anulada en Supabase. ${waResultSuffix(waStatus, r.phone, msg)}`,
             'ok'
           );
         }
@@ -921,11 +929,9 @@ async function loadReservations(){
           return;
         }
         const msg = buildDepositMessage(r, method);
-        const opened = openWhatsApp(r.phone, msg);
+        const waStatus = openWhatsApp(r.phone, msg);
         setActionMsg(
-          opened
-            ? `Señal de ${r.full_name} marcada como pagada (${method === 'bizum' ? 'Bizum' : 'efectivo'}) en Supabase. Se ha abierto WhatsApp para confirmárselo.`
-            : `Señal de ${r.full_name} marcada como pagada en Supabase, pero el navegador ha bloqueado la ventana de WhatsApp. <a href="https://wa.me/${waNumber(r.phone)}?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">Ábrela manualmente aquí</a>.`,
+          `Señal de ${r.full_name} marcada como pagada (${method === 'bizum' ? 'Bizum' : 'efectivo'}) en Supabase. ${waResultSuffix(waStatus, r.phone, msg)}`,
           'ok'
         );
         await loadReservations();
