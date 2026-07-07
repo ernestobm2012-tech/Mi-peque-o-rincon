@@ -68,6 +68,7 @@
   .badge.pendiente{ background:#F7EBD3; color:#6B4F17; }
   .badge.confirmada{ background:#EAF0E2; color:var(--olive-dark); }
   .badge.cancelada{ background:#F6E4E0; color:#7A2E22; }
+  .badge.parcial{ background:#FBE4CE; color:#9A4B14; }
   .res-meta{ font-size:13.5px; color:var(--ink-soft); margin-top:6px; }
   .res-meta div{ margin-top:3px; }
   .res-actions{ display:flex; gap:10px; margin-top:16px; flex-wrap:wrap; }
@@ -1179,7 +1180,7 @@ async function renderPartialCancellations(){
 
   const confirmed = reservations.filter(r => r.status === 'confirmada');
   const pending = reservations.filter(r => r.status === 'pendiente');
-  const cancelled = reservations.filter(r => r.status === 'cancelada');
+  const cancelled = reservations.filter(r => r.status === 'cancelada' && !(cancelsByRes[r.id] || []).length);
   const sumTotal = (list) => list.reduce((sum, r) => sum + reservationTotal(r) - kidsMenuRevenue(r), 0);
   const partialTotal = cancels.reduce((sum, c) => sum + Number(c.amount), 0);
 
@@ -1237,11 +1238,13 @@ function showPcDay(dateStr, reservations, cancelsByRes){
       const plan = ALL_PLANS.find(p => p.id === r.pricing_plan_id);
       const resCancels = cancelsByRes[r.id] || [];
       const cancelsTotal = resCancels.reduce((sum, c) => sum + Number(c.amount), 0);
+      const badgeClass = resCancels.length ? 'parcial' : r.status;
+      const badgeLabel = resCancels.length ? 'anulada parcial' : r.status;
       return `
         <div class="res-card">
           <div class="res-head">
             <h3>${r.full_name}</h3>
-            <span class="badge ${r.status}">${r.status}</span>
+            <span class="badge ${badgeClass}">${badgeLabel}</span>
           </div>
           <div class="res-meta">
             <div>⏰ ${r.start_time}-${r.end_time} · 🎉 ${r.event_type}</div>
