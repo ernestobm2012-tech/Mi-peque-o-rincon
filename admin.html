@@ -149,6 +149,10 @@
   .cal-day.status-confirmada{ background:var(--olive-dark); border-color:var(--olive-dark); }
   .cal-day.status-confirmada .daynum{ color:var(--cream); }
   .cal-day.status-confirmada.clickable:hover{ background:#3c4b1b; }
+  .cal-day.status-cancelada{ background:#7A2E22; border-color:#7A2E22; }
+  .cal-day.status-cancelada .daynum{ color:var(--cream); }
+  .cal-day.status-cancelada.clickable:hover{ background:#5c2119; }
+  .cal-day.has-partial{ box-shadow:inset 0 0 0 3px #E2762E; }
 
   /* ---------- Clients ---------- */
   .client-card{ background:#fff; border:1px solid var(--line); padding:16px 20px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap; }
@@ -200,6 +204,7 @@
       <button class="btn btn-ghost" id="enableNotifBtn" hidden>🔔 Activar notificaciones</button>
       <button class="btn btn-primary" id="newResBtn">+ Reserva manual</button>
       <button class="btn btn-ghost" id="logoutBtn">Salir</button>
+      <button class="btn btn-ghost" id="hiddenPanelBtn" style="font-size:11px; padding:5px 8px;" title="Acceso restringido">🔒</button>
     </div>
   </div>
   <p id="notifMsg" style="font-size:13px; color:var(--ink-soft); margin-top:-10px; margin-bottom:20px;"></p>
@@ -343,6 +348,66 @@
       </form>
     </div>
     <div id="galleryAdminSections"></div>
+  </div>
+
+  <div id="tabAnulaciones" class="tab-panel" hidden>
+    <div class="stats-row">
+      <div class="stat-card">
+        <span class="num" id="pcConfirmedTotal">0€</span>
+        <span class="lbl">Aceptadas (<span id="pcConfirmedCount">0</span>)</span>
+      </div>
+      <div class="stat-card">
+        <span class="num" id="pcPendingTotal">0€</span>
+        <span class="lbl">Pendientes (<span id="pcPendingCount">0</span>)</span>
+      </div>
+      <div class="stat-card">
+        <span class="num" id="pcCancelledTotal">0€</span>
+        <span class="lbl">Anuladas (<span id="pcCancelledCount">0</span>)</span>
+      </div>
+      <div class="stat-card">
+        <span class="num" id="pcTotal">0€</span>
+        <span class="lbl">Anuladas parcialmente (<span id="pcCount">0</span>)</span>
+      </div>
+    </div>
+    <div class="cal-nav">
+      <button type="button" class="btn btn-ghost" id="pcCalPrevBtn">← Mes anterior</button>
+      <h2 id="pcCalLabel" style="font-size:18px; text-transform:capitalize;"></h2>
+      <button type="button" class="btn btn-ghost" id="pcCalNextBtn">Mes siguiente →</button>
+    </div>
+    <div class="cal-grid" id="pcCalGrid"></div>
+    <div id="pcCalDayList" style="margin-top:24px;"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="pinModal" hidden>
+  <div class="modal-box" style="max-width:320px; text-align:center;">
+    <button type="button" class="modal-close" id="pinClose" aria-label="Cerrar">×</button>
+    <h3 style="font-size:18px; margin-bottom:16px;">Acceso restringido</h3>
+    <form id="pinForm">
+      <input type="password" id="pinInput" inputmode="numeric" placeholder="Contraseña" style="width:100%; text-align:center; font-size:20px; letter-spacing:4px; padding:10px; box-sizing:border-box;" required>
+      <button type="submit" class="btn btn-primary" style="margin-top:14px; width:100%;">Entrar</button>
+      <p id="pinMsg" style="font-size:13px; margin-top:10px; color:var(--ink-soft);"></p>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="partialCancelModal" hidden>
+  <div class="modal-box" style="max-width:420px;">
+    <button type="button" class="modal-close" id="partialCancelClose" aria-label="Cerrar">×</button>
+    <h3 style="font-size:18px; margin-bottom:16px;">Anulación parcial</h3>
+    <p id="partialCancelResName" style="font-size:13.5px; color:var(--ink-soft); margin-bottom:16px;"></p>
+    <form id="partialCancelForm">
+      <div class="field">
+        <label for="pc_amount">Importe anulado (€)</label>
+        <input type="number" id="pc_amount" min="0.01" step="0.01" required>
+      </div>
+      <div class="field">
+        <label for="pc_note">Motivo (opcional)</label>
+        <input type="text" id="pc_note" placeholder="Ej: el cliente canceló el catering">
+      </div>
+      <button type="submit" class="btn btn-primary" id="partialCancelSubmitBtn">Guardar anulación</button>
+      <p id="partialCancelMsg" style="font-size:13px; margin-top:10px; color:var(--ink-soft);"></p>
+    </form>
   </div>
 </div>
 
@@ -715,7 +780,8 @@ async function loadReservations(){
           ? `<button class="btn btn-primary" data-action="accept" data-id="${r.id}">✅ Aceptar</button>
              <button class="btn btn-deny" data-action="deny" data-id="${r.id}">❌ Denegar</button>`
           : `<button class="btn btn-ghost" data-action="resend" data-id="${r.id}">Reenviar WhatsApp</button>
-             ${r.status === 'confirmada' ? `<button class="btn btn-deny" data-action="cancel" data-id="${r.id}">🚫 Anular reserva</button>` : ''}`}
+             ${r.status === 'confirmada' ? `<button class="btn btn-deny" data-action="cancel" data-id="${r.id}">🚫 Anular reserva</button>` : ''}
+             <button class="btn btn-ghost" data-action="partial-cancel" data-id="${r.id}">💸 Anular parcial</button>`}
         <button class="btn btn-ghost" data-action="edit" data-id="${r.id}">✏️ Modificar</button>
         <button class="btn btn-deny" data-action="delete" data-id="${r.id}">🗑️ Borrar</button>
       </div>`;
@@ -820,6 +886,8 @@ async function loadReservations(){
         await loadReservations();
       } else if (action === 'edit'){
         openEditResModal(r);
+      } else if (action === 'partial-cancel'){
+        openPartialCancelModal(r);
       } else if (action === 'delete'){
         if (!confirm(`¿Seguro que quieres borrar definitivamente la reserva de ${r.full_name} (${fmtDate(r.event_date)})? Esta acción no se puede deshacer.`)) return;
         btn.disabled = true;
@@ -855,6 +923,7 @@ async function showDashboard(){
 
   await loadReservations();
   checkNotifButton();
+  checkHiddenHash();
 }
 
 async function init(){
@@ -977,6 +1046,184 @@ document.getElementById('calNextBtn').addEventListener('click', () => {
   calState.month++;
   if (calState.month > 11){ calState.month = 0; calState.year++; }
   renderCalendarState();
+});
+
+// ---------- Anulaciones parciales (panel oculto) ----------
+const ADMIN_HIDDEN_PIN = '2195';
+let partialCancelResId = null;
+const partialCancelModal = document.getElementById('partialCancelModal');
+const pinModal = document.getElementById('pinModal');
+const pcCalState = { year: new Date().getFullYear(), month: new Date().getMonth() };
+
+function openPartialCancelModal(r){
+  partialCancelResId = r.id;
+  document.getElementById('partialCancelForm').reset();
+  document.getElementById('partialCancelMsg').textContent = '';
+  document.getElementById('partialCancelResName').textContent = `${r.full_name} — ${fmtDate(r.event_date)}`;
+  partialCancelModal.hidden = false;
+}
+document.getElementById('partialCancelClose').addEventListener('click', () => { partialCancelModal.hidden = true; });
+partialCancelModal.addEventListener('click', (e) => { if (e.target === partialCancelModal) partialCancelModal.hidden = true; });
+
+document.getElementById('partialCancelForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const amount = Number(document.getElementById('pc_amount').value);
+  const note = document.getElementById('pc_note').value.trim() || null;
+  const msgEl = document.getElementById('partialCancelMsg');
+  const submitBtn = document.getElementById('partialCancelSubmitBtn');
+  if (!amount || amount <= 0){
+    msgEl.textContent = 'Introduce un importe válido.';
+    return;
+  }
+  submitBtn.disabled = true;
+  const { error } = await supabase.from('partial_cancellations').insert({ reservation_id: partialCancelResId, amount, note });
+  if (error){
+    msgEl.textContent = 'No se ha podido guardar: ' + error.message;
+    submitBtn.disabled = false;
+    return;
+  }
+  partialCancelModal.hidden = true;
+  submitBtn.disabled = false;
+  setActionMsg('Anulación parcial registrada.', 'ok');
+});
+
+function checkHiddenHash(){
+  if (location.hash === '#anulaciones'){
+    document.getElementById('pinInput').value = '';
+    document.getElementById('pinMsg').textContent = '';
+    pinModal.hidden = false;
+  }
+}
+document.getElementById('pinClose').addEventListener('click', () => {
+  pinModal.hidden = true;
+  history.replaceState(null, '', location.pathname + location.search);
+});
+document.getElementById('pinForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const val = document.getElementById('pinInput').value;
+  if (val === ADMIN_HIDDEN_PIN){
+    pinModal.hidden = true;
+    history.replaceState(null, '', location.pathname + location.search);
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.hidden = true);
+    document.getElementById('tabAnulaciones').hidden = false;
+    renderPartialCancellations();
+  } else {
+    document.getElementById('pinMsg').textContent = 'Contraseña incorrecta.';
+  }
+});
+window.addEventListener('hashchange', () => { if (!dashView.hidden) checkHiddenHash(); });
+document.getElementById('hiddenPanelBtn').addEventListener('click', () => {
+  location.hash = '#anulaciones';
+  checkHiddenHash();
+});
+
+async function renderPartialCancellations(){
+  document.getElementById('pcCalLabel').textContent = `${MONTH_NAMES[pcCalState.month]} ${pcCalState.year}`;
+  document.getElementById('pcCalDayList').innerHTML = '';
+
+  const [{ data: allRes }, { data: allCancels }] = await Promise.all([
+    supabase.from('reservations').select('*'),
+    supabase.from('partial_cancellations').select('*'),
+  ]);
+  const reservations = allRes || [];
+  const cancels = allCancels || [];
+
+  const cancelsByRes = {};
+  cancels.forEach(c => {
+    if (!cancelsByRes[c.reservation_id]) cancelsByRes[c.reservation_id] = [];
+    cancelsByRes[c.reservation_id].push(c);
+  });
+
+  const confirmed = reservations.filter(r => r.status === 'confirmada');
+  const pending = reservations.filter(r => r.status === 'pendiente');
+  const cancelled = reservations.filter(r => r.status === 'cancelada');
+  const sumTotal = (list) => list.reduce((sum, r) => sum + reservationTotal(r) - kidsMenuRevenue(r), 0);
+  const partialTotal = cancels.reduce((sum, c) => sum + Number(c.amount), 0);
+
+  document.getElementById('pcConfirmedTotal').textContent = formatPrice(sumTotal(confirmed));
+  document.getElementById('pcConfirmedCount').textContent = confirmed.length;
+  document.getElementById('pcPendingTotal').textContent = formatPrice(sumTotal(pending));
+  document.getElementById('pcPendingCount').textContent = pending.length;
+  document.getElementById('pcCancelledTotal').textContent = formatPrice(sumTotal(cancelled));
+  document.getElementById('pcCancelledCount').textContent = cancelled.length;
+  document.getElementById('pcTotal').textContent = formatPrice(partialTotal);
+  document.getElementById('pcCount').textContent = cancels.length;
+
+  const monthStart = `${pcCalState.year}-${String(pcCalState.month+1).padStart(2,'0')}-01`;
+  const monthEnd = pcCalState.month === 11 ? `${pcCalState.year+1}-01-01` : `${pcCalState.year}-${String(pcCalState.month+2).padStart(2,'0')}-01`;
+  const byDate = {};
+  reservations.forEach(r => {
+    if (r.event_date < monthStart || r.event_date >= monthEnd) return;
+    if (!byDate[r.event_date]) byDate[r.event_date] = [];
+    byDate[r.event_date].push(r);
+  });
+
+  const first = new Date(pcCalState.year, pcCalState.month, 1);
+  const startOffset = (first.getDay() + 6) % 7;
+  const daysInMonth = new Date(pcCalState.year, pcCalState.month + 1, 0).getDate();
+
+  let html = '';
+  DOWS.forEach(d => html += `<div class="dow">${d}</div>`);
+  for (let i = 0; i < startOffset; i++) html += `<div class="cal-day empty"></div>`;
+  for (let day = 1; day <= daysInMonth; day++){
+    const key = ymd(new Date(pcCalState.year, pcCalState.month, day));
+    const dayRes = byDate[key] || [];
+    const dayStatus = dayRes.some(r => r.status === 'confirmada') ? 'confirmada'
+      : dayRes.some(r => r.status === 'pendiente') ? 'pendiente'
+      : dayRes.some(r => r.status === 'cancelada') ? 'cancelada'
+      : null;
+    const hasPartial = dayRes.some(r => (cancelsByRes[r.id] || []).length);
+    const cls = 'cal-day' + (dayRes.length ? ' clickable' : '') + (dayStatus ? ` status-${dayStatus}` : '') + (hasPartial ? ' has-partial' : '');
+    html += `<div class="${cls}" ${dayRes.length ? `data-date="${key}"` : ''}>
+        <span class="daynum">${day}</span>
+      </div>`;
+  }
+  const grid = document.getElementById('pcCalGrid');
+  grid.innerHTML = html;
+  grid.querySelectorAll('[data-date]').forEach(el => {
+    el.addEventListener('click', () => showPcDay(el.dataset.date, byDate[el.dataset.date], cancelsByRes));
+  });
+}
+
+function showPcDay(dateStr, reservations, cancelsByRes){
+  const SOURCE_LABELS = { web: '🌐 Web', whatsapp: '💬 WhatsApp', presencial: '📍 Presencial' };
+  const list = document.getElementById('pcCalDayList');
+  list.innerHTML = `<h3 style="font-size:16px; margin-bottom:14px; text-transform:capitalize;">${fmtDate(dateStr)}</h3>` +
+    reservations.map(r => {
+      const plan = ALL_PLANS.find(p => p.id === r.pricing_plan_id);
+      const resCancels = cancelsByRes[r.id] || [];
+      const cancelsTotal = resCancels.reduce((sum, c) => sum + Number(c.amount), 0);
+      return `
+        <div class="res-card">
+          <div class="res-head">
+            <h3>${r.full_name}</h3>
+            <span class="badge ${r.status}">${r.status}</span>
+          </div>
+          <div class="res-meta">
+            <div>⏰ ${r.start_time}-${r.end_time} · 🎉 ${r.event_type}</div>
+            <div>📞 ${r.phone}</div>
+            ${plan ? `<div>💶 Total est. ${formatPrice(reservationTotal(r))}</div>` : ''}
+            <div>${SOURCE_LABELS[r.source] || r.source || ''}</div>
+          </div>
+          ${resCancels.length ? `
+          <div class="res-meta" style="margin-top:10px; padding-top:10px; border-top:1px dashed var(--line);">
+            <div>💸 Anulado parcialmente: ${formatPrice(cancelsTotal)}</div>
+            ${resCancels.map(c => `<div style="font-size:12.5px;">– ${formatPrice(c.amount)}${c.note ? ' · ' + c.note : ''} (${fmtDate(c.created_at.slice(0,10))})</div>`).join('')}
+          </div>` : ''}
+        </div>`;
+    }).join('');
+}
+
+document.getElementById('pcCalPrevBtn').addEventListener('click', () => {
+  pcCalState.month--;
+  if (pcCalState.month < 0){ pcCalState.month = 11; pcCalState.year--; }
+  renderPartialCancellations();
+});
+document.getElementById('pcCalNextBtn').addEventListener('click', () => {
+  pcCalState.month++;
+  if (pcCalState.month > 11){ pcCalState.month = 0; pcCalState.year++; }
+  renderPartialCancellations();
 });
 
 // ---------- Clients tab (fidelidad) ----------
