@@ -152,6 +152,7 @@
   .cal-day.status-cancelada{ background:#7A2E22; border-color:#7A2E22; }
   .cal-day.status-cancelada .daynum{ color:var(--cream); }
   .cal-day.status-cancelada.clickable:hover{ background:#5c2119; }
+  .cal-day.has-partial{ box-shadow:inset 0 0 0 3px var(--gold); }
 
   /* ---------- Clients ---------- */
   .client-card{ background:#fff; border:1px solid var(--line); padding:16px 20px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap; }
@@ -351,12 +352,20 @@
   <div id="tabAnulaciones" class="tab-panel" hidden>
     <div class="stats-row">
       <div class="stat-card">
-        <span class="num" id="pcTotal">0€</span>
-        <span class="lbl">Total anulado parcialmente</span>
+        <span class="num" id="pcConfirmedTotal">0€</span>
+        <span class="lbl">Aceptadas (<span id="pcConfirmedCount">0</span>)</span>
       </div>
       <div class="stat-card">
-        <span class="num" id="pcCount">0</span>
-        <span class="lbl">Anulaciones registradas</span>
+        <span class="num" id="pcPendingTotal">0€</span>
+        <span class="lbl">Pendientes (<span id="pcPendingCount">0</span>)</span>
+      </div>
+      <div class="stat-card">
+        <span class="num" id="pcCancelledTotal">0€</span>
+        <span class="lbl">Anuladas (<span id="pcCancelledCount">0</span>)</span>
+      </div>
+      <div class="stat-card">
+        <span class="num" id="pcTotal">0€</span>
+        <span class="lbl">Anuladas parcialmente (<span id="pcCount">0</span>)</span>
       </div>
     </div>
     <div class="cal-nav">
@@ -1108,23 +1117,41 @@ async function renderPartialCancellations(){
   document.getElementById('pcCalLabel').textContent = `${MONTH_NAMES[pcCalState.month]} ${pcCalState.year}`;
   document.getElementById('pcCalDayList').innerHTML = '';
 
-  const { data: all } = await supabase.from('partial_cancellations').select('amount');
-  const total = (all || []).reduce((sum, c) => sum + Number(c.amount), 0);
-  document.getElementById('pcTotal').textContent = formatPrice(total);
-  document.getElementById('pcCount').textContent = (all || []).length;
+  const [{ data: allRes }, { data: allCancels }] = await Promise.all([
+    supabase.from('reservations').select('*'),
+    supabase.from('partial_cancellations').select('*'),
+  ]);
+  const reservations = allRes || [];
+  const cancels = allCancels || [];
 
-  const { data } = await supabase.from('partial_cancellations')
-    .select('*, reservations(id, full_name, event_date, event_type)');
+  const cancelsByRes = {};
+  cancels.forEach(c => {
+    if (!cancelsByRes[c.reservation_id]) cancelsByRes[c.reservation_id] = [];
+    cancelsByRes[c.reservation_id].push(c);
+  });
 
+  const confirmed = reservations.filter(r => r.status === 'confirmada');
+  const pending = reservations.filter(r => r.status === 'pendiente');
+  const cancelled = reservations.filter(r => r.status === 'cancelada');
+  const sumTotal = (list) => list.reduce((sum, r) => sum + reservationTotal(r) - kidsMenuRevenue(r), 0);
+  const partialTotal = cancels.reduce((sum, c) => sum + Number(c.amount), 0);
+
+  document.getElementById('pcConfirmedTotal').textContent = formatPrice(sumTotal(confirmed));
+  document.getElementById('pcConfirmedCount').textContent = confirmed.length;
+  document.getElementById('pcPendingTotal').textContent = formatPrice(sumTotal(pending));
+  document.getElementById('pcPendingCount').textContent = pending.length;
+  document.getElementById('pcCancelledTotal').textContent = formatPrice(sumTotal(cancelled));
+  document.getElementById('pcCancelledCount').textContent = cancelled.length;
+  document.getElementById('pcTotal').textContent = formatPrice(partialTotal);
+  document.getElementById('pcCount').textContent = cancels.length;
+
+  const monthStart = `${pcCalState.year}-${String(pcCalState.month+1).padStart(2,'0')}-01`;
+  const monthEnd = pcCalState.month === 11 ? `${pcCalState.year+1}-01-01` : `${pcCalState.year}-${String(pcCalState.month+2).padStart(2,'0')}-01`;
   const byDate = {};
-  (data || []).forEach(c => {
-    const res = c.reservations;
-    if (!res || !res.event_date) return;
-    if (res.event_date < `${pcCalState.year}-${String(pcCalState.month+1).padStart(2,'0')}-01`) return;
-    const upperBound = pcCalState.month === 11 ? `${pcCalState.year+1}-01-01` : `${pcCalState.year}-${String(pcCalState.month+2).padStart(2,'0')}-01`;
-    if (res.event_date >= upperBound) return;
-    if (!byDate[res.event_date]) byDate[res.event_date] = [];
-    byDate[res.event_date].push(c);
+  reservations.forEach(r => {
+    if (r.event_date < monthStart || r.event_date >= monthEnd) return;
+    if (!byDate[r.event_date]) byDate[r.event_date] = [];
+    byDate[r.event_date].push(r);
   });
 
   const first = new Date(pcCalState.year, pcCalState.month, 1);
@@ -1136,35 +1163,51 @@ async function renderPartialCancellations(){
   for (let i = 0; i < startOffset; i++) html += `<div class="cal-day empty"></div>`;
   for (let day = 1; day <= daysInMonth; day++){
     const key = ymd(new Date(pcCalState.year, pcCalState.month, day));
-    const dayCancels = byDate[key] || [];
-    const cls = 'cal-day' + (dayCancels.length ? ' clickable status-cancelada' : '');
-    html += `<div class="${cls}" ${dayCancels.length ? `data-date="${key}"` : ''}>
+    const dayRes = byDate[key] || [];
+    const dayStatus = dayRes.some(r => r.status === 'confirmada') ? 'confirmada'
+      : dayRes.some(r => r.status === 'pendiente') ? 'pendiente'
+      : dayRes.some(r => r.status === 'cancelada') ? 'cancelada'
+      : null;
+    const hasPartial = dayRes.some(r => (cancelsByRes[r.id] || []).length);
+    const cls = 'cal-day' + (dayRes.length ? ' clickable' : '') + (dayStatus ? ` status-${dayStatus}` : '') + (hasPartial ? ' has-partial' : '');
+    html += `<div class="${cls}" ${dayRes.length ? `data-date="${key}"` : ''}>
         <span class="daynum">${day}</span>
       </div>`;
   }
   const grid = document.getElementById('pcCalGrid');
   grid.innerHTML = html;
   grid.querySelectorAll('[data-date]').forEach(el => {
-    el.addEventListener('click', () => showPcDay(el.dataset.date, byDate[el.dataset.date]));
+    el.addEventListener('click', () => showPcDay(el.dataset.date, byDate[el.dataset.date], cancelsByRes));
   });
 }
 
-function showPcDay(dateStr, cancellations){
+function showPcDay(dateStr, reservations, cancelsByRes){
+  const SOURCE_LABELS = { web: '🌐 Web', whatsapp: '💬 WhatsApp', presencial: '📍 Presencial' };
   const list = document.getElementById('pcCalDayList');
-  const dayTotal = cancellations.reduce((sum, c) => sum + Number(c.amount), 0);
-  list.innerHTML = `<h3 style="font-size:16px; margin-bottom:14px; text-transform:capitalize;">${fmtDate(dateStr)} — Total ${formatPrice(dayTotal)}</h3>` +
-    cancellations.map(c => `
-      <div class="res-card">
-        <div class="res-head">
-          <h3>${c.reservations?.full_name || 'Reserva eliminada'}</h3>
-          <span class="badge cancelada">-${formatPrice(c.amount)}</span>
-        </div>
-        <div class="res-meta">
-          ${c.reservations?.event_type ? `<div>🎉 ${c.reservations.event_type}</div>` : ''}
-          ${c.note ? `<div>💬 ${c.note}</div>` : ''}
-          <div>🗓️ Registrada el ${fmtDate(c.created_at.slice(0,10))}</div>
-        </div>
-      </div>`).join('');
+  list.innerHTML = `<h3 style="font-size:16px; margin-bottom:14px; text-transform:capitalize;">${fmtDate(dateStr)}</h3>` +
+    reservations.map(r => {
+      const plan = ALL_PLANS.find(p => p.id === r.pricing_plan_id);
+      const resCancels = cancelsByRes[r.id] || [];
+      const cancelsTotal = resCancels.reduce((sum, c) => sum + Number(c.amount), 0);
+      return `
+        <div class="res-card">
+          <div class="res-head">
+            <h3>${r.full_name}</h3>
+            <span class="badge ${r.status}">${r.status}</span>
+          </div>
+          <div class="res-meta">
+            <div>⏰ ${r.start_time}-${r.end_time} · 🎉 ${r.event_type}</div>
+            <div>📞 ${r.phone}</div>
+            ${plan ? `<div>💶 Total est. ${formatPrice(reservationTotal(r))}</div>` : ''}
+            <div>${SOURCE_LABELS[r.source] || r.source || ''}</div>
+          </div>
+          ${resCancels.length ? `
+          <div class="res-meta" style="margin-top:10px; padding-top:10px; border-top:1px dashed var(--line);">
+            <div>💸 Anulado parcialmente: ${formatPrice(cancelsTotal)}</div>
+            ${resCancels.map(c => `<div style="font-size:12.5px;">– ${formatPrice(c.amount)}${c.note ? ' · ' + c.note : ''} (${fmtDate(c.created_at.slice(0,10))})</div>`).join('')}
+          </div>` : ''}
+        </div>`;
+    }).join('');
 }
 
 document.getElementById('pcCalPrevBtn').addEventListener('click', () => {
