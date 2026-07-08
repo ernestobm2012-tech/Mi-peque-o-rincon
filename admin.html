@@ -748,6 +748,10 @@ function buildDenyMessage(r){
   return `Hola ${r.full_name}, gracias por tu interés en *Mi Pequeño Rincón*. Sentimos decirte que la fecha del ${fmtDate(r.event_date)} (${r.start_time}-${r.end_time}) ya no está disponible. Si quieres, dinos otra fecha y miramos la disponibilidad. ¡Gracias por escribirnos!`;
 }
 
+function buildDateTakenMessage(r){
+  return `Hola ${r.full_name}, gracias por tu interés en *Mi Pequeño Rincón*. Sentimos decirte que la fecha del ${fmtDate(r.event_date)} (${r.start_time}-${r.end_time}) ya ha sido reservada por otra persona. Si quieres, dinos otra fecha y miramos la disponibilidad. ¡Gracias por escribirnos!`;
+}
+
 function buildCancelMessage(r){
   return `Hola ${r.full_name}, te informamos de que tu reserva en *Mi Pequeño Rincón* del ${fmtDate(r.event_date)} (${r.start_time}-${r.end_time}) ha sido anulada. Si tienes cualquier duda o quieres buscar otra fecha, contacta con nosotros. Disculpa las molestias.`;
 }
@@ -1067,6 +1071,35 @@ async function loadReservations(){
       const action = btn.dataset.action;
 
       if (action === 'accept' || action === 'deny'){
+        if (action === 'accept'){
+          const { data: conflicts } = await supabase
+            .from('reservations')
+            .select('id, full_name')
+            .eq('event_date', r.event_date)
+            .eq('status', 'confirmada')
+            .neq('id', id)
+            .limit(1);
+          if (conflicts && conflicts.length){
+            const wantsDeny = confirm(`⚠️ El día ${fmtDate(r.event_date)} ya tienes confirmada la reserva de ${conflicts[0].full_name}.\n\nNo puedes aceptar esta también. ¿Quieres denegarla ahora avisando al cliente de que la fecha ya está reservada?`);
+            if (wantsDeny){
+              btn.disabled = true;
+              const msg = buildDateTakenMessage(r);
+              const saved = await updateStatus(id, 'cancelada');
+              if (saved){
+                const opened = openWhatsApp(r.phone, msg);
+                setActionMsg(
+                  opened
+                    ? `Reserva de ${r.full_name} denegada (fecha ya reservada) en Supabase. Se ha abierto WhatsApp para que envíes el mensaje.`
+                    : `Reserva de ${r.full_name} denegada (fecha ya reservada) en Supabase, pero el navegador ha bloqueado la ventana de WhatsApp. <a href="https://wa.me/${waNumber(r.phone)}?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">Ábrela manualmente aquí</a>.`,
+                  'ok'
+                );
+              }
+              await loadReservations();
+              refreshActiveTab();
+            }
+            return;
+          }
+        }
         btn.disabled = true;
         const status = action === 'accept' ? 'confirmada' : 'cancelada';
         const label = action === 'accept' ? 'confirmada ✅' : 'cancelada ❌';
@@ -1988,6 +2021,19 @@ newResForm.addEventListener('submit', async (e) => {
   if (endTime <= startTime){
     newResMsg.textContent = 'La hora de fin debe ser posterior a la hora de inicio.';
     return;
+  }
+
+  if (!editingId){
+    const { data: conflicts } = await supabase
+      .from('reservations')
+      .select('id, full_name')
+      .eq('event_date', document.getElementById('nr_event_date').value)
+      .eq('status', 'confirmada')
+      .limit(1);
+    if (conflicts && conflicts.length){
+      newResMsg.textContent = `⚠️ Ese día ya tienes confirmada la reserva de ${conflicts[0].full_name}. No se ha guardado.`;
+      return;
+    }
   }
 
   const payload = {
