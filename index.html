@@ -273,8 +273,6 @@
   .cal-day.clickable:hover{ background:var(--cream-2); }
   .cal-day.today{ border:1px solid var(--olive-dark); }
   .cal-day.past{ color:var(--line); }
-  .cal-day.reserved{ color:var(--ink-soft); text-decoration:line-through; cursor:not-allowed; }
-  .cal-legend{ font-size:12.5px; color:var(--ink-soft); margin-top:16px; text-align:center; }
 
   /* ---------- Booking modal ---------- */
   .modal-overlay{
@@ -694,9 +692,6 @@
           <button type="button" class="cal-nav-btn" id="calNextBtn" aria-label="Mes siguiente">&#8594;</button>
         </div>
         <div class="cal-grid" id="calGrid"></div>
-        <div class="cal-legend">
-          <span style="text-decoration:line-through;">Fecha tachada</span> = ya reservada
-        </div>
       </div>
     </div>
   </div>
@@ -1232,13 +1227,6 @@ async function loadFestivos(){
   FESTIVOS = new Set((data||[]).map(r => r.event_date));
 }
 
-// ---------- Fechas ya reservadas (confirmadas) ----------
-let CONFIRMED_DATES = new Set();
-async function loadConfirmedDates(){
-  const { data } = await supabase.from('confirmed_dates').select('event_date');
-  CONFIRMED_DATES = new Set((data||[]).map(r => r.event_date));
-}
-
 function dayGroupFor(dateStr){
   const d = new Date(dateStr + 'T00:00:00');
   const dow = d.getDay(); // 0=domingo ... 5=viernes, 6=sábado
@@ -1262,15 +1250,13 @@ function buildCalendar(container, year, month){
     const key = ymd(d);
     const isPast = d < today;
     const isToday = key === ymd(today);
-    const isReserved = CONFIRMED_DATES.has(key);
-    const isClickable = !isPast && !isReserved;
     const cls = [
       'cal-day',
-      isPast ? 'past' : (isReserved ? 'reserved' : 'clickable'),
+      isPast ? 'past' : 'clickable',
       isToday ? 'today' : ''
     ].filter(Boolean).join(' ');
-    const tag = isClickable ? 'button' : 'span';
-    const attrs = isClickable ? `type="button" data-date="${key}"` : (isReserved ? `title="Fecha ya reservada"` : '');
+    const tag = isPast ? 'span' : 'button';
+    const attrs = isPast ? '' : `type="button" data-date="${key}"`;
     html += `<${tag} class="${cls}" ${attrs}>${day}</${tag}>`;
   }
   container.innerHTML = html;
@@ -1542,7 +1528,6 @@ async function initForm(){
   await loadOfertas();
   await loadPricing();
   await loadFestivos();
-  await loadConfirmedDates();
   await loadAvailability();
   await initForm();
 })();
