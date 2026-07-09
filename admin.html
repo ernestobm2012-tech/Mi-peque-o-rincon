@@ -82,6 +82,8 @@
   .stat-card{ background:#fff; border:1px solid var(--line); padding:16px 20px; flex:1; min-width:170px; }
   .stat-card .num{ font-family:'Fraunces',serif; font-size:28px; color:var(--olive-dark); display:block; }
   .stat-card .lbl{ font-size:11.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.04em; margin-top:4px; display:block; }
+  .stat-card.clickable{ cursor:pointer; transition:background .15s; }
+  .stat-card.clickable:hover{ background:var(--cream-2); }
   .stats-months{ background:#fff; border:1px solid var(--line); padding:14px 20px; margin-bottom:24px; font-size:13px; color:var(--ink-soft); }
   .stats-months summary{ cursor:pointer; font-weight:500; color:var(--ink); }
   .stats-months table{ width:100%; border-collapse:collapse; margin-top:10px; }
@@ -429,26 +431,31 @@
 
   <div id="tabAnulaciones" class="tab-panel" hidden>
     <button type="button" class="btn btn-ghost" id="pcBackBtn" style="margin-bottom:18px;">← Volver a Reservas</button>
-    <div class="stats-row">
-      <div class="stat-card">
+    <div class="stats-row" id="pcStatsRow">
+      <div class="stat-card clickable" data-filter="confirmed">
         <span class="num" id="pcConfirmedTotal">0€</span>
         <span class="lbl">Aceptadas (<span id="pcConfirmedCount">0</span>)</span>
       </div>
-      <div class="stat-card">
+      <div class="stat-card clickable" data-filter="pending">
         <span class="num" id="pcPendingTotal">0€</span>
         <span class="lbl">Pendientes (<span id="pcPendingCount">0</span>)</span>
       </div>
-      <div class="stat-card">
+      <div class="stat-card clickable" data-filter="cancelled">
         <span class="num" id="pcCancelledTotal">0€</span>
         <span class="lbl">Anuladas (<span id="pcCancelledCount">0</span>)</span>
       </div>
-      <div class="stat-card">
+      <div class="stat-card clickable" data-filter="partial">
         <span class="num" id="pcTotal">0€</span>
         <span class="lbl">Anuladas parcialmente (<span id="pcCount">0</span>)</span>
       </div>
-    </div>
-    <div class="stats-extra-row" style="margin-bottom:24px;">
-      <span>🧹 Limpieza (aparte): <strong id="pcCleaning">0 reservas · 0€</strong></span>
+      <div class="stat-card clickable" data-filter="cleaning">
+        <span class="num" id="pcCleaningTotal">0€</span>
+        <span class="lbl">🧹 Limpieza (<span id="pcCleaningCount">0</span>)</span>
+      </div>
+      <div class="stat-card clickable" data-filter="decoration">
+        <span class="num" id="pcDecorTotal">0€</span>
+        <span class="lbl">🎈 Decoración (<span id="pcDecorCount">0</span>)</span>
+      </div>
     </div>
     <div class="cal-nav">
       <button type="button" class="btn btn-ghost" id="pcCalPrevBtn">← Mes anterior</button>
@@ -1348,6 +1355,8 @@ let partialCancelRes = null;
 const partialCancelModal = document.getElementById('partialCancelModal');
 const pinModal = document.getElementById('pinModal');
 const pcCalState = { year: new Date().getFullYear(), month: new Date().getMonth() };
+let PC_LISTS = { confirmed: [], pending: [], cancelled: [], partial: [], cleaning: [], decoration: [] };
+let PC_CANCELS_BY_RES = {};
 
 function openPartialCancelModal(r){
   partialCancelRes = r;
@@ -1466,10 +1475,21 @@ async function renderPartialCancellations(){
   const confirmed = reservations.filter(r => r.status === 'confirmada');
   const pending = reservations.filter(r => r.status === 'pendiente');
   const cancelled = reservations.filter(r => r.status === 'cancelada' && !(cancelsByRes[r.id] || []).length);
+  const partialReservations = reservations.filter(r => (cancelsByRes[r.id] || []).length);
   const sumTotal = (list) => list.reduce((sum, r) => sum + reservationTotal(r) - kidsMenuRevenue(r) - cleaningRevenue(r), 0);
   const partialTotal = cancels.reduce((sum, c) => sum + Number(c.amount), 0);
   const cleaningReservations = reservations.filter(r => r.wants_cleaning);
   const cleaningTotal = cleaningReservations.reduce((sum, r) => sum + cleaningRevenue(r), 0);
+  const decorReservations = reservations.filter(r => r.wants_decoration);
+  const decorTotal = decorReservations.reduce((sum, r) => sum + Number(r.decoration_cost || 0), 0);
+
+  PC_LISTS = {
+    confirmed, pending, cancelled,
+    partial: partialReservations,
+    cleaning: cleaningReservations,
+    decoration: decorReservations,
+  };
+  PC_CANCELS_BY_RES = cancelsByRes;
 
   document.getElementById('pcConfirmedTotal').textContent = formatPrice(sumTotal(confirmed));
   document.getElementById('pcConfirmedCount').textContent = confirmed.length;
@@ -1479,7 +1499,10 @@ async function renderPartialCancellations(){
   document.getElementById('pcCancelledCount').textContent = cancelled.length;
   document.getElementById('pcTotal').textContent = formatPrice(partialTotal);
   document.getElementById('pcCount').textContent = cancels.length;
-  document.getElementById('pcCleaning').textContent = `${cleaningReservations.length} reservas · ${formatPrice(cleaningTotal)}`;
+  document.getElementById('pcCleaningTotal').textContent = formatPrice(cleaningTotal);
+  document.getElementById('pcCleaningCount').textContent = cleaningReservations.length;
+  document.getElementById('pcDecorTotal').textContent = formatPrice(decorTotal);
+  document.getElementById('pcDecorCount').textContent = decorReservations.length;
 
   const monthStart = `${pcCalState.year}-${String(pcCalState.month+1).padStart(2,'0')}-01`;
   const monthEnd = pcCalState.month === 11 ? `${pcCalState.year+1}-01-01` : `${pcCalState.year}-${String(pcCalState.month+2).padStart(2,'0')}-01`;
@@ -1519,9 +1542,17 @@ async function renderPartialCancellations(){
 }
 
 function showPcDay(dateStr, reservations, cancelsByRes){
+  showPcList(fmtDate(dateStr), reservations, cancelsByRes);
+}
+
+function showPcList(title, reservations, cancelsByRes){
   const SOURCE_LABELS = { web: '🌐 Web', whatsapp: '💬 WhatsApp', presencial: '📍 Presencial' };
   const list = document.getElementById('pcCalDayList');
-  list.innerHTML = `<h3 style="font-size:16px; margin-bottom:14px; text-transform:capitalize;">${fmtDate(dateStr)}</h3>` +
+  if (!reservations.length){
+    list.innerHTML = `<h3 style="font-size:16px; margin-bottom:14px; text-transform:capitalize;">${title}</h3><p class="empty-msg">No hay reservas en este grupo.</p>`;
+    return;
+  }
+  list.innerHTML = `<h3 style="font-size:16px; margin-bottom:14px; text-transform:capitalize;">${title}</h3>` +
     reservations.map(r => {
       const plan = ALL_PLANS.find(p => p.id === r.pricing_plan_id);
       const resCancels = cancelsByRes[r.id] || [];
@@ -1553,6 +1584,21 @@ function showPcDay(dateStr, reservations, cancelsByRes){
     btn.addEventListener('click', () => revertPartialCancellation(btn.dataset.id, btn.dataset.name));
   });
 }
+
+const PC_FILTER_LABELS = {
+  confirmed: 'Aceptadas',
+  pending: 'Pendientes',
+  cancelled: 'Anuladas',
+  partial: 'Anuladas parcialmente',
+  cleaning: '🧹 Limpieza',
+  decoration: '🎈 Decoración',
+};
+document.getElementById('pcStatsRow').addEventListener('click', (e) => {
+  const card = e.target.closest('[data-filter]');
+  if (!card) return;
+  const key = card.dataset.filter;
+  showPcList(PC_FILTER_LABELS[key] || key, PC_LISTS[key] || [], PC_CANCELS_BY_RES);
+});
 
 document.getElementById('pcCalPrevBtn').addEventListener('click', () => {
   pcCalState.month--;
