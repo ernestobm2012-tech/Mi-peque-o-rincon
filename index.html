@@ -193,9 +193,14 @@
 
   /* ---------- Events grid ---------- */
   .events-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--line); border:1px solid var(--line); }
-  .event-card{ background:var(--cream); padding:30px 26px; min-height:150px; display:flex; flex-direction:column; gap:10px; justify-content:flex-end;}
-  .event-card svg{ width:26px; height:26px; color:var(--olive-dark); }
-  .event-card h3{ font-size:17px; font-weight:500; }
+  .event-card{ position:relative; overflow:hidden; background:var(--cream); padding:30px 26px; min-height:150px; display:flex; flex-direction:column; gap:10px; justify-content:flex-end;}
+  .event-card svg{ width:26px; height:26px; color:var(--olive-dark); position:relative; z-index:2; }
+  .event-card h3{ font-size:17px; font-weight:500; position:relative; z-index:2; }
+  .event-card.has-photo{ cursor:zoom-in; }
+  .event-card.has-photo img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:0; transition:transform .35s ease; }
+  .event-card.has-photo:hover img{ transform:scale(1.05); }
+  .event-card.has-photo::after{ content:''; position:absolute; inset:0; background:linear-gradient(to top, rgba(20,18,14,.78), rgba(20,18,14,.08) 65%); z-index:1; }
+  .event-card.has-photo svg, .event-card.has-photo h3{ color:#fff; }
   @media (max-width:760px){ .events-grid{ grid-template-columns:repeat(2,1fr);} }
 
   /* ---------- Catas highlight ---------- */
@@ -1053,7 +1058,7 @@ function showLightboxIndex(){
   lightboxNextBtn.hidden = !multiple;
 }
 function openLightbox(imgEl){
-  const container = imgEl.closest('.decor-grid, .sala-gallery');
+  const container = imgEl.closest('.decor-grid, .sala-gallery, .events-grid');
   lightboxImages = container ? Array.from(container.querySelectorAll('img')) : [imgEl];
   lightboxIndex = lightboxImages.indexOf(imgEl);
   showLightboxIndex();
@@ -1072,8 +1077,13 @@ function lightboxNext(){
   showLightboxIndex();
 }
 document.addEventListener('click', (e) => {
-  const img = e.target.closest('.decor-grid img, .sala-gallery img');
-  if (img) openLightbox(img);
+  const img = e.target.closest('.decor-grid img, .sala-gallery img, .events-grid img');
+  if (img){ openLightbox(img); return; }
+  const photoCard = e.target.closest('.event-card.has-photo');
+  if (photoCard){
+    const cardImg = photoCard.querySelector('img');
+    if (cardImg) openLightbox(cardImg);
+  }
 });
 document.getElementById('lightboxClose').addEventListener('click', closeLightbox);
 lightboxPrevBtn.addEventListener('click', lightboxPrev);
@@ -1087,23 +1097,50 @@ document.addEventListener('keydown', (e) => {
 });
 
 const EVENT_ICONS = {
-  default: '<path d="M12 3v18M4 8h16M4 16h16" stroke="currentColor" stroke-width="1.4" fill="none"/>'
+  cumpleanos: '<rect x="4" y="10" width="16" height="10" rx="1"/><path d="M4 10h16"/><path d="M12 10v10"/><path d="M12 10c-1.8 0-3.2-1.1-3.2-2.6C8.8 6 10.2 5 12 7c1.8-2 3.2-1 3.2.4C15.2 8.9 13.8 10 12 10Z"/>',
+  comunion: '<path d="M7 4h10l-1 6a4 4 0 0 1-8 0L7 4Z"/><path d="M12 14v4"/><path d="M9 20h6"/>',
+  bautizo: '<path d="M12 3c3 4 6 7.5 6 11a6 6 0 0 1-12 0c0-3.5 3-7 6-11Z"/>',
+  boda: '<circle cx="9" cy="14" r="4.2"/><circle cx="15" cy="14" r="4.2"/>',
+  'baby shower': '<path d="M10 3h4v3h-4z"/><path d="M9 8h6a1 1 0 0 1 1 1v9a3 3 0 0 1-3 3h-2a3 3 0 0 1-3-3V9a1 1 0 0 1 1-1Z"/><path d="M9 13h6"/>',
+  'grupo de amigos': '<circle cx="8.5" cy="9" r="2.5"/><circle cx="16" cy="9" r="2.2"/><path d="M3.5 20c.5-3.5 2.7-5.5 5-5.5s4.5 2 5 5.5"/><path d="M13.5 20c.4-2.8 1.9-4.7 3.7-5.2"/>',
+  'reunion de empresa': '<rect x="3.5" y="8" width="17" height="11" rx="1.5"/><path d="M8.5 8V6.5a1.5 1.5 0 0 1 1.5-1.5h4a1.5 1.5 0 0 1 1.5 1.5V8"/><path d="M3.5 13h17"/>',
+  otro: '<path d="M12 4l1.2 3.8L17 9l-3.8 1.2L12 14l-1.2-3.8L7 9l3.8-1.2L12 4Z"/><path d="M18 15l.6 1.9L20.5 17.5l-1.9.6L18 20l-.6-1.9-1.9-.6 1.9-.6L18 15Z"/>',
+  default: '<path d="M12 3v18M4 8h16M4 16h16"/>'
 };
+
+function normalizeEventName(s){
+  return (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+}
 
 // ---------- Event types ----------
 async function loadEventTypes(){
   const grid = document.getElementById('eventsGrid');
   const select = document.getElementById('event_type');
-  const { data, error } = await supabase.from('event_types').select('name').order('name');
-  const types = (!error && data && data.length) ? data.map(d=>d.name) : ['Cumpleaños','Comunión','Bautizo','Boda','Baby shower','Grupo de amigos','Reunión de empresa','Otro'];
+  const { data, error } = await supabase.from('event_types').select('name, image_path').order('name');
+  const types = (!error && data && data.length)
+    ? data
+    : ['Cumpleaños','Comunión','Bautizo','Boda','Baby shower','Grupo de amigos','Reunión de empresa','Otro'].map(name => ({ name, image_path: null }));
 
-  grid.innerHTML = types.map(name => `
-    <div class="event-card">
-      <svg viewBox="0 0 24 24" fill="none">${EVENT_ICONS.default}</svg>
-      <h3>${name}</h3>
-    </div>`).join('');
+  grid.innerHTML = types.map(t => {
+    const icon = EVENT_ICONS[normalizeEventName(t.name)] || EVENT_ICONS.default;
+    const iconSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">${icon}</svg>`;
+    if (t.image_path){
+      const { data: pub } = supabase.storage.from('galeria').getPublicUrl(t.image_path);
+      return `
+        <div class="event-card has-photo">
+          <img src="${pub.publicUrl}" alt="${t.name.replace(/"/g, '&quot;')}">
+          ${iconSvg}
+          <h3>${t.name}</h3>
+        </div>`;
+    }
+    return `
+      <div class="event-card">
+        ${iconSvg}
+        <h3>${t.name}</h3>
+      </div>`;
+  }).join('');
 
-  select.innerHTML = types.map(t => `<option value="${t}">${t}</option>`).join('');
+  select.innerHTML = types.map(t => `<option value="${t.name}">${t.name}</option>`).join('');
 }
 
 // ---------- Gallery sections (decoraciones, ofertas) ----------

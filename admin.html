@@ -389,6 +389,11 @@
         <p id="galFormMsg" style="font-size:13.5px; margin-top:10px; color:var(--ink-soft);"></p>
       </form>
     </div>
+    <div class="res-card" style="margin-bottom:24px;">
+      <h3 style="margin-bottom:6px;">Fotos de los tipos de evento</h3>
+      <p style="font-size:13.5px; color:var(--ink-soft); margin-bottom:16px;">Si le pones una foto a un tipo de evento, en la web se podrá pinchar en su tarjeta para verla en grande.</p>
+      <div id="eventTypePhotos" class="gallery-admin-grid"></div>
+    </div>
     <div id="galleryAdminSections"></div>
   </div>
 
@@ -1228,7 +1233,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     if (btn.dataset.tab === 'tabCalendario') renderCalendarState();
     if (btn.dataset.tab === 'tabClientes') renderClients();
     if (btn.dataset.tab === 'tabCupones') renderCoupons();
-    if (btn.dataset.tab === 'tabGaleria') renderGallery();
+    if (btn.dataset.tab === 'tabGaleria'){ renderGallery(); renderEventTypePhotos(); }
     if (btn.dataset.tab === 'tabGraficos') renderGraficos();
     if (btn.dataset.tab === 'tabImpuestos') renderImpuestos();
   });
@@ -1831,6 +1836,77 @@ async function renderGallery(){
       await supabase.storage.from('galeria').remove([path]);
       await supabase.from('gallery_images').delete().eq('id', id);
       await renderGallery();
+    });
+  });
+}
+
+// ---------- Fotos de tipos de evento ----------
+async function renderEventTypePhotos(){
+  const container = document.getElementById('eventTypePhotos');
+  const { data, error } = await supabase.from('event_types').select('*').order('name');
+  if (error){
+    container.innerHTML = `<p class="empty-msg">Error cargando los tipos de evento: ${error.message}</p>`;
+    return;
+  }
+
+  container.innerHTML = (data || []).map(t => {
+    const thumb = t.image_path
+      ? supabase.storage.from('galeria').getPublicUrl(t.image_path).data.publicUrl
+      : null;
+    return `
+      <div class="gallery-admin-card">
+        ${thumb ? `<img src="${thumb}" alt="${t.name}">` : `<div style="height:140px; display:flex; align-items:center; justify-content:center; background:var(--cream); color:var(--ink-soft); font-size:12.5px;">Sin foto</div>`}
+        <div class="gallery-admin-meta">
+          <p>${t.name}</p>
+          <input type="file" accept="image/*" data-et-file="${t.id}" style="font-size:12px; margin-bottom:8px;">
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn btn-ghost" data-et-upload="${t.id}" style="font-size:11.5px; padding:5px 10px;">Subir</button>
+            ${t.image_path ? `<button class="btn btn-deny" data-et-remove="${t.id}" data-path="${t.image_path}" style="font-size:11.5px; padding:5px 10px;">🗑️ Quitar foto</button>` : ''}
+          </div>
+          <p class="et-photo-msg" data-et-msg="${t.id}" style="font-size:12px; margin-top:6px;"></p>
+        </div>
+      </div>`;
+  }).join('');
+
+  container.querySelectorAll('[data-et-upload]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const typeId = btn.dataset.etUpload;
+      const fileInput = container.querySelector(`input[data-et-file="${typeId}"]`);
+      const msgEl = container.querySelector(`[data-et-msg="${typeId}"]`);
+      const file = fileInput.files[0];
+      if (!file){
+        msgEl.textContent = 'Elige antes una foto.';
+        return;
+      }
+      btn.disabled = true;
+      msgEl.textContent = 'Subiendo…';
+      const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
+      const path = `event-types/${typeId}-${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage.from('galeria').upload(path, file);
+      if (uploadError){
+        msgEl.textContent = 'No se ha podido subir: ' + uploadError.message;
+        btn.disabled = false;
+        return;
+      }
+      const { error: updateError } = await supabase.from('event_types').update({ image_path: path }).eq('id', typeId);
+      if (updateError){
+        msgEl.textContent = 'No se ha podido guardar: ' + updateError.message;
+        btn.disabled = false;
+        return;
+      }
+      await renderEventTypePhotos();
+    });
+  });
+
+  container.querySelectorAll('[data-et-remove]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('¿Quitar la foto de este tipo de evento?')) return;
+      btn.disabled = true;
+      const typeId = btn.dataset.etRemove;
+      const path = btn.dataset.path;
+      await supabase.storage.from('galeria').remove([path]);
+      await supabase.from('event_types').update({ image_path: null }).eq('id', typeId);
+      await renderEventTypePhotos();
     });
   });
 }
