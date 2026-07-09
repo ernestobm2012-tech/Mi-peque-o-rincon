@@ -459,7 +459,7 @@
     </div>
     <div class="res-card" style="margin-bottom:24px;">
       <h3 style="margin-bottom:6px;">Ingresos reales por mes</h3>
-      <p style="font-size:13.5px; color:var(--ink-soft); margin-bottom:14px;">Solo de reservas aceptadas: alquiler de la sala sin IVA + decoración + limpieza + 1€ por cada menú infantil.</p>
+      <p style="font-size:13.5px; color:var(--ink-soft); margin-bottom:14px;">De reservas aceptadas y anuladas parcialmente: alquiler de la sala sin IVA + decoración + limpieza + 1€ por cada menú infantil.</p>
       <table class="tax-table" id="pcIncomeTable"></table>
     </div>
     <div class="cal-nav">
@@ -1523,7 +1523,7 @@ async function renderPartialCancellations(){
   document.getElementById('pcDecorTotal').textContent = formatPrice(decorTotal);
   document.getElementById('pcDecorCount').textContent = decorReservations.length;
 
-  const incomeByMonth = monthlyRealIncome(confirmed);
+  const incomeByMonth = monthlyRealIncome([...confirmed, ...partialReservations]);
   const incomeMonths = Object.keys(incomeByMonth).sort().reverse();
   const incomeTable = document.getElementById('pcIncomeTable');
   if (!incomeMonths.length){
