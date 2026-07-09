@@ -457,6 +457,11 @@
         <span class="lbl">🎈 Decoración (<span id="pcDecorCount">0</span>)</span>
       </div>
     </div>
+    <div class="res-card" style="margin-bottom:24px;">
+      <h3 style="margin-bottom:6px;">Ingresos reales por mes</h3>
+      <p style="font-size:13.5px; color:var(--ink-soft); margin-bottom:14px;">Solo de reservas aceptadas: alquiler de la sala sin IVA + decoración + limpieza + 1€ por cada menú infantil.</p>
+      <table class="tax-table" id="pcIncomeTable"></table>
+    </div>
     <div class="cal-nav">
       <button type="button" class="btn btn-ghost" id="pcCalPrevBtn">← Mes anterior</button>
       <h2 id="pcCalLabel" style="font-size:18px; text-transform:capitalize;"></h2>
@@ -835,6 +840,20 @@ function monthlyRoomRevenue(reservations){
     byMonth[key].gross += gross;
     byMonth[key].net += net;
     byMonth[key].iva += gross - net;
+  });
+  return byMonth;
+}
+
+// Ingreso real por mes: alquiler sin IVA + decoración + limpieza + 1€ por cada menú infantil.
+function monthlyRealIncome(reservations){
+  const byMonth = {};
+  reservations.forEach(r => {
+    const key = (r.event_date || '').slice(0, 7);
+    if (!key) return;
+    if (!byMonth[key]) byMonth[key] = 0;
+    const decor = r.wants_decoration ? Number(r.decoration_cost || 0) : 0;
+    const kids = (r.kids_menus_count || 0) * 1;
+    byMonth[key] += roomRevenueNet(r) + decor + cleaningRevenue(r) + kids;
   });
   return byMonth;
 }
@@ -1503,6 +1522,25 @@ async function renderPartialCancellations(){
   document.getElementById('pcCleaningCount').textContent = cleaningReservations.length;
   document.getElementById('pcDecorTotal').textContent = formatPrice(decorTotal);
   document.getElementById('pcDecorCount').textContent = decorReservations.length;
+
+  const incomeByMonth = monthlyRealIncome(confirmed);
+  const incomeMonths = Object.keys(incomeByMonth).sort().reverse();
+  const incomeTable = document.getElementById('pcIncomeTable');
+  if (!incomeMonths.length){
+    incomeTable.innerHTML = '<tr><td>Todavía no hay reservas aceptadas.</td></tr>';
+  } else {
+    const incomeTotal = incomeMonths.reduce((sum, m) => sum + incomeByMonth[m], 0);
+    incomeTable.innerHTML = `
+      <thead><tr><th>Mes</th><th>Ingreso real</th></tr></thead>
+      <tbody>
+        ${incomeMonths.map(m => {
+          const label = new Date(m + '-01T00:00:00').toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+          return `<tr><td style="text-transform:capitalize;">${label}</td><td>${formatPrice(incomeByMonth[m])}</td></tr>`;
+        }).join('')}
+      </tbody>
+      <tfoot><tr><td>Total</td><td>${formatPrice(incomeTotal)}</td></tr></tfoot>
+    `;
+  }
 
   const monthStart = `${pcCalState.year}-${String(pcCalState.month+1).padStart(2,'0')}-01`;
   const monthEnd = pcCalState.month === 11 ? `${pcCalState.year+1}-01-01` : `${pcCalState.year}-${String(pcCalState.month+2).padStart(2,'0')}-01`;
