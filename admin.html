@@ -1888,9 +1888,11 @@ async function renderEventTypePhotos(){
         btn.disabled = false;
         return;
       }
-      const { error: updateError } = await supabase.from('event_types').update({ image_path: path }).eq('id', typeId);
-      if (updateError){
-        msgEl.textContent = 'No se ha podido guardar: ' + updateError.message;
+      const { data: updateData, error: updateError } = await supabase.from('event_types').update({ image_path: path }).eq('id', typeId).select();
+      if (updateError || !updateData || !updateData.length){
+        msgEl.textContent = updateError
+          ? 'No se ha podido guardar: ' + updateError.message
+          : 'Supabase no ha guardado el cambio (revisa los permisos). La foto NO se ha vinculado.';
         btn.disabled = false;
         return;
       }
@@ -1905,7 +1907,7 @@ async function renderEventTypePhotos(){
       const typeId = btn.dataset.etRemove;
       const path = btn.dataset.path;
       await supabase.storage.from('galeria').remove([path]);
-      await supabase.from('event_types').update({ image_path: null }).eq('id', typeId);
+      await supabase.from('event_types').update({ image_path: null }).eq('id', typeId).select();
       await renderEventTypePhotos();
     });
   });
