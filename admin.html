@@ -1554,7 +1554,10 @@ async function renderPartialCancellations(){
           const resRows = info.reservations
             .slice()
             .sort((a, b) => (a.event_date || '').localeCompare(b.event_date || ''))
-            .map(r => `<tr><td style="padding-left:18px;">${r.full_name}</td><td colspan="2">${formatPrice(reservationTotal(r))}</td></tr>`)
+            .map(r => {
+              const icons = `${r.wants_decoration ? ' 🎈' : ''}${r.wants_cleaning ? ' 🧹' : ''}`;
+              return `<tr><td style="padding-left:18px;">${r.full_name}${icons}</td><td colspan="2">${formatPrice(reservationTotal(r))}</td></tr>`;
+            })
             .join('');
           return `
             <tr class="quarter-header"><td colspan="3">${label}</td></tr>
