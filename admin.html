@@ -460,7 +460,7 @@
     </div>
     <div class="res-card" style="margin-bottom:24px;">
       <h3 style="margin-bottom:6px;">Ingresos reales por mes</h3>
-      <p style="font-size:13.5px; color:var(--ink-soft); margin-bottom:14px;">De reservas aceptadas y anuladas parcialmente: alquiler de la sala + decoración + limpieza + 1€ por cada menú infantil. "Real" sin el IVA del alquiler, "Total" pagando ese IVA.</p>
+      <p style="font-size:13.5px; color:var(--ink-soft); margin-bottom:14px;">De reservas aceptadas y anuladas parcialmente: alquiler de la sala + decoración + limpieza + 1€ por cada menú infantil. "Real" sin el IVA del alquiler, "Total" pagando ese IVA. 🎈 Decoración · 🧹 Limpieza · 🍕 Menú infantil (suman al total) · 🎭 Animación · 🍽️ Catering (solo informativos, no suman).</p>
       <table class="tax-table" id="pcIncomeTable"></table>
     </div>
     <div class="cal-nav">
@@ -1555,8 +1555,14 @@ async function renderPartialCancellations(){
             .slice()
             .sort((a, b) => (a.event_date || '').localeCompare(b.event_date || ''))
             .map(r => {
-              const icons = `${r.wants_decoration ? ' 🎈' : ''}${r.wants_cleaning ? ' 🧹' : ''}`;
-              return `<tr><td style="padding-left:18px;">${r.full_name}${icons}</td><td colspan="2">${formatPrice(reservationTotal(r))}</td></tr>`;
+              const icons = [
+                r.wants_decoration ? '🎈' : '',
+                r.wants_cleaning ? '🧹' : '',
+                r.kids_menus_count ? '🍕' : '',
+                r.wants_animation ? '🎭' : '',
+                r.wants_catering ? '🍽️' : '',
+              ].filter(Boolean).join(' ');
+              return `<tr><td style="padding-left:18px;">${r.full_name}${icons ? ' ' + icons : ''}</td><td>${formatPrice(realIncomeForReservation(r))}</td><td>${formatPrice(totalIncomeForReservation(r))}</td></tr>`;
             })
             .join('');
           return `
