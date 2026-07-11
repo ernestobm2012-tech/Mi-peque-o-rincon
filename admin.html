@@ -377,6 +377,7 @@
             <option value="menu-infantil">Menú infantil</option>
             <option value="decoraciones">Decoraciones</option>
             <option value="ofertas">Ofertas</option>
+            <option value="catering">Catering</option>
           </select>
         </div>
         <div class="field">
@@ -459,7 +460,7 @@
     </div>
     <div class="res-card" style="margin-bottom:24px;">
       <h3 style="margin-bottom:6px;">Ingresos reales por mes</h3>
-      <p style="font-size:13.5px; color:var(--ink-soft); margin-bottom:14px;">De reservas aceptadas y anuladas parcialmente: alquiler de la sala sin IVA + decoración + limpieza + 1€ por cada menú infantil.</p>
+      <p style="font-size:13.5px; color:var(--ink-soft); margin-bottom:14px;">De reservas aceptadas y anuladas parcialmente: alquiler de la sala + decoración + limpieza + 1€ por cada menú infantil. "Real" sin el IVA del alquiler, "Total" pagando ese IVA.</p>
       <table class="tax-table" id="pcIncomeTable"></table>
     </div>
     <div class="cal-nav">
@@ -844,16 +845,29 @@ function monthlyRoomRevenue(reservations){
   return byMonth;
 }
 
-// Ingreso real por mes: alquiler sin IVA + decoración + limpieza + 1€ por cada menú infantil.
+// "Real" = alquiler sin IVA + decoración + limpieza + 1€ por cada menú infantil.
+// "Total" = lo mismo pero con el alquiler CON IVA (lo que hay que pagar de más al hacienda).
+function realIncomeForReservation(r){
+  const decor = r.wants_decoration ? Number(r.decoration_cost || 0) : 0;
+  const kids = (r.kids_menus_count || 0) * 1;
+  return roomRevenueNet(r) + decor + cleaningRevenue(r) + kids;
+}
+
+function totalIncomeForReservation(r){
+  const decor = r.wants_decoration ? Number(r.decoration_cost || 0) : 0;
+  const kids = (r.kids_menus_count || 0) * 1;
+  return roomRevenue(r) + decor + cleaningRevenue(r) + kids;
+}
+
 function monthlyRealIncome(reservations){
   const byMonth = {};
   reservations.forEach(r => {
     const key = (r.event_date || '').slice(0, 7);
     if (!key) return;
-    if (!byMonth[key]) byMonth[key] = 0;
-    const decor = r.wants_decoration ? Number(r.decoration_cost || 0) : 0;
-    const kids = (r.kids_menus_count || 0) * 1;
-    byMonth[key] += roomRevenueNet(r) + decor + cleaningRevenue(r) + kids;
+    if (!byMonth[key]) byMonth[key] = { real: 0, total: 0, reservations: [] };
+    byMonth[key].real += realIncomeForReservation(r);
+    byMonth[key].total += totalIncomeForReservation(r);
+    byMonth[key].reservations.push(r);
   });
   return byMonth;
 }
@@ -1529,16 +1543,27 @@ async function renderPartialCancellations(){
   if (!incomeMonths.length){
     incomeTable.innerHTML = '<tr><td>Todavía no hay reservas aceptadas.</td></tr>';
   } else {
-    const incomeTotal = incomeMonths.reduce((sum, m) => sum + incomeByMonth[m], 0);
+    const grandReal = incomeMonths.reduce((sum, m) => sum + incomeByMonth[m].real, 0);
+    const grandTotal = incomeMonths.reduce((sum, m) => sum + incomeByMonth[m].total, 0);
     incomeTable.innerHTML = `
-      <thead><tr><th>Mes</th><th>Ingreso real</th></tr></thead>
+      <thead><tr><th>Mes / Reserva</th><th>Real</th><th>Total</th></tr></thead>
       <tbody>
         ${incomeMonths.map(m => {
           const label = new Date(m + '-01T00:00:00').toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
-          return `<tr><td style="text-transform:capitalize;">${label}</td><td>${formatPrice(incomeByMonth[m])}</td></tr>`;
+          const info = incomeByMonth[m];
+          const resRows = info.reservations
+            .slice()
+            .sort((a, b) => (a.event_date || '').localeCompare(b.event_date || ''))
+            .map(r => `<tr><td style="padding-left:18px;">${r.full_name}</td><td colspan="2">${formatPrice(reservationTotal(r))}</td></tr>`)
+            .join('');
+          return `
+            <tr class="quarter-header"><td colspan="3">${label}</td></tr>
+            ${resRows}
+            <tr class="quarter-subtotal"><td>Total ${label}</td><td>${formatPrice(info.real)}</td><td>${formatPrice(info.total)}</td></tr>
+          `;
         }).join('')}
       </tbody>
-      <tfoot><tr><td>Total</td><td>${formatPrice(incomeTotal)}</td></tr></tfoot>
+      <tfoot><tr><td>Total general</td><td>${formatPrice(grandReal)}</td><td>${formatPrice(grandTotal)}</td></tr></tfoot>
     `;
   }
 
@@ -1858,6 +1883,7 @@ const GALLERY_SECTION_LABELS = {
   'menu-infantil': 'Menú infantil',
   decoraciones: 'Decoraciones',
   ofertas: 'Ofertas',
+  catering: 'Catering',
 };
 
 document.getElementById('galleryForm').addEventListener('submit', async (e) => {
