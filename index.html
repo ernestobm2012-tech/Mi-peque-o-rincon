@@ -672,6 +672,18 @@
   </div>
 </section>
 
+<section id="catering">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">Catering</p>
+      <h2>Catering para tu evento.</h2>
+      <p style="color:var(--ink-soft); margin-top:10px;">Estas son algunas fotos del catering de nuestro colaborador premium.</p>
+    </div>
+    <div class="decor-grid" id="cateringGrid"></div>
+    <p id="cateringEmptyMsg" style="color:var(--ink-soft); margin-top:24px;" hidden>Todavía no hay fotos de catering. ¡Vuelve pronto!</p>
+  </div>
+</section>
+
 <section id="precios">
   <div class="wrap">
     <div class="section-head">
@@ -1176,6 +1188,10 @@ async function loadOfertas(){
   await loadGallerySection('ofertas', 'ofertasGrid', 'ofertasEmptyMsg', 'Oferta especial de Mi Pequeño Rincón');
 }
 
+async function loadCateringGallery(){
+  await loadGallerySection('catering', 'cateringGrid', 'cateringEmptyMsg', 'Foto del catering de nuestro colaborador premium en Mi Pequeño Rincón');
+}
+
 async function loadSalaGallery(){
   await loadGallerySection('sala-juegos', 'salaGridJuegos', 'salaJuegosEmptyMsg', 'Zona de juegos de Mi Pequeño Rincón');
   await loadGallerySection('sala-mesas', 'salaGridMesas', 'salaMesasEmptyMsg', 'Mesas preparadas para un evento en Mi Pequeño Rincón');
@@ -1566,6 +1582,7 @@ async function initForm(){
   await loadMenuInfantilGallery();
   await loadDecorations();
   await loadOfertas();
+  await loadCateringGallery();
   await loadPricing();
   await loadFestivos();
   await loadAvailability();
