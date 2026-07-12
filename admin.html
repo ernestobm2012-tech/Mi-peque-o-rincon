@@ -407,6 +407,28 @@
       <span><i class="chart-swatch chart-swatch-net"></i> Ganado (sin IVA)</span>
     </div>
     <div id="chartMonths"></div>
+
+    <h3 style="margin:32px 0 6px;">Visitas a la web</h3>
+    <p style="color:var(--ink-soft); font-size:14px; margin-bottom:18px;">"Visitas" cuenta cada carga de la página principal; "Visitantes únicos" cuenta dispositivos distintos (si alguien recarga o vuelve a entrar, no suma otra vez). No cuenta el panel de admin.</p>
+    <div class="stats-row" style="margin-bottom:24px;">
+      <div class="stat-card">
+        <span class="num" id="visitsTotal">0</span>
+        <span class="lbl">Visitas totales</span>
+      </div>
+      <div class="stat-card">
+        <span class="num" id="visitsUniqueTotal">0</span>
+        <span class="lbl">Visitantes únicos totales</span>
+      </div>
+      <div class="stat-card">
+        <span class="num" id="visitsMonth">0</span>
+        <span class="lbl">Visitas este mes</span>
+      </div>
+      <div class="stat-card">
+        <span class="num" id="visitsUniqueMonth">0</span>
+        <span class="lbl">Visitantes únicos este mes</span>
+      </div>
+    </div>
+    <table class="tax-table" id="visitsMonthsTable"></table>
   </div>
 
   <div id="tabImpuestos" class="tab-panel" hidden>
@@ -900,6 +922,43 @@ async function renderGraficos(){
   }).join('');
 }
 
+async function renderVisitas(){
+  const { data, error } = await supabase.from('page_views').select('visited_at, visitor_id');
+  const visits = error ? [] : (data || []);
+
+  document.getElementById('visitsTotal').textContent = visits.length;
+  document.getElementById('visitsUniqueTotal').textContent = new Set(visits.map(v => v.visitor_id).filter(Boolean)).size;
+
+  const byMonth = {};
+  visits.forEach(v => {
+    const key = (v.visited_at || '').slice(0, 7);
+    if (!key) return;
+    if (!byMonth[key]) byMonth[key] = { count: 0, visitors: new Set() };
+    byMonth[key].count += 1;
+    if (v.visitor_id) byMonth[key].visitors.add(v.visitor_id);
+  });
+  const months = Object.keys(byMonth).sort().reverse();
+  const currentMonthKey = ymd(new Date()).slice(0, 7);
+  const currentInfo = byMonth[currentMonthKey];
+  document.getElementById('visitsMonth').textContent = currentInfo ? currentInfo.count : 0;
+  document.getElementById('visitsUniqueMonth').textContent = currentInfo ? currentInfo.visitors.size : 0;
+
+  const table = document.getElementById('visitsMonthsTable');
+  if (!months.length){
+    table.innerHTML = '<tr><td>Todavía no hay visitas registradas.</td></tr>';
+    return;
+  }
+  table.innerHTML = `
+    <thead><tr><th>Mes</th><th>Visitas</th><th>Visitantes únicos</th></tr></thead>
+    <tbody>
+      ${months.map(m => {
+        const label = new Date(m + '-01T00:00:00').toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+        return `<tr><td style="text-transform:capitalize;">${label}</td><td>${byMonth[m].count}</td><td>${byMonth[m].visitors.size}</td></tr>`;
+      }).join('')}
+    </tbody>
+  `;
+}
+
 const QUARTER_NAMES = ['1er trimestre', '2º trimestre', '3er trimestre', '4º trimestre'];
 
 function quarterKeyForMonth(monthKey){
@@ -1274,7 +1333,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     if (btn.dataset.tab === 'tabClientes') renderClients();
     if (btn.dataset.tab === 'tabCupones') renderCoupons();
     if (btn.dataset.tab === 'tabGaleria'){ renderGallery(); renderEventTypePhotos(); }
-    if (btn.dataset.tab === 'tabGraficos') renderGraficos();
+    if (btn.dataset.tab === 'tabGraficos'){ renderGraficos(); renderVisitas(); }
     if (btn.dataset.tab === 'tabImpuestos') renderImpuestos();
   });
 });
