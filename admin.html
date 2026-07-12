@@ -851,6 +851,12 @@ function buildDepositMessage(r, method){
   return `Hola ${r.full_name} 👋 Confirmamos que hemos recibido tu señal de 20€${methodLabel} para la reserva del ${fmtDate(r.event_date)} en *Mi Pequeño Rincón*. Ese importe se descontará del precio final el día del evento. ¡Gracias!`;
 }
 
+const GOOGLE_REVIEW_URL = 'https://g.page/r/CWvTXLQwN02wEBM/review';
+
+function buildReviewRequestMessage(r){
+  return `Hola ${r.full_name} 👋 Esperamos que lo pasarais genial en tu evento en *Mi Pequeño Rincón* 🌿 Si te ha gustado la experiencia, nos ayudaría muchísimo que nos dejaras una reseña en Google, se tarda un minuto y significa mucho para nosotros: ${GOOGLE_REVIEW_URL}\n\n¡Gracias! 💛`;
+}
+
 function addDays(dateStr, n){
   const d = new Date(dateStr + 'T00:00:00');
   d.setDate(d.getDate() + n);
@@ -1250,6 +1256,12 @@ async function loadReservations(){
                <button class="btn btn-ghost" data-action="mark-deposit" data-method="efectivo" data-id="${r.id}">💵 Efectivo</button>
                <button class="btn btn-ghost" data-action="mark-deposit" data-method="bizum" data-id="${r.id}">📱 Bizum</button>`}
         </div>` : ''}
+        ${r.status === 'confirmada' && r.event_date <= ymd(new Date()) ? `
+        <div style="margin-top:10px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+          ${r.review_requested_at
+            ? `<span class="badge confirmada">⭐ Reseña pedida el ${fmtDate(r.review_requested_at.slice(0,10))}</span>`
+            : `<button class="btn btn-ghost" data-action="request-review" data-id="${r.id}">⭐ Pedir reseña</button>`}
+        </div>` : ''}
         ${actions}
       </div>`;
   }).join('');
@@ -1342,6 +1354,23 @@ async function loadReservations(){
           opened
             ? `Señal de ${r.full_name} marcada como pagada (${method === 'bizum' ? 'Bizum' : 'efectivo'}) en Supabase. Se ha abierto WhatsApp para confirmárselo.`
             : `Señal de ${r.full_name} marcada como pagada en Supabase, pero el navegador ha bloqueado la ventana de WhatsApp. <a href="https://wa.me/${waNumber(r.phone)}?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">Ábrela manualmente aquí</a>.`,
+          'ok'
+        );
+        await loadReservations();
+      } else if (action === 'request-review'){
+        btn.disabled = true;
+        const { error } = await supabase.from('reservations').update({ review_requested_at: new Date().toISOString() }).eq('id', id).select();
+        if (error){
+          setActionMsg('No se ha podido guardar: ' + error.message, 'err');
+          btn.disabled = false;
+          return;
+        }
+        const msg = buildReviewRequestMessage(r);
+        const opened = openWhatsApp(r.phone, msg);
+        setActionMsg(
+          opened
+            ? `Se ha abierto WhatsApp para pedirle la reseña a ${r.full_name}.`
+            : `Marcado en Supabase, pero el navegador ha bloqueado la ventana de WhatsApp. <a href="https://wa.me/${waNumber(r.phone)}?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">Ábrela manualmente aquí</a>.`,
           'ok'
         );
         await loadReservations();
