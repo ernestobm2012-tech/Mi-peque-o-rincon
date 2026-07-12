@@ -407,6 +407,20 @@
       <span><i class="chart-swatch chart-swatch-net"></i> Ganado (sin IVA)</span>
     </div>
     <div id="chartMonths"></div>
+
+    <h3 style="margin:32px 0 6px;">Visitas a la web</h3>
+    <p style="color:var(--ink-soft); font-size:14px; margin-bottom:18px;">Número de veces que se ha cargado la página principal (no cuenta el panel de admin).</p>
+    <div class="stats-row" style="margin-bottom:24px;">
+      <div class="stat-card">
+        <span class="num" id="visitsTotal">0</span>
+        <span class="lbl">Visitas totales</span>
+      </div>
+      <div class="stat-card">
+        <span class="num" id="visitsMonth">0</span>
+        <span class="lbl">Visitas este mes</span>
+      </div>
+    </div>
+    <table class="tax-table" id="visitsMonthsTable"></table>
   </div>
 
   <div id="tabImpuestos" class="tab-panel" hidden>
@@ -900,6 +914,38 @@ async function renderGraficos(){
   }).join('');
 }
 
+async function renderVisitas(){
+  const { data, error } = await supabase.from('page_views').select('visited_at');
+  const visits = error ? [] : (data || []);
+
+  document.getElementById('visitsTotal').textContent = visits.length;
+
+  const byMonth = {};
+  visits.forEach(v => {
+    const key = (v.visited_at || '').slice(0, 7);
+    if (!key) return;
+    byMonth[key] = (byMonth[key] || 0) + 1;
+  });
+  const months = Object.keys(byMonth).sort().reverse();
+  const currentMonthKey = ymd(new Date()).slice(0, 7);
+  document.getElementById('visitsMonth').textContent = byMonth[currentMonthKey] || 0;
+
+  const table = document.getElementById('visitsMonthsTable');
+  if (!months.length){
+    table.innerHTML = '<tr><td>Todavía no hay visitas registradas.</td></tr>';
+    return;
+  }
+  table.innerHTML = `
+    <thead><tr><th>Mes</th><th>Visitas</th></tr></thead>
+    <tbody>
+      ${months.map(m => {
+        const label = new Date(m + '-01T00:00:00').toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+        return `<tr><td style="text-transform:capitalize;">${label}</td><td>${byMonth[m]}</td></tr>`;
+      }).join('')}
+    </tbody>
+  `;
+}
+
 const QUARTER_NAMES = ['1er trimestre', '2º trimestre', '3er trimestre', '4º trimestre'];
 
 function quarterKeyForMonth(monthKey){
@@ -1274,7 +1320,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     if (btn.dataset.tab === 'tabClientes') renderClients();
     if (btn.dataset.tab === 'tabCupones') renderCoupons();
     if (btn.dataset.tab === 'tabGaleria'){ renderGallery(); renderEventTypePhotos(); }
-    if (btn.dataset.tab === 'tabGraficos') renderGraficos();
+    if (btn.dataset.tab === 'tabGraficos'){ renderGraficos(); renderVisitas(); }
     if (btn.dataset.tab === 'tabImpuestos') renderImpuestos();
   });
 });
