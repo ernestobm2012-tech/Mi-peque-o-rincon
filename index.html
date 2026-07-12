@@ -231,6 +231,12 @@
   .decor-grid figure{ margin:0; background:#fff; border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; }
   .decor-grid img{ width:100%; height:230px; object-fit:contain; background:var(--cream); display:block; }
   .decor-grid figcaption{ padding:10px 14px; font-size:13.5px; color:var(--ink-soft); text-align:center; }
+  .video-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:20px; margin-top:36px; }
+  @media (max-width:760px){ .video-grid{ grid-template-columns:1fr; } }
+  .video-card{ background:#fff; border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; }
+  .video-card .video-frame{ position:relative; width:100%; aspect-ratio:16/9; }
+  .video-card iframe{ position:absolute; inset:0; width:100%; height:100%; border:0; }
+  .video-card figcaption{ padding:10px 14px; font-size:13.5px; color:var(--ink-soft); text-align:center; }
   .empty-msg{ color:var(--ink-soft); margin-top:24px; }
   .sala-tabs{ display:flex; flex-wrap:wrap; gap:10px; margin-top:36px; }
   .sala-tab{
@@ -463,6 +469,7 @@
       <li><a class="navlink" href="#sobre">La sala</a></li>
       <li><a class="navlink" href="#eventos">Eventos</a></li>
       <li><a class="navlink" href="#fotos-eventos">Fotos de eventos</a></li>
+      <li><a class="navlink" href="#videos">Vídeos</a></li>
       <li><a class="navlink" href="#menu-infantil">Para los peques</a></li>
       <li><a class="navlink" href="#decoraciones">Decoraciones</a></li>
       <li><a class="navlink" href="#ofertas">Ofertas</a></li>
@@ -603,6 +610,18 @@
     </div>
     <div class="decor-grid" id="fotosEventosGrid"></div>
     <p id="fotosEventosEmptyMsg" style="color:var(--ink-soft); margin-top:24px;" hidden>Todavía no hay fotos de eventos. ¡Vuelve pronto!</p>
+  </div>
+</section>
+
+<section class="section-alt" id="videos">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">Vídeos</p>
+      <h2>Vídeos de eventos.</h2>
+      <p style="color:var(--ink-soft); margin-top:10px;">Algunos vídeos de celebraciones en la sala.</p>
+    </div>
+    <div class="video-grid" id="videosGrid"></div>
+    <p id="videosEmptyMsg" style="color:var(--ink-soft); margin-top:24px;" hidden>Todavía no hay vídeos. ¡Vuelve pronto!</p>
   </div>
 </section>
 
@@ -1232,6 +1251,29 @@ async function loadFotosEventosGallery(){
   await loadGallerySection('fotos-eventos', 'fotosEventosGrid', 'fotosEventosEmptyMsg', 'Foto de un evento celebrado en Mi Pequeño Rincón');
 }
 
+// ---------- Vídeos de YouTube ----------
+async function loadVideos(){
+  const grid = document.getElementById('videosGrid');
+  const emptyMsg = document.getElementById('videosEmptyMsg');
+  const { data, error } = await supabase.from('videos').select('*').order('created_at', { ascending: false });
+  if (error || !data || !data.length){
+    grid.innerHTML = '';
+    emptyMsg.hidden = false;
+    return;
+  }
+  emptyMsg.hidden = true;
+  grid.innerHTML = data.map(v => {
+    const caption = (v.caption || '').replace(/"/g, '&quot;');
+    return `
+      <div class="video-card">
+        <div class="video-frame">
+          <iframe src="https://www.youtube.com/embed/${v.youtube_id}" title="${caption || 'Vídeo de Mi Pequeño Rincón'}" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        </div>
+        ${v.caption ? `<figcaption>${caption}</figcaption>` : ''}
+      </div>`;
+  }).join('');
+}
+
 // ---------- Pricing ----------
 let ALL_PLANS = [];
 let ALL_EXTRAS = [];
@@ -1608,6 +1650,7 @@ supabase.from('page_views').insert({ visitor_id: getVisitorId() }).then(() => {}
   await loadOfertas();
   await loadCateringGallery();
   await loadFotosEventosGallery();
+  await loadVideos();
   await loadPricing();
   await loadFestivos();
   await loadAvailability();

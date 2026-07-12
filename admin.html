@@ -397,6 +397,22 @@
       <p style="font-size:13.5px; color:var(--ink-soft); margin-bottom:16px;">Si le pones una foto a un tipo de evento, en la web se podrá pinchar en su tarjeta para verla en grande.</p>
       <div id="eventTypePhotos" class="gallery-admin-grid"></div>
     </div>
+    <div class="res-card" style="margin-bottom:24px;">
+      <h3 style="margin-bottom:16px;">Vídeos de YouTube</h3>
+      <form id="videoForm">
+        <div class="field">
+          <label for="video_url">Enlace de YouTube</label>
+          <input type="text" id="video_url" placeholder="https://www.youtube.com/watch?v=..." required>
+        </div>
+        <div class="field">
+          <label for="video_caption">Descripción (opcional)</label>
+          <input type="text" id="video_caption" placeholder="Ej: Vídeo de la boda de Marta y Carlos">
+        </div>
+        <button type="submit" class="btn btn-primary" id="videoSubmitBtn">Añadir vídeo</button>
+        <p id="videoFormMsg" style="font-size:13.5px; margin-top:10px; color:var(--ink-soft);"></p>
+      </form>
+      <div id="videosAdminList" class="gallery-admin-grid" style="margin-top:20px;"></div>
+    </div>
     <div id="galleryAdminSections"></div>
   </div>
 
@@ -1348,7 +1364,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     if (btn.dataset.tab === 'tabCalendario') renderCalendarState();
     if (btn.dataset.tab === 'tabClientes') renderClients();
     if (btn.dataset.tab === 'tabCupones') renderCoupons();
-    if (btn.dataset.tab === 'tabGaleria'){ renderGallery(); renderEventTypePhotos(); }
+    if (btn.dataset.tab === 'tabGaleria'){ renderGallery(); renderEventTypePhotos(); renderVideosAdmin(); }
     if (btn.dataset.tab === 'tabGraficos'){ renderGraficos(); renderVisitas(); }
     if (btn.dataset.tab === 'tabImpuestos') renderImpuestos();
   });
@@ -2115,6 +2131,79 @@ async function renderEventTypePhotos(){
       await supabase.storage.from('galeria').remove([path]);
       await supabase.from('event_types').update({ image_path: null }).eq('id', typeId).select();
       await renderEventTypePhotos();
+    });
+  });
+}
+
+// ---------- Vídeos de YouTube ----------
+function extractYoutubeId(url){
+  try {
+    const u = new URL(url.trim());
+    if (u.hostname.includes('youtu.be')) return u.pathname.slice(1).split('/')[0] || null;
+    if (u.pathname.startsWith('/embed/')) return u.pathname.split('/embed/')[1].split('/')[0] || null;
+    if (u.pathname.startsWith('/shorts/')) return u.pathname.split('/shorts/')[1].split('/')[0] || null;
+    if (u.searchParams.get('v')) return u.searchParams.get('v');
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+document.getElementById('videoForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const urlInput = document.getElementById('video_url');
+  const captionInput = document.getElementById('video_caption');
+  const msgEl = document.getElementById('videoFormMsg');
+  const submitBtn = document.getElementById('videoSubmitBtn');
+
+  const youtubeId = extractYoutubeId(urlInput.value);
+  if (!youtubeId){
+    msgEl.textContent = 'No he reconocido ese enlace de YouTube. Copia el enlace tal cual desde YouTube.';
+    return;
+  }
+
+  submitBtn.disabled = true;
+  msgEl.textContent = 'Añadiendo…';
+  const { error } = await supabase.from('videos').insert({
+    youtube_id: youtubeId,
+    caption: captionInput.value.trim() || null,
+  });
+  submitBtn.disabled = false;
+  if (error){
+    msgEl.textContent = 'No se ha podido añadir: ' + error.message;
+    return;
+  }
+  msgEl.textContent = 'Vídeo añadido ✅';
+  e.target.reset();
+  await renderVideosAdmin();
+});
+
+async function renderVideosAdmin(){
+  const container = document.getElementById('videosAdminList');
+  const { data, error } = await supabase.from('videos').select('*').order('created_at', { ascending: false });
+  if (error){
+    container.innerHTML = `<p class="empty-msg">Error cargando los vídeos: ${error.message}</p>`;
+    return;
+  }
+  if (!data || !data.length){
+    container.innerHTML = '<p class="empty-msg">Todavía no has añadido ningún vídeo.</p>';
+    return;
+  }
+  container.innerHTML = data.map(v => `
+    <div class="gallery-admin-card">
+      <img src="https://img.youtube.com/vi/${v.youtube_id}/hqdefault.jpg" alt="${(v.caption || 'Vídeo').replace(/"/g, '&quot;')}">
+      <div class="gallery-admin-meta">
+        <p>${v.caption || ''}</p>
+        <button class="btn btn-deny" data-delete-video="${v.id}" style="font-size:11.5px; padding:5px 10px;">🗑️ Borrar</button>
+      </div>
+    </div>`).join('');
+
+  container.querySelectorAll('[data-delete-video]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('¿Borrar este vídeo de la web? No se puede deshacer.')) return;
+      btn.disabled = true;
+      await supabase.from('videos').delete().eq('id', btn.dataset.deleteVideo);
+      await renderVideosAdmin();
     });
   });
 }
