@@ -774,13 +774,29 @@ function waNumber(phone){
 }
 
 function buildConfirmMessage(r, plan){
+  const items = [];
+  if (plan) items.push(`${formatPrice(plan.price)} de alquiler`);
+  if (r.wants_cleaning) items.push(`${formatPrice(getExtraPrice('limpieza'))} de limpieza`);
+  if (r.kids_menus_count){
+    const n = r.kids_menus_count;
+    items.push(`${formatPrice(kidsMenuRevenue(r))} de menú${n > 1 ? 's' : ''} infantil${n > 1 ? 'es' : ''} (${n})`);
+  }
   const total = plan ? reservationTotal(r) : null;
+
   let msg = `Hola ${r.full_name} 👋 Te confirmamos tu reserva en *Mi Pequeño Rincón* para el ${fmtDate(r.event_date)}, de ${r.start_time} a ${r.end_time} (${r.event_type}).`;
-  if (total != null) msg += `\n\nTotal estimado: ${formatPrice(total)}.`;
-  if (r.coupon_code && Number(r.discount_amount) > 0) msg += ` (incluye descuento del cupón *${r.coupon_code}*: -${formatPrice(r.discount_amount)})`;
+  if (items.length){
+    msg += `\n\n${items.join(' + ')}`;
+    if (r.coupon_code && Number(r.discount_amount) > 0) msg += ` - ${formatPrice(r.discount_amount)} (cupón *${r.coupon_code}*)`;
+    if (total != null) msg += ` = *${formatPrice(total)}* total`;
+  } else if (total != null){
+    msg += `\n\nTotal estimado: ${formatPrice(total)}.`;
+  }
+
   msg += `\n\nPara cerrar la reserva pedimos una señal de 20€ (efectivo o Bizum)`;
   if (r.wants_decoration) msg += `, más otros 20€ de señal por la decoración personalizada`;
-  msg += `. El día del evento se pide además una fianza de 50€, que se devuelve si la sala queda en las mismas condiciones de uso y limpieza. Está prohibido pegar en las paredes cualquier tipo de decoración; hacerlo conllevará la pérdida total de la fianza.\n\n¡Te esperamos! 🌿`;
+  msg += `. El día del evento se pide además una fianza de 50€ en efectivo, que se devuelve si la sala queda en las mismas condiciones de uso y limpieza. Está prohibido pegar en las paredes cualquier tipo de decoración; hacerlo conllevará la pérdida total de la fianza.`;
+  if (r.wants_cleaning) msg += ` La limpieza (${formatPrice(getExtraPrice('limpieza'))}) también se paga en efectivo.`;
+  msg += `\n\n¡Te esperamos! 🌿`;
   return msg;
 }
 
