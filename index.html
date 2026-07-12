@@ -185,6 +185,10 @@
   @media (max-width:860px){ .about-grid{ grid-template-columns:1fr; gap:28px; } }
   .about-grid p{ color:var(--ink-soft); font-size:16px; }
   .about-grid p strong{ color:var(--olive-dark); font-weight:600; }
+  .chair-figure{ float:right; margin:4px 0 16px 22px; width:38%; max-width:220px; }
+  .chair-figure img{ width:100%; aspect-ratio:3/4; object-fit:cover; border:1px solid var(--line); border-radius:var(--radius); }
+  .chair-figure figcaption{ margin-top:8px; font-size:12.5px; color:var(--ink-soft); text-align:center; }
+  @media (max-width:520px){ .chair-figure{ float:none; width:60%; max-width:220px; margin:16px auto; } }
   .stat-row{ display:flex; gap:36px; margin-top:32px; flex-wrap:wrap; }
   .stat b{ display:block; font-family:'Fraunces',serif; font-size:34px; color:var(--olive-dark); }
   .stat span{ font-size:12.5px; color:var(--ink-soft); letter-spacing:.03em; }
@@ -542,6 +546,10 @@
     <div>
       <p>Mi Pequeño Rincón es una sala de eventos en Chozas de Canales con <strong>climatización por conducto en toda la sala</strong>, así que da igual si tu celebración es en pleno agosto o en enero: siempre se está a gusto. Está pensada para que cada celebración tenga el espacio, el tiempo y la tranquilidad que necesita, con horarios flexibles de lunes a domingo y franjas especiales para findes y vísperas de festivo.</p>
       <p>Ya sea una comida familiar de tres horas o un día completo con la Franja Golden hasta medianoche, tú eliges cuánto tiempo necesitas y nosotros preparamos la sala.</p>
+      <figure class="chair-figure">
+        <img src="assets/silla-interactiva.jpg" alt="Silla interactiva con pantalla LED de Mi Pequeño Rincón, lista para grabar felicitaciones en vídeo o foto" loading="lazy">
+        <figcaption>Nuestra silla interactiva</figcaption>
+      </figure>
       <p>En todas las reservas grabamos gratis una felicitación en vídeo o foto en nuestra <strong>silla interactiva</strong>, para que los invitados dejen un mensaje a los protagonistas del evento y se lleven un recuerdo único.</p>
       <p>Estamos en Chozas de Canales, a un paso de Camarena, Arcicollar, Camarenilla, Fuensalida, Ventas de Retamosa, Casarrubios del Monte, Palomeque y Cedillo del Condado, por lo que muchas familias de estos pueblos celebran aquí su evento.</p>
       <div class="stat-row">
