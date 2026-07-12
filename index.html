@@ -644,7 +644,6 @@
       <p>Los menús infantiles los prepara y sirve, a la hora que convengáis, un <strong>colaborador externo</strong> especializado — nosotros nos encargamos de coordinarlo con tu reserva.</p>
       <p>🥤 Por <strong>cada 6 menús infantiles</strong> pedidos, podéis elegir <strong>3 refrescos de 2 litros</strong> para la mesa.</p>
     </div>
-    <div class="decor-grid" id="menuInfantilGrid" style="margin-top:24px;"></div>
   </div>
 </section>
 
@@ -681,6 +680,18 @@
     </div>
     <div class="decor-grid" id="cateringGrid"></div>
     <p id="cateringEmptyMsg" style="color:var(--ink-soft); margin-top:24px;" hidden>Todavía no hay fotos de catering. ¡Vuelve pronto!</p>
+  </div>
+</section>
+
+<section class="section-alt" id="fotos-eventos">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">Eventos</p>
+      <h2>Fotos de eventos.</h2>
+      <p style="color:var(--ink-soft); margin-top:10px;">Un vistazo a algunas de las celebraciones que hemos tenido en la sala.</p>
+    </div>
+    <div class="decor-grid" id="fotosEventosGrid"></div>
+    <p id="fotosEventosEmptyMsg" style="color:var(--ink-soft); margin-top:24px;" hidden>Todavía no hay fotos de eventos. ¡Vuelve pronto!</p>
   </div>
 </section>
 
@@ -1214,8 +1225,8 @@ async function loadCatasGallery(){
   await loadGallerySection('catas', 'catasGrid', null, 'Foto de una cata de vino en Mi Pequeño Rincón');
 }
 
-async function loadMenuInfantilGallery(){
-  await loadGallerySection('menu-infantil', 'menuInfantilGrid', null, 'Foto del menú infantil de Mi Pequeño Rincón');
+async function loadFotosEventosGallery(){
+  await loadGallerySection('fotos-eventos', 'fotosEventosGrid', 'fotosEventosEmptyMsg', 'Foto de un evento celebrado en Mi Pequeño Rincón');
 }
 
 // ---------- Pricing ----------
@@ -1590,10 +1601,10 @@ supabase.from('page_views').insert({ visitor_id: getVisitorId() }).then(() => {}
   await loadEventTypes();
   await loadSalaGallery();
   await loadCatasGallery();
-  await loadMenuInfantilGallery();
   await loadDecorations();
   await loadOfertas();
   await loadCateringGallery();
+  await loadFotosEventosGallery();
   await loadPricing();
   await loadFestivos();
   await loadAvailability();
