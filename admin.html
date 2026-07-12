@@ -258,6 +258,7 @@
     <button class="tab-btn" data-tab="tabGaleria">Galería web</button>
     <button class="tab-btn" data-tab="tabGraficos">Gráficos</button>
     <button class="tab-btn" data-tab="tabImpuestos">Impuestos</button>
+    <button class="tab-btn" data-tab="tabFacturas">Facturas</button>
   </div>
 
   <p id="actionMsg" style="display:none; font-size:13.5px; padding:10px 14px; margin-bottom:18px; border-radius:2px;"></p>
@@ -486,6 +487,14 @@
     </div>
   </div>
 
+  <div id="tabFacturas" class="tab-panel" hidden>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; flex-wrap:wrap; gap:10px;">
+      <p style="color:var(--ink-soft); font-size:14px; margin:0;">Genera facturas con el mismo modelo que ya usas, y guárdalas como PDF desde el diálogo de impresión.</p>
+      <button type="button" class="btn btn-primary" id="newInvoiceBtn">+ Nueva factura</button>
+    </div>
+    <div id="invoicesList"></div>
+  </div>
+
   <div id="tabAnulaciones" class="tab-panel" hidden>
     <button type="button" class="btn btn-ghost" id="pcBackBtn" style="margin-bottom:18px;">← Volver a Reservas</button>
     <div class="stats-row" id="pcStatsRow">
@@ -647,6 +656,76 @@
         <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;" id="newResSubmitBtn">Guardar reserva confirmada</button>
       </p>
       <p id="newResMsg" style="font-size:13.5px; margin-top:10px; color:var(--ink-soft);"></p>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="invoiceModal" hidden>
+  <div class="modal-box">
+    <button type="button" class="modal-close" id="invoiceClose" aria-label="Cerrar">×</button>
+    <h2 style="font-size:22px; margin-bottom:20px;">Nueva factura</h2>
+    <form id="invoiceForm">
+      <div class="field">
+        <label for="inv_reservation">Rellenar desde una reserva (opcional)</label>
+        <select id="inv_reservation">
+          <option value="">— Sin reserva / rellenar a mano —</option>
+        </select>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="inv_number">Nº factura</label>
+          <input type="text" id="inv_number" required>
+        </div>
+        <div class="field">
+          <label for="inv_date">Fecha</label>
+          <input type="date" id="inv_date" required>
+        </div>
+      </div>
+      <div class="field">
+        <label for="inv_name">Nombre del cliente</label>
+        <input type="text" id="inv_name" required>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="inv_dni">DNI (opcional)</label>
+          <input type="text" id="inv_dni">
+        </div>
+        <div class="field">
+          <label for="inv_address">Dirección (opcional)</label>
+          <input type="text" id="inv_address">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="inv_phone">Teléfono (opcional)</label>
+          <input type="tel" id="inv_phone">
+        </div>
+        <div class="field">
+          <label for="inv_email">Correo (opcional)</label>
+          <input type="email" id="inv_email">
+        </div>
+      </div>
+      <div class="field">
+        <label for="inv_concept">Concepto</label>
+        <input type="text" id="inv_concept" required>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="inv_total">Total cobrado (con IVA)</label>
+          <input type="number" id="inv_total" min="0" step="0.01" required>
+        </div>
+        <div class="field">
+          <label for="inv_payment">Forma de pago</label>
+          <select id="inv_payment">
+            <option value="Efectivo">Efectivo</option>
+            <option value="Bizum">Bizum</option>
+            <option value="Transferencia">Transferencia</option>
+          </select>
+        </div>
+      </div>
+      <p id="invoiceBreakdown" style="font-size:13.5px; color:var(--ink-soft); margin:-6px 0 14px;"></p>
+      <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;" id="invoiceSubmitBtn">Guardar y ver factura</button>
+      <p id="invoiceFormMsg" style="font-size:13.5px; margin-top:10px; color:var(--ink-soft);"></p>
     </form>
   </div>
 </div>
@@ -892,6 +971,152 @@ function kidsMenuRevenue(r){
 
 function cleaningRevenue(r){
   return r.wants_cleaning ? getExtraPrice('limpieza') : 0;
+}
+
+// ---------- Facturas ----------
+const BUSINESS_INFO = {
+  name: 'BEATRIZ ESPINILLA CABALGANTE',
+  dni: '47497563X',
+  address: 'CALLE RUMANIA 38',
+  postal: '45960 CHOZAS DE CANALES',
+  province: 'TOLEDO',
+  email: 'mipqrincón@gmail.com',
+  phone: 'Tlf: 624 2978 77',
+};
+
+function invoiceBreakdownFromTotal(total, rate){
+  const t = Number(total) || 0;
+  const base = t / (1 + rate / 100);
+  const iva = t - base;
+  return { base, iva, total: t };
+}
+
+async function suggestNextInvoiceNumber(){
+  const year = new Date().getFullYear();
+  const { data } = await supabase
+    .from('invoices')
+    .select('invoice_number')
+    .like('invoice_number', `${year}%`)
+    .order('invoice_number', { ascending: false })
+    .limit(1);
+  if (!data || !data.length) return '';
+  const last = data[0].invoice_number;
+  const suffix = last.slice(String(year).length);
+  const n = parseInt(suffix, 10);
+  if (Number.isNaN(n)) return '';
+  return `${year}${String(n + 1).padStart(suffix.length, '0')}`;
+}
+
+function buildInvoiceHtml(inv){
+  const { base, iva, total } = invoiceBreakdownFromTotal(inv.total_amount, inv.iva_rate);
+  return `<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Factura ${inv.invoice_number}</title>
+<style>
+  body{ font-family: Arial, Helvetica, sans-serif; color:#222; margin:40px; }
+  .head{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:24px; }
+  .head h1{ color:#2f5233; font-size:26px; margin:0 0 14px; }
+  .head .biz p{ margin:2px 0; font-size:13px; }
+  .head img{ height:90px; }
+  table{ width:100%; border-collapse:collapse; margin-top:18px; font-size:13.5px; }
+  td, th{ padding:6px 10px; }
+  .meta td:first-child{ font-weight:bold; width:140px; }
+  .meta td:last-child{ background:#E7EFC4; }
+  .cliente th{ background:#cfcfcf; text-align:center; }
+  .cliente td:first-child{ font-weight:bold; width:140px; }
+  .cliente td:last-child{ background:#E7EFC4; text-align:center; }
+  .concepto th{ background:#cfcfcf; }
+  .concepto td{ background:#E7EFC4; }
+  .concepto .num{ text-align:right; width:140px; }
+  .totales td.num{ text-align:right; }
+  .pago{ margin-top:24px; font-size:13.5px; }
+  @media print{ .no-print{ display:none; } body{ margin:15mm; } }
+</style>
+</head>
+<body>
+  <div class="head">
+    <div class="biz">
+      <h1>FACTURA</h1>
+      <p>${BUSINESS_INFO.name}</p>
+      <p>${BUSINESS_INFO.dni}</p>
+      <p>${BUSINESS_INFO.address}</p>
+      <p>${BUSINESS_INFO.postal}</p>
+      <p>${BUSINESS_INFO.province}</p>
+      <p>${BUSINESS_INFO.email}</p>
+      <p>${BUSINESS_INFO.phone}</p>
+    </div>
+    <img src="assets/logo-mpr.jpg" alt="Mi Pequeño Rincón">
+  </div>
+  <table class="meta">
+    <tr><td>FECHA:</td><td>${fmtDate(inv.issue_date)}</td></tr>
+    <tr><td>Nº FACTURA:</td><td>${inv.invoice_number}</td></tr>
+  </table>
+  <table class="cliente">
+    <tr><th colspan="2">CLIENTE</th></tr>
+    <tr><td>NOMBRE:</td><td>${inv.client_name}</td></tr>
+    <tr><td>DNI:</td><td>${inv.client_dni || ''}</td></tr>
+    <tr><td>DIRECCIÓN:</td><td>${inv.client_address || ''}</td></tr>
+    <tr><td>TELÉFONO:</td><td>${inv.client_phone || ''}</td></tr>
+    <tr><td>CORREO:</td><td>${inv.client_email || ''}</td></tr>
+  </table>
+  <table class="concepto">
+    <tr><th>CONCEPTO</th><th class="num">PRECIO</th></tr>
+    <tr><td>${inv.concept}</td><td class="num">${formatPrice(base)}</td></tr>
+    <tr class="totales"><td></td><td class="num">${inv.iva_rate}%IVA ${formatPrice(iva)}</td></tr>
+    <tr class="totales"><td></td><td class="num"><strong>TOTAL ${formatPrice(total)}</strong></td></tr>
+  </table>
+  <p class="pago"><strong>FORMA DE PAGO:</strong> ${inv.payment_method || ''}</p>
+  <p class="no-print" style="margin-top:36px;"><button onclick="window.print()" style="padding:10px 20px; font-size:14px; cursor:pointer;">Imprimir / Guardar PDF</button></p>
+</body>
+</html>`;
+}
+
+function openInvoicePrintView(inv){
+  const win = window.open('', '_blank');
+  if (!win){ alert('El navegador ha bloqueado la ventana. Permite las ventanas emergentes para ver la factura.'); return; }
+  win.document.write(buildInvoiceHtml(inv));
+  win.document.close();
+}
+
+async function renderInvoices(){
+  const list = document.getElementById('invoicesList');
+  const { data, error } = await supabase.from('invoices').select('*').order('invoice_number', { ascending: false });
+  if (error){ list.innerHTML = `<p class="empty-msg">Error cargando facturas: ${error.message}</p>`; return; }
+  if (!data || !data.length){ list.innerHTML = `<p class="empty-msg">Todavía no has creado ninguna factura.</p>`; return; }
+  list.innerHTML = data.map(inv => `
+    <div class="res-card">
+      <div class="res-head">
+        <h3>Factura ${inv.invoice_number}</h3>
+        <span class="badge confirmada">${formatPrice(inv.total_amount)}</span>
+      </div>
+      <div class="res-meta">
+        <div>📅 ${fmtDate(inv.issue_date)}</div>
+        <div>🧾 ${inv.client_name}</div>
+        <div>${inv.concept}</div>
+      </div>
+      <div class="res-actions">
+        <button class="btn btn-ghost" data-action="view-invoice" data-id="${inv.id}">🖨️ Ver / Imprimir</button>
+        <button class="btn btn-deny" data-action="delete-invoice" data-id="${inv.id}">🗑️ Borrar</button>
+      </div>
+    </div>
+  `).join('');
+
+  list.querySelectorAll('button[data-action]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.id;
+      const inv = data.find(x => x.id === id);
+      if (btn.dataset.action === 'view-invoice'){
+        openInvoicePrintView(inv);
+      } else if (btn.dataset.action === 'delete-invoice'){
+        if (!confirm(`¿Borrar la factura ${inv.invoice_number}? Hacienda exige que la numeración de facturas sea correlativa y sin huecos, así que solo deberías borrar la última factura emitida si te has equivocado al crearla.`)) return;
+        const { error } = await supabase.from('invoices').delete().eq('id', id);
+        if (error){ alert('No se ha podido borrar: ' + error.message); return; }
+        await renderInvoices();
+      }
+    });
+  });
 }
 
 const IVA_RATE = 0.21;
@@ -1451,6 +1676,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     if (btn.dataset.tab === 'tabGaleria'){ renderGallery(); renderEventTypePhotos(); renderVideosAdmin(); }
     if (btn.dataset.tab === 'tabGraficos'){ renderGraficos(); renderVisitas(); renderSocialClicks(); }
     if (btn.dataset.tab === 'tabImpuestos') renderImpuestos();
+    if (btn.dataset.tab === 'tabFacturas') renderInvoices();
   });
 });
 
@@ -2293,6 +2519,93 @@ async function renderVideosAdmin(){
 }
 
 // ---------- Manual reservation modal ----------
+const invoiceModal = document.getElementById('invoiceModal');
+const invoiceForm = document.getElementById('invoiceForm');
+const invReservationSelect = document.getElementById('inv_reservation');
+
+function updateInvoiceBreakdown(){
+  const total = Number(document.getElementById('inv_total').value) || 0;
+  const { base, iva } = invoiceBreakdownFromTotal(total, 21);
+  document.getElementById('invoiceBreakdown').textContent =
+    `Base imponible: ${formatPrice(base)} + 21% IVA: ${formatPrice(iva)} = ${formatPrice(total)} total`;
+}
+document.getElementById('inv_total').addEventListener('input', updateInvoiceBreakdown);
+
+async function openInvoiceModal(){
+  invoiceForm.reset();
+  document.getElementById('invoiceFormMsg').textContent = '';
+  document.getElementById('inv_date').value = ymd(new Date());
+  document.getElementById('inv_concept').value = 'ALQUILER SALA DE EVENTOS.';
+  document.getElementById('inv_payment').value = 'Efectivo';
+
+  const { data: confirmedRes } = await supabase
+    .from('reservations')
+    .select('*')
+    .eq('status', 'confirmada')
+    .order('event_date', { ascending: false });
+  invReservationSelect.innerHTML = '<option value="">— Sin reserva / rellenar a mano —</option>' +
+    (confirmedRes || []).map(r => `<option value="${r.id}">${r.full_name} — ${fmtDate(r.event_date)}</option>`).join('');
+  invReservationSelect.dataset.reservations = JSON.stringify(confirmedRes || []);
+
+  const suggested = await suggestNextInvoiceNumber();
+  document.getElementById('inv_number').value = suggested;
+  if (!suggested){
+    document.getElementById('invoiceFormMsg').textContent = 'Es tu primera factura en el panel: pon el número siguiente al último que hayas emitido.';
+  }
+
+  updateInvoiceBreakdown();
+  invoiceModal.hidden = false;
+}
+
+invReservationSelect.addEventListener('change', () => {
+  const id = invReservationSelect.value;
+  if (!id) return;
+  const list = JSON.parse(invReservationSelect.dataset.reservations || '[]');
+  const r = list.find(x => x.id === id);
+  if (!r) return;
+  document.getElementById('inv_name').value = r.full_name;
+  document.getElementById('inv_phone').value = r.phone || '';
+  document.getElementById('inv_email').value = r.email || '';
+  const plan = ALL_PLANS.find(p => p.id === r.pricing_plan_id);
+  document.getElementById('inv_total').value = plan ? Number(plan.price).toFixed(2) : '';
+  updateInvoiceBreakdown();
+});
+
+document.getElementById('newInvoiceBtn').addEventListener('click', openInvoiceModal);
+document.getElementById('invoiceClose').addEventListener('click', () => { invoiceModal.hidden = true; });
+invoiceModal.addEventListener('click', (e) => { if (e.target === invoiceModal) invoiceModal.hidden = true; });
+
+invoiceForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const submitBtn = document.getElementById('invoiceSubmitBtn');
+  submitBtn.disabled = true;
+  const payload = {
+    invoice_number: document.getElementById('inv_number').value.trim(),
+    issue_date: document.getElementById('inv_date').value,
+    reservation_id: invReservationSelect.value || null,
+    client_name: document.getElementById('inv_name').value.trim(),
+    client_dni: document.getElementById('inv_dni').value.trim() || null,
+    client_address: document.getElementById('inv_address').value.trim() || null,
+    client_phone: document.getElementById('inv_phone').value.trim() || null,
+    client_email: document.getElementById('inv_email').value.trim() || null,
+    concept: document.getElementById('inv_concept').value.trim(),
+    total_amount: Number(document.getElementById('inv_total').value),
+    iva_rate: 21,
+    payment_method: document.getElementById('inv_payment').value,
+  };
+  const { data, error } = await supabase.from('invoices').insert(payload).select().single();
+  submitBtn.disabled = false;
+  if (error){
+    document.getElementById('invoiceFormMsg').textContent = error.code === '23505'
+      ? 'Ya existe una factura con ese número. Cambia el número e inténtalo de nuevo.'
+      : 'No se ha podido guardar: ' + error.message;
+    return;
+  }
+  invoiceModal.hidden = true;
+  openInvoicePrintView(data);
+  await renderInvoices();
+});
+
 const newResModal = document.getElementById('newResModal');
 const newResForm = document.getElementById('newResForm');
 const newResMsg = document.getElementById('newResMsg');
