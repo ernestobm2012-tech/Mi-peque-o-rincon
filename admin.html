@@ -445,6 +445,24 @@
       </div>
     </div>
     <table class="tax-table" id="visitsMonthsTable"></table>
+
+    <h3 style="margin:32px 0 6px;">Clics en redes sociales</h3>
+    <p style="color:var(--ink-soft); font-size:14px; margin-bottom:18px;">Veces que se ha pinchado en cualquiera de los enlaces a cada red social dentro de la web.</p>
+    <div class="stats-row" style="margin-bottom:24px;">
+      <div class="stat-card">
+        <span class="num" id="socialFacebookTotal">0</span>
+        <span class="lbl">Facebook</span>
+      </div>
+      <div class="stat-card">
+        <span class="num" id="socialInstagramTotal">0</span>
+        <span class="lbl">Instagram</span>
+      </div>
+      <div class="stat-card">
+        <span class="num" id="socialTiktokTotal">0</span>
+        <span class="lbl">TikTok</span>
+      </div>
+    </div>
+    <table class="tax-table" id="socialMonthsTable"></table>
   </div>
 
   <div id="tabImpuestos" class="tab-panel" hidden>
@@ -991,6 +1009,43 @@ async function renderVisitas(){
   `;
 }
 
+const SOCIAL_NETWORKS = ['facebook', 'instagram', 'tiktok'];
+const SOCIAL_LABELS = { facebook: 'Facebook', instagram: 'Instagram', tiktok: 'TikTok' };
+
+async function renderSocialClicks(){
+  const { data, error } = await supabase.from('social_clicks').select('network, clicked_at');
+  const clicks = error ? [] : (data || []);
+
+  SOCIAL_NETWORKS.forEach(net => {
+    document.getElementById(`social${net.charAt(0).toUpperCase()}${net.slice(1)}Total`).textContent =
+      clicks.filter(c => c.network === net).length;
+  });
+
+  const byMonth = {};
+  clicks.forEach(c => {
+    const key = (c.clicked_at || '').slice(0, 7);
+    if (!key) return;
+    if (!byMonth[key]) byMonth[key] = { facebook: 0, instagram: 0, tiktok: 0 };
+    if (byMonth[key][c.network] != null) byMonth[key][c.network] += 1;
+  });
+  const months = Object.keys(byMonth).sort().reverse();
+  const table = document.getElementById('socialMonthsTable');
+  if (!months.length){
+    table.innerHTML = '<tr><td>Todavía no hay clics registrados.</td></tr>';
+    return;
+  }
+  table.innerHTML = `
+    <thead><tr><th>Mes</th><th>Facebook</th><th>Instagram</th><th>TikTok</th></tr></thead>
+    <tbody>
+      ${months.map(m => {
+        const label = new Date(m + '-01T00:00:00').toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+        const info = byMonth[m];
+        return `<tr><td style="text-transform:capitalize;">${label}</td><td>${info.facebook}</td><td>${info.instagram}</td><td>${info.tiktok}</td></tr>`;
+      }).join('')}
+    </tbody>
+  `;
+}
+
 const QUARTER_NAMES = ['1er trimestre', '2º trimestre', '3er trimestre', '4º trimestre'];
 
 function quarterKeyForMonth(monthKey){
@@ -1365,7 +1420,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     if (btn.dataset.tab === 'tabClientes') renderClients();
     if (btn.dataset.tab === 'tabCupones') renderCoupons();
     if (btn.dataset.tab === 'tabGaleria'){ renderGallery(); renderEventTypePhotos(); renderVideosAdmin(); }
-    if (btn.dataset.tab === 'tabGraficos'){ renderGraficos(); renderVisitas(); }
+    if (btn.dataset.tab === 'tabGraficos'){ renderGraficos(); renderVisitas(); renderSocialClicks(); }
     if (btn.dataset.tab === 'tabImpuestos') renderImpuestos();
   });
 });
