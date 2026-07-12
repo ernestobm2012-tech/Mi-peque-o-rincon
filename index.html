@@ -1575,7 +1575,16 @@ async function initForm(){
   });
 }
 
-supabase.from('page_views').insert({}).then(() => {});
+function getVisitorId(){
+  const KEY = 'mpr_visitor_id';
+  let id = localStorage.getItem(KEY);
+  if (!id){
+    id = (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    localStorage.setItem(KEY, id);
+  }
+  return id;
+}
+supabase.from('page_views').insert({ visitor_id: getVisitorId() }).then(() => {});
 
 (async function init(){
   await loadEventTypes();
