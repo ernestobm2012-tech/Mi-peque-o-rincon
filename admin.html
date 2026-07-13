@@ -1165,10 +1165,13 @@ function monthlyRoomRevenue(reservations){
 
 // "Real" = alquiler sin IVA + decoración + limpieza + 1€ por cada menú infantil.
 // "Total" = lo mismo pero con el alquiler CON IVA (lo que hay que pagar de más al hacienda).
-function realIncomeForReservation(r){
+// En las anulaciones parciales no se descuenta el IVA del alquiler: el importe retenido
+// es una compensación, no una venta sujeta al mismo desglose fiscal.
+function realIncomeForReservation(r, skipIva){
   const decor = r.wants_decoration ? Number(r.decoration_cost || 0) : 0;
   const kids = (r.kids_menus_count || 0) * 1;
-  return roomRevenueNet(r) + decor + cleaningRevenue(r) + kids;
+  const room = skipIva ? roomRevenue(r) : roomRevenueNet(r);
+  return room + decor + cleaningRevenue(r) + kids;
 }
 
 function totalIncomeForReservation(r){
@@ -1177,13 +1180,14 @@ function totalIncomeForReservation(r){
   return roomRevenue(r) + decor + cleaningRevenue(r) + kids;
 }
 
-function monthlyRealIncome(reservations){
+function monthlyRealIncome(reservations, partialIds){
+  const ids = partialIds || new Set();
   const byMonth = {};
   reservations.forEach(r => {
     const key = (r.event_date || '').slice(0, 7);
     if (!key) return;
     if (!byMonth[key]) byMonth[key] = { real: 0, total: 0, reservations: [] };
-    byMonth[key].real += realIncomeForReservation(r);
+    byMonth[key].real += realIncomeForReservation(r, ids.has(r.id));
     byMonth[key].total += totalIncomeForReservation(r);
     byMonth[key].reservations.push(r);
   });
@@ -1959,7 +1963,8 @@ async function renderPartialCancellations(){
   document.getElementById('pcDecorTotal').textContent = formatPrice(decorTotal);
   document.getElementById('pcDecorCount').textContent = decorReservations.length;
 
-  const incomeByMonth = monthlyRealIncome([...confirmed, ...partialReservations]);
+  const partialIds = new Set(partialReservations.map(r => r.id));
+  const incomeByMonth = monthlyRealIncome([...confirmed, ...partialReservations], partialIds);
   const incomeMonths = Object.keys(incomeByMonth).sort().reverse();
   const incomeTable = document.getElementById('pcIncomeTable');
   if (!incomeMonths.length){
@@ -1984,7 +1989,8 @@ async function renderPartialCancellations(){
                 r.wants_animation ? '🎭' : '',
                 r.wants_catering ? '🍽️' : '',
               ].filter(Boolean).join(' ');
-              return `<tr><td style="padding-left:18px;">${r.full_name}${icons ? ' ' + icons : ''}</td><td>${formatPrice(realIncomeForReservation(r))}</td><td>${formatPrice(totalIncomeForReservation(r))}</td></tr>`;
+              const real = realIncomeForReservation(r, partialIds.has(r.id));
+              return `<tr><td style="padding-left:18px;"><button type="button" class="pc-open-res" data-id="${r.id}" style="background:none; border:none; padding:0; font:inherit; color:var(--olive-dark); text-decoration:underline; cursor:pointer; text-align:left;">${r.full_name}</button>${icons ? ' ' + icons : ''}</td><td>${formatPrice(real)}</td><td>${formatPrice(totalIncomeForReservation(r))}</td></tr>`;
             })
             .join('');
           return `
@@ -1996,6 +2002,12 @@ async function renderPartialCancellations(){
       </tbody>
       <tfoot><tr><td>Total general</td><td>${formatPrice(grandReal)}</td><td>${formatPrice(grandTotal)}</td></tr></tfoot>
     `;
+    incomeTable.querySelectorAll('.pc-open-res').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const r = [...confirmed, ...partialReservations].find(x => x.id === btn.dataset.id);
+        if (r) openEditResModal(r);
+      });
+    });
   }
 
   const monthStart = `${pcCalState.year}-${String(pcCalState.month+1).padStart(2,'0')}-01`;
