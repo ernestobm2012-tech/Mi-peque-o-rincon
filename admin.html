@@ -216,6 +216,7 @@
   .chart-bar-fill{ height:100%; border-radius:2px; display:flex; align-items:center; padding-left:8px; box-sizing:border-box; font-size:11.5px; color:#fff; white-space:nowrap; min-width:fit-content; }
   .chart-bar-fill.billed{ background:var(--gold); }
   .chart-bar-fill.net{ background:var(--olive-dark); }
+  .chart-bar-fill.top{ background:var(--gold); }
 
   /* ---------- Impuestos ---------- */
   .tax-table{ width:100%; border-collapse:collapse; font-size:13.5px; }
@@ -266,6 +267,7 @@
     <button class="tab-btn" data-tab="tabCupones">Cupones</button>
     <button class="tab-btn" data-tab="tabGaleria">Galería web</button>
     <button class="tab-btn" data-tab="tabGraficos">Gráficos</button>
+    <button class="tab-btn" data-tab="tabEstadisticas">Estadísticas</button>
     <button class="tab-btn" data-tab="tabImpuestos">Impuestos</button>
     <button class="tab-btn" data-tab="tabFacturas">Facturas</button>
   </div>
@@ -476,6 +478,54 @@
       </div>
     </div>
     <table class="tax-table" id="socialMonthsTable"></table>
+  </div>
+
+  <div id="tabEstadisticas" class="tab-panel" hidden>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; flex-wrap:wrap; gap:10px;">
+      <p style="color:var(--ink-soft); font-size:14px; margin:0;">Solo tiene en cuenta reservas confirmadas.</p>
+      <select id="statsRange" class="filter-input">
+        <option value="30">Últimos 30 días</option>
+        <option value="90">Últimos 90 días</option>
+        <option value="365" selected>Último año</option>
+        <option value="all">Todo el historial</option>
+      </select>
+    </div>
+    <div class="stats-row" style="margin-bottom:24px;">
+      <div class="stat-card">
+        <span class="num" id="statsKpiCount">0</span>
+        <span class="lbl">Reservas confirmadas</span>
+      </div>
+      <div class="stat-card">
+        <span class="num" id="statsKpiClients">0</span>
+        <span class="lbl">Clientes distintos</span>
+      </div>
+      <div class="stat-card">
+        <span class="num" id="statsKpiRevenue">0€</span>
+        <span class="lbl">Dinero ganado</span>
+      </div>
+      <div class="stat-card">
+        <span class="num" id="statsKpiTicket">0€</span>
+        <span class="lbl">Ticket medio</span>
+      </div>
+    </div>
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(340px,1fr)); gap:24px;">
+      <div class="res-card">
+        <h3 style="margin-bottom:14px;">💶 Ingresos por mes</h3>
+        <div id="statsRevenueChart"></div>
+      </div>
+      <div class="res-card">
+        <h3 style="margin-bottom:14px;">🎉 Tipo de evento más solicitado</h3>
+        <div id="statsEventTypeChart"></div>
+      </div>
+      <div class="res-card">
+        <h3 style="margin-bottom:14px;">📅 Día de la semana más solicitado</h3>
+        <div id="statsWeekdayChart"></div>
+      </div>
+      <div class="res-card">
+        <h3 style="margin-bottom:14px;">🏆 Clientes más frecuentes</h3>
+        <div id="statsTopClients"></div>
+      </div>
+    </div>
   </div>
 
   <div id="tabImpuestos" class="tab-panel" hidden>
@@ -1242,6 +1292,134 @@ async function renderGraficos(){
   }).join('');
 }
 
+// ---------- Estadísticas ----------
+const WEEKDAY_NAMES = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+
+function statsClientKey(r){
+  return waNumber(r.phone) || r.phone || r.full_name;
+}
+
+async function renderEstadisticas(){
+  const kpiCount = document.getElementById('statsKpiCount');
+  kpiCount.textContent = '…';
+
+  const { data: rawData, error } = await supabase.from('reservations').select('*');
+  if (error || !rawData) return;
+  const allConfirmed = visibleReservations(rawData).filter(r => r.status === 'confirmada');
+
+  const range = document.getElementById('statsRange').value;
+  let rows = allConfirmed;
+  if (range !== 'all'){
+    const days = Number(range);
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - days);
+    const cutoffStr = ymd(cutoff);
+    rows = allConfirmed.filter(r => r.event_date >= cutoffStr);
+  }
+
+  const uniqueClients = new Set(rows.map(statsClientKey)).size;
+  const totalRevenue = rows.reduce((sum, r) => sum + reservationTotal(r), 0);
+  const avgTicket = rows.length ? totalRevenue / rows.length : 0;
+
+  document.getElementById('statsKpiCount').textContent = rows.length;
+  document.getElementById('statsKpiClients').textContent = uniqueClients;
+  document.getElementById('statsKpiRevenue').textContent = formatPrice(totalRevenue);
+  document.getElementById('statsKpiTicket').textContent = formatPrice(avgTicket);
+
+  renderStatsRevenueChart(rows);
+  renderStatsEventTypeChart(rows);
+  renderStatsWeekdayChart(rows);
+  renderStatsTopClients(rows);
+}
+
+function renderStatsRevenueChart(rows){
+  const el = document.getElementById('statsRevenueChart');
+  const byMonth = {};
+  rows.forEach(r => {
+    const key = (r.event_date || '').slice(0, 7);
+    if (!key) return;
+    byMonth[key] = (byMonth[key] || 0) + reservationTotal(r);
+  });
+  const months = Object.keys(byMonth).sort().slice(-12);
+  if (!months.length){ el.innerHTML = '<p class="empty-msg">Sin datos en este periodo.</p>'; return; }
+  const max = Math.max(...months.map(m => byMonth[m]), 1);
+  el.innerHTML = months.map(m => {
+    const value = byMonth[m];
+    const pct = Math.max(4, Math.round((value / max) * 100));
+    const label = new Date(m + '-01T00:00:00').toLocaleDateString('es-ES', { month: 'short', year: '2-digit' });
+    return `
+      <div class="chart-row">
+        <div class="chart-month-lbl">${label}</div>
+        <div class="chart-bar-track"><div class="chart-bar-fill net" style="width:${pct}%">${formatPrice(value)}</div></div>
+      </div>`;
+  }).join('');
+}
+
+function renderStatsEventTypeChart(rows){
+  const el = document.getElementById('statsEventTypeChart');
+  const buckets = {};
+  rows.forEach(r => {
+    const key = r.event_type || 'Sin especificar';
+    buckets[key] = (buckets[key] || 0) + 1;
+  });
+  const entries = Object.entries(buckets).sort((a, b) => b[1] - a[1]);
+  if (!entries.length){ el.innerHTML = '<p class="empty-msg">Sin datos en este periodo.</p>'; return; }
+  const max = Math.max(...entries.map(e => e[1]), 1);
+  const total = entries.reduce((s, e) => s + e[1], 0);
+  el.innerHTML = entries.map(([type, count], i) => {
+    const pct = Math.max(4, Math.round((count / max) * 100));
+    const share = Math.round((count / total) * 100);
+    return `
+      <div class="chart-row">
+        <div class="chart-month-lbl">${type}</div>
+        <div class="chart-bar-track"><div class="chart-bar-fill ${i === 0 ? 'top' : 'net'}" style="width:${pct}%">${count} (${share}%)</div></div>
+      </div>`;
+  }).join('');
+}
+
+function renderStatsWeekdayChart(rows){
+  const el = document.getElementById('statsWeekdayChart');
+  const buckets = {};
+  rows.forEach(r => {
+    if (!r.event_date) return;
+    const dow = new Date(r.event_date + 'T00:00:00').getDay();
+    buckets[dow] = (buckets[dow] || 0) + 1;
+  });
+  const entries = Object.entries(buckets).sort((a, b) => Number(a[0]) - Number(b[0]));
+  if (!entries.length){ el.innerHTML = '<p class="empty-msg">Sin datos en este periodo.</p>'; return; }
+  const max = Math.max(...entries.map(e => e[1]), 1);
+  const topDow = entries.reduce((best, e) => (e[1] > best[1] ? e : best), entries[0])[0];
+  el.innerHTML = entries.map(([dow, count]) => {
+    const pct = Math.max(4, Math.round((count / max) * 100));
+    return `
+      <div class="chart-row">
+        <div class="chart-month-lbl">${WEEKDAY_NAMES[dow]}</div>
+        <div class="chart-bar-track"><div class="chart-bar-fill ${dow === topDow ? 'top' : 'net'}" style="width:${pct}%">${count}</div></div>
+      </div>`;
+  }).join('');
+}
+
+function renderStatsTopClients(rows){
+  const el = document.getElementById('statsTopClients');
+  const byClient = {};
+  rows.forEach(r => {
+    const key = statsClientKey(r);
+    if (!byClient[key]) byClient[key] = { name: r.full_name, count: 0 };
+    byClient[key].count += 1;
+  });
+  const top = Object.values(byClient).sort((a, b) => b.count - a.count).slice(0, 8);
+  if (!top.length){ el.innerHTML = '<p class="empty-msg">Sin datos en este periodo.</p>'; return; }
+  const max = Math.max(...top.map(c => c.count), 1);
+  el.innerHTML = top.map((c, i) => {
+    const pct = Math.max(4, Math.round((c.count / max) * 100));
+    return `
+      <div class="chart-row">
+        <div class="chart-month-lbl" style="text-transform:none;" title="${c.name}">${c.name}</div>
+        <div class="chart-bar-track"><div class="chart-bar-fill ${i === 0 ? 'top' : 'net'}" style="width:${pct}%">${c.count}</div></div>
+      </div>`;
+  }).join('');
+}
+
 async function renderVisitas(){
   const { data, error } = await supabase.from('page_views').select('visited_at, visitor_id');
   const visits = error ? [] : (data || []);
@@ -1718,6 +1896,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     if (btn.dataset.tab === 'tabCupones') renderCoupons();
     if (btn.dataset.tab === 'tabGaleria'){ renderGallery(); renderEventTypePhotos(); renderVideosAdmin(); }
     if (btn.dataset.tab === 'tabGraficos'){ renderGraficos(); renderVisitas(); renderSocialClicks(); }
+    if (btn.dataset.tab === 'tabEstadisticas') renderEstadisticas();
     if (btn.dataset.tab === 'tabImpuestos') renderImpuestos();
     if (btn.dataset.tab === 'tabFacturas') renderInvoices();
   });
@@ -1731,6 +1910,8 @@ function refreshActiveTab(){
   if (activeBtn.dataset.tab === 'tabGraficos') renderGraficos();
   if (activeBtn.dataset.tab === 'tabImpuestos') renderImpuestos();
 }
+
+document.getElementById('statsRange').addEventListener('change', renderEstadisticas);
 
 // ---------- Calendar tab ----------
 const MONTH_NAMES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
