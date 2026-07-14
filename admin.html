@@ -114,6 +114,10 @@
     font-family:'Work Sans',sans-serif; font-size:14.5px; color:var(--ink); border-radius:var(--radius);
   }
   .field textarea{ resize:vertical; min-height:70px; }
+  .filter-input{
+    padding:10px 13px; border:1px solid var(--line); background:#fff;
+    font-family:'Work Sans',sans-serif; font-size:14px; color:var(--ink); border-radius:var(--radius);
+  }
   .field-row{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
   .checkbox-row{ display:flex; align-items:center; gap:8px; font-size:14px; margin-bottom:10px;}
   .checkbox-row input{ width:auto; }
@@ -293,12 +297,15 @@
       <table id="statsMonthsTable"></table>
     </details>
 
-    <select id="statusFilter" style="margin-bottom:18px;">
-      <option value="pendiente">Pendientes</option>
-      <option value="confirmada">Confirmadas</option>
-      <option value="cancelada">Canceladas</option>
-      <option value="todas">Todas</option>
-    </select>
+    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:18px;">
+      <select id="statusFilter" class="filter-input">
+        <option value="pendiente">Pendientes</option>
+        <option value="confirmada">Confirmadas</option>
+        <option value="cancelada">Canceladas</option>
+        <option value="todas">Todas</option>
+      </select>
+      <input type="search" id="resSearchInput" class="filter-input" placeholder="Buscar por nombre o teléfono" style="flex:1; min-width:200px;">
+    </div>
     <div id="resList"></div>
   </div>
 
@@ -820,7 +827,19 @@ const dashView = document.getElementById('dashView');
 const loginForm = document.getElementById('loginForm');
 const loginMsg = document.getElementById('loginMsg');
 const statusFilter = document.getElementById('statusFilter');
+const resSearchInput = document.getElementById('resSearchInput');
 const resList = document.getElementById('resList');
+
+function matchesReservationSearch(r, term){
+  const t = term.trim().toLowerCase();
+  if (!t) return true;
+  const name = (r.full_name || '').toLowerCase();
+  if (name.includes(t)) return true;
+  const termDigits = t.replace(/\D/g, '');
+  if (!termDigits) return false;
+  const phoneDigits = (r.phone || '').replace(/\D/g, '');
+  return phoneDigits.includes(termDigits);
+}
 
 let ALL_PLANS = [];
 let ALL_EXTRAS = [];
@@ -872,6 +891,7 @@ document.getElementById('logoutBtn').addEventListener('click', async () => {
 });
 
 statusFilter.addEventListener('change', loadReservations);
+resSearchInput.addEventListener('input', loadReservations);
 
 function fmtDate(d){
   return new Date(d + 'T00:00:00').toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
@@ -1448,14 +1468,18 @@ async function loadReservations(){
     resList.innerHTML = `<p class="empty-msg">Error cargando reservas: ${error.message}</p>`;
     return;
   }
-  if (!data || !data.length){
-    resList.innerHTML = `<p class="empty-msg">No hay reservas en este filtro.</p>`;
+
+  const searchTerm = resSearchInput.value;
+  const filteredData = (data || []).filter(r => matchesReservationSearch(r, searchTerm));
+
+  if (!filteredData.length){
+    resList.innerHTML = `<p class="empty-msg">${searchTerm.trim() ? 'No se han encontrado reservas con esa búsqueda.' : 'No hay reservas en este filtro.'}</p>`;
     return;
   }
 
   const SOURCE_LABELS = { web: '🌐 Web', whatsapp: '💬 WhatsApp', presencial: '📍 Presencial' };
 
-  resList.innerHTML = data.map(r => {
+  resList.innerHTML = filteredData.map(r => {
     const plan = ALL_PLANS.find(p => p.id === r.pricing_plan_id);
     const extras = [];
     if (r.wants_cleaning) extras.push('Limpieza');
@@ -1513,7 +1537,7 @@ async function loadReservations(){
   resList.querySelectorAll('button[data-action]').forEach(btn => {
     btn.addEventListener('click', async () => {
       const id = btn.dataset.id;
-      const r = data.find(x => x.id === id);
+      const r = filteredData.find(x => x.id === id);
       const plan = ALL_PLANS.find(p => p.id === r.pricing_plan_id);
       const action = btn.dataset.action;
 
