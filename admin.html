@@ -270,6 +270,7 @@
     <button class="tab-btn" data-tab="tabEstadisticas">Estadísticas</button>
     <button class="tab-btn" data-tab="tabImpuestos">Impuestos</button>
     <button class="tab-btn" data-tab="tabFacturas">Facturas</button>
+    <button class="tab-btn" data-tab="tabEnchufes">Enchufes</button>
   </div>
 
   <p id="actionMsg" style="display:none; font-size:13.5px; padding:10px 14px; margin-bottom:18px; border-radius:2px;"></p>
@@ -572,6 +573,51 @@
       <span id="zipDownloadMsg" style="font-size:13px; color:var(--ink-soft);"></span>
     </div>
     <div id="invoicesList"></div>
+  </div>
+
+  <div id="tabEnchufes" class="tab-panel" hidden>
+    <p style="color:var(--ink-soft); font-size:14px; margin-bottom:18px;">Enciende automáticamente tus enchufes inteligentes (Tuya / Smart Life) unas horas antes de cada reserva confirmada, y se apagan solos a la hora de fin. Se revisa cada 15 minutos.</p>
+
+    <div class="res-card" style="margin-bottom:24px;">
+      <h3 style="margin-bottom:14px;">Conexión con Tuya</h3>
+      <form id="plugSettingsForm">
+        <div class="field-row">
+          <div class="field">
+            <label for="plug_client_id">Client ID (Access ID)</label>
+            <input type="text" id="plug_client_id">
+          </div>
+          <div class="field">
+            <label for="plug_client_secret">Client Secret (Access Secret)</label>
+            <input type="password" id="plug_client_secret">
+          </div>
+        </div>
+        <div class="field">
+          <label for="plug_hours_before">Horas de antelación para encender</label>
+          <input type="number" id="plug_hours_before" min="0" step="1" value="6" style="max-width:120px;">
+        </div>
+        <button type="submit" class="btn btn-primary" id="plugSettingsSubmitBtn">Guardar conexión</button>
+        <p id="plugSettingsMsg" style="font-size:13.5px; margin-top:10px; color:var(--ink-soft);"></p>
+      </form>
+    </div>
+
+    <div class="res-card">
+      <h3 style="margin-bottom:14px;">Enchufes</h3>
+      <form id="plugForm" style="margin-bottom:20px;">
+        <div class="field-row">
+          <div class="field">
+            <label for="plug_name">Nombre</label>
+            <input type="text" id="plug_name" placeholder="Ej: Luces sala">
+          </div>
+          <div class="field">
+            <label for="plug_device_id">Device ID (de Tuya)</label>
+            <input type="text" id="plug_device_id">
+          </div>
+        </div>
+        <button type="submit" class="btn btn-ghost" id="plugSubmitBtn">+ Añadir enchufe</button>
+        <p id="plugFormMsg" style="font-size:13.5px; margin-top:10px; color:var(--ink-soft);"></p>
+      </form>
+      <div id="plugsList"></div>
+    </div>
   </div>
 
   <div id="tabAnulaciones" class="tab-panel" hidden>
@@ -1319,6 +1365,107 @@ async function renderInvoices(){
   });
 }
 
+// ---------- Enchufes inteligentes ----------
+let PLUG_SETTINGS_ID = null;
+
+async function renderPlugSettings(){
+  const { data, error } = await supabase.from('smart_plug_settings').select('*').limit(1).maybeSingle();
+  if (error){
+    document.getElementById('plugSettingsMsg').textContent = 'Error cargando la configuración: ' + error.message;
+    return;
+  }
+  if (data){
+    PLUG_SETTINGS_ID = data.id;
+    document.getElementById('plug_client_id').value = data.tuya_client_id || '';
+    document.getElementById('plug_client_secret').value = data.tuya_client_secret || '';
+    document.getElementById('plug_hours_before').value = data.hours_before_on ?? 6;
+  } else {
+    PLUG_SETTINGS_ID = null;
+  }
+}
+
+document.getElementById('plugSettingsForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const msgEl = document.getElementById('plugSettingsMsg');
+  const submitBtn = document.getElementById('plugSettingsSubmitBtn');
+  submitBtn.disabled = true;
+  const payload = {
+    tuya_client_id: document.getElementById('plug_client_id').value.trim(),
+    tuya_client_secret: document.getElementById('plug_client_secret').value.trim(),
+    hours_before_on: Number(document.getElementById('plug_hours_before').value) || 6,
+    updated_at: new Date().toISOString(),
+  };
+  const { error } = PLUG_SETTINGS_ID
+    ? await supabase.from('smart_plug_settings').update(payload).eq('id', PLUG_SETTINGS_ID)
+    : await supabase.from('smart_plug_settings').insert(payload);
+  submitBtn.disabled = false;
+  if (error){
+    msgEl.textContent = 'No se ha podido guardar: ' + error.message;
+    return;
+  }
+  msgEl.textContent = 'Conexión guardada.';
+  await renderPlugSettings();
+});
+
+async function renderPlugsList(){
+  const list = document.getElementById('plugsList');
+  const { data, error } = await supabase.from('smart_plugs').select('*').order('created_at', { ascending: true });
+  if (error){ list.innerHTML = `<p class="empty-msg">Error cargando enchufes: ${error.message}</p>`; return; }
+  if (!data || !data.length){ list.innerHTML = '<p class="empty-msg">Todavía no has añadido ningún enchufe.</p>'; return; }
+  list.innerHTML = data.map(p => `
+    <div class="res-card">
+      <div class="res-head">
+        <h3>${p.name}</h3>
+        <span class="badge ${p.active ? 'confirmada' : 'cancelada'}">${p.active ? 'Activo' : 'Desactivado'}</span>
+      </div>
+      <div class="res-meta"><div>🔌 ${p.device_id}</div></div>
+      <div class="res-actions">
+        <button class="btn btn-ghost" data-action="toggle-plug" data-id="${p.id}" data-active="${p.active}">${p.active ? 'Desactivar' : 'Activar'}</button>
+        <button class="btn btn-deny" data-action="delete-plug" data-id="${p.id}">🗑️ Borrar</button>
+      </div>
+    </div>
+  `).join('');
+
+  list.querySelectorAll('button[data-action]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.id;
+      if (btn.dataset.action === 'toggle-plug'){
+        const active = btn.dataset.active === 'true';
+        const { error } = await supabase.from('smart_plugs').update({ active: !active }).eq('id', id);
+        if (error){ alert('No se ha podido actualizar: ' + error.message); return; }
+        await renderPlugsList();
+      } else if (btn.dataset.action === 'delete-plug'){
+        if (!confirm('¿Borrar este enchufe de la lista?')) return;
+        const { error } = await supabase.from('smart_plugs').delete().eq('id', id);
+        if (error){ alert('No se ha podido borrar: ' + error.message); return; }
+        await renderPlugsList();
+      }
+    });
+  });
+}
+
+document.getElementById('plugForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const msgEl = document.getElementById('plugFormMsg');
+  const submitBtn = document.getElementById('plugSubmitBtn');
+  const name = document.getElementById('plug_name').value.trim();
+  const deviceId = document.getElementById('plug_device_id').value.trim();
+  if (!name || !deviceId){
+    msgEl.textContent = 'Rellena el nombre y el Device ID.';
+    return;
+  }
+  submitBtn.disabled = true;
+  const { error } = await supabase.from('smart_plugs').insert({ name, device_id: deviceId, active: true });
+  submitBtn.disabled = false;
+  if (error){
+    msgEl.textContent = 'No se ha podido añadir: ' + error.message;
+    return;
+  }
+  msgEl.textContent = '';
+  document.getElementById('plugForm').reset();
+  await renderPlugsList();
+});
+
 const IVA_RATE = 0.21;
 
 // Solo el alquiler de la sala lleva IVA; limpieza y menús infantiles los gestionan
@@ -2014,6 +2161,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     if (btn.dataset.tab === 'tabEstadisticas') renderEstadisticas();
     if (btn.dataset.tab === 'tabImpuestos') renderImpuestos();
     if (btn.dataset.tab === 'tabFacturas') renderInvoices();
+    if (btn.dataset.tab === 'tabEnchufes'){ renderPlugSettings(); renderPlugsList(); }
   });
 });
 
