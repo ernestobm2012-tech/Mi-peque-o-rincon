@@ -984,6 +984,7 @@ function buildConfirmMessage(r, plan){
   if (r.wants_decoration) msg += `, más otros 20€ de señal por la decoración personalizada`;
   msg += `. El día del evento se pide además una fianza de 50€ en efectivo, que se devuelve si la sala queda en las mismas condiciones de uso y limpieza. Está prohibido pegar en las paredes cualquier tipo de decoración; hacerlo conllevará la pérdida total de la fianza.`;
   if (r.wants_cleaning) msg += ` La limpieza (${formatPrice(getExtraPrice('limpieza'))}) también se paga en efectivo.`;
+  msg += `\n\n🎥 Recuerda que en todas las reservas grabamos gratis una felicitación en nuestra *silla interactiva*. Para poder prepararla, mándanos por aquí el *nombre y la edad* de quien celebra el evento (y si quieres, también fotos o vídeos suyos), con al menos *24 horas de antelación* al evento. Si no nos llega a tiempo, no podremos hacer la felicitación.`;
   msg += `\n\n¡Te esperamos! 🌿`;
   return msg;
 }
