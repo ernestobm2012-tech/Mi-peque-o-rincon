@@ -554,6 +554,23 @@
       <p style="color:var(--ink-soft); font-size:14px; margin:0;">Genera facturas con el mismo modelo que ya usas, y guárdalas como PDF desde el diálogo de impresión.</p>
       <button type="button" class="btn btn-primary" id="newInvoiceBtn">+ Nueva factura</button>
     </div>
+    <div style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap; margin-bottom:24px; background:#fff; border:1px solid var(--line); padding:16px 18px;">
+      <div class="field" style="margin:0;">
+        <label for="inv_zip_quarter">Trimestre</label>
+        <select id="inv_zip_quarter" class="filter-input">
+          <option value="1">1er trimestre (ene-mar)</option>
+          <option value="2">2º trimestre (abr-jun)</option>
+          <option value="3">3er trimestre (jul-sep)</option>
+          <option value="4">4º trimestre (oct-dic)</option>
+        </select>
+      </div>
+      <div class="field" style="margin:0;">
+        <label for="inv_zip_year">Año</label>
+        <input type="number" id="inv_zip_year" class="filter-input" style="width:100px;">
+      </div>
+      <button type="button" class="btn btn-ghost" id="downloadQuarterZipBtn">⬇️ Descargar PDFs del trimestre (ZIP)</button>
+      <span id="zipDownloadMsg" style="font-size:13px; color:var(--ink-soft);"></span>
+    </div>
     <div id="invoicesList"></div>
   </div>
 
@@ -795,6 +812,9 @@
 <script type="module">
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { computeDiscount, lookupCoupon, couponSummary, formatPrice, couponAppliesTo, COUPON_SCOPE_LABELS } from './assets/coupons.js';
+import { jsPDF } from 'https://esm.sh/jspdf@2.5.2';
+import html2canvas from 'https://esm.sh/html2canvas@1.4.1';
+import JSZip from 'https://esm.sh/jszip@3.10.1';
 
 const SUPABASE_URL = 'https://ztsdkfwnqrlmsirfvoat.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0c2RrZnducXJsbXNpcmZ2b2F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwOTM5OTksImV4cCI6MjA5ODY2OTk5OX0.ODimfaCqTpK8fkY4Oobk8kSR3rppb_afmoTTXG8H2os';
@@ -1162,6 +1182,100 @@ function openInvoicePrintView(inv){
   win.document.write(buildInvoiceHtml(inv));
   win.document.close();
 }
+
+async function renderInvoiceToCanvas(inv){
+  const iframe = document.createElement('iframe');
+  iframe.style.position = 'fixed';
+  iframe.style.left = '-9999px';
+  iframe.style.top = '0';
+  iframe.style.width = '900px';
+  iframe.style.height = '1200px';
+  iframe.style.border = '0';
+  document.body.appendChild(iframe);
+
+  await new Promise((resolve) => {
+    iframe.onload = () => {
+      const img = iframe.contentDocument.querySelector('img');
+      if (!img || img.complete){ resolve(); return; }
+      img.onload = resolve;
+      img.onerror = resolve;
+    };
+    iframe.srcdoc = buildInvoiceHtml(inv);
+  });
+
+  const canvas = await html2canvas(iframe.contentDocument.body, { scale: 2, backgroundColor: '#ffffff' });
+  document.body.removeChild(iframe);
+  return canvas;
+}
+
+async function buildInvoicePdfBlob(inv){
+  const canvas = await renderInvoiceToCanvas(inv);
+  const imgData = canvas.toDataURL('image/jpeg', 0.92);
+  const pdf = new jsPDF({ unit: 'px', format: [canvas.width, canvas.height] });
+  pdf.addImage(imgData, 'JPEG', 0, 0, canvas.width, canvas.height);
+  return pdf.output('blob');
+}
+
+document.getElementById('downloadQuarterZipBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('downloadQuarterZipBtn');
+  const msgEl = document.getElementById('zipDownloadMsg');
+  const quarter = Number(document.getElementById('inv_zip_quarter').value);
+  const year = Number(document.getElementById('inv_zip_year').value);
+  if (!year){ msgEl.textContent = 'Indica un año.'; return; }
+
+  const startMonth = (quarter - 1) * 3 + 1;
+  const endMonth = startMonth + 3;
+  const startDate = `${year}-${String(startMonth).padStart(2, '0')}-01`;
+  const endDate = endMonth > 12 ? `${year + 1}-01-01` : `${year}-${String(endMonth).padStart(2, '0')}-01`;
+
+  btn.disabled = true;
+  msgEl.textContent = 'Buscando facturas…';
+
+  const { data, error } = await supabase
+    .from('invoices')
+    .select('*')
+    .gte('issue_date', startDate)
+    .lt('issue_date', endDate)
+    .order('invoice_number', { ascending: true });
+
+  if (error){
+    msgEl.textContent = 'Error buscando facturas: ' + error.message;
+    btn.disabled = false;
+    return;
+  }
+  if (!data || !data.length){
+    msgEl.textContent = `No hay facturas en el ${QUARTER_NAMES[quarter - 1]} de ${year}.`;
+    btn.disabled = false;
+    return;
+  }
+
+  const zip = new JSZip();
+  for (let i = 0; i < data.length; i++){
+    msgEl.textContent = `Generando factura ${i + 1} de ${data.length}…`;
+    const blob = await buildInvoicePdfBlob(data[i]);
+    zip.file(`Factura_${data[i].invoice_number}.pdf`, blob);
+  }
+
+  msgEl.textContent = 'Comprimiendo…';
+  const zipBlob = await zip.generateAsync({ type: 'blob' });
+  const url = URL.createObjectURL(zipBlob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Facturas_T${quarter}_${year}.zip`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+
+  msgEl.textContent = `Descargadas ${data.length} factura(s) del ${QUARTER_NAMES[quarter - 1]} ${year}.`;
+  btn.disabled = false;
+});
+
+(function initInvoiceZipDefaults(){
+  const now = new Date();
+  document.getElementById('inv_zip_year').value = now.getFullYear();
+  document.getElementById('inv_zip_quarter').value = String(Math.ceil((now.getMonth() + 1) / 3));
+})();
 
 async function renderInvoices(){
   const list = document.getElementById('invoicesList');
