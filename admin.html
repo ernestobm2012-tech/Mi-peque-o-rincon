@@ -576,7 +576,7 @@
   </div>
 
   <div id="tabEnchufes" class="tab-panel" hidden>
-    <p style="color:var(--ink-soft); font-size:14px; margin-bottom:18px;">Enciende automáticamente tus enchufes inteligentes (Tuya / Smart Life) unas horas antes de cada reserva confirmada, y se apagan solos a la hora de fin. Se revisa cada 15 minutos.</p>
+    <p style="color:var(--ink-soft); font-size:14px; margin-bottom:18px;">Enciende automáticamente tus enchufes inteligentes (Tuya / Smart Life) antes de cada reserva confirmada, y se apagan solos a la hora de fin. Cada enchufe tiene su propia antelación (por ejemplo, luces 6 horas antes, y un enchufe "disparador" para el aire 30 minutos antes). Se revisa cada 15 minutos.</p>
 
     <div class="res-card" style="margin-bottom:24px;">
       <h3 style="margin-bottom:14px;">Conexión con Tuya</h3>
@@ -591,10 +591,6 @@
             <input type="password" id="plug_client_secret">
           </div>
         </div>
-        <div class="field">
-          <label for="plug_hours_before">Horas de antelación para encender</label>
-          <input type="number" id="plug_hours_before" min="0" step="1" value="6" style="max-width:120px;">
-        </div>
         <button type="submit" class="btn btn-primary" id="plugSettingsSubmitBtn">Guardar conexión</button>
         <p id="plugSettingsMsg" style="font-size:13.5px; margin-top:10px; color:var(--ink-soft);"></p>
       </form>
@@ -606,13 +602,18 @@
         <div class="field-row">
           <div class="field">
             <label for="plug_name">Nombre</label>
-            <input type="text" id="plug_name" placeholder="Ej: Luces sala">
+            <input type="text" id="plug_name" placeholder="Ej: Luces sala, Disparador aire...">
           </div>
           <div class="field">
             <label for="plug_device_id">Device ID (de Tuya)</label>
             <input type="text" id="plug_device_id">
           </div>
+          <div class="field">
+            <label for="plug_minutes_before">Minutos de antelación</label>
+            <input type="number" id="plug_minutes_before" min="0" step="5" value="360" style="max-width:110px;">
+          </div>
         </div>
+        <p class="field-note" style="font-size:12.5px; color:var(--ink-soft); margin:-8px 0 12px;">Ej: 360 = 6 horas antes, 30 = media hora antes.</p>
         <button type="submit" class="btn btn-ghost" id="plugSubmitBtn">+ Añadir enchufe</button>
         <p id="plugFormMsg" style="font-size:13.5px; margin-top:10px; color:var(--ink-soft);"></p>
       </form>
@@ -1378,7 +1379,6 @@ async function renderPlugSettings(){
     PLUG_SETTINGS_ID = data.id;
     document.getElementById('plug_client_id').value = data.tuya_client_id || '';
     document.getElementById('plug_client_secret').value = data.tuya_client_secret || '';
-    document.getElementById('plug_hours_before').value = data.hours_before_on ?? 6;
   } else {
     PLUG_SETTINGS_ID = null;
   }
@@ -1392,7 +1392,6 @@ document.getElementById('plugSettingsForm').addEventListener('submit', async (e)
   const payload = {
     tuya_client_id: document.getElementById('plug_client_id').value.trim(),
     tuya_client_secret: document.getElementById('plug_client_secret').value.trim(),
-    hours_before_on: Number(document.getElementById('plug_hours_before').value) || 6,
     updated_at: new Date().toISOString(),
   };
   const { error } = PLUG_SETTINGS_ID
@@ -1407,6 +1406,11 @@ document.getElementById('plugSettingsForm').addEventListener('submit', async (e)
   await renderPlugSettings();
 });
 
+function minutesLabel(mins){
+  if (mins % 60 === 0) return `${mins} min (${mins / 60}h)`;
+  return `${mins} min`;
+}
+
 async function renderPlugsList(){
   const list = document.getElementById('plugsList');
   const { data, error } = await supabase.from('smart_plugs').select('*').order('created_at', { ascending: true });
@@ -1418,8 +1422,13 @@ async function renderPlugsList(){
         <h3>${p.name}</h3>
         <span class="badge ${p.active ? 'confirmada' : 'cancelada'}">${p.active ? 'Activo' : 'Desactivado'}</span>
       </div>
-      <div class="res-meta"><div>🔌 ${p.device_id}</div></div>
-      <div class="res-actions">
+      <div class="res-meta">
+        <div>🔌 ${p.device_id}</div>
+        <div>⏱️ Se enciende ${minutesLabel(p.minutes_before_on)} antes</div>
+      </div>
+      <div class="res-actions" style="align-items:center;">
+        <input type="number" min="0" step="5" value="${p.minutes_before_on}" data-minutes-input="${p.id}" style="width:90px; padding:8px 10px; border:1px solid var(--line); border-radius:var(--radius);">
+        <button class="btn btn-ghost" data-action="save-minutes" data-id="${p.id}">Guardar minutos</button>
         <button class="btn btn-ghost" data-action="toggle-plug" data-id="${p.id}" data-active="${p.active}">${p.active ? 'Desactivar' : 'Activar'}</button>
         <button class="btn btn-deny" data-action="delete-plug" data-id="${p.id}">🗑️ Borrar</button>
       </div>
@@ -1439,6 +1448,13 @@ async function renderPlugsList(){
         const { error } = await supabase.from('smart_plugs').delete().eq('id', id);
         if (error){ alert('No se ha podido borrar: ' + error.message); return; }
         await renderPlugsList();
+      } else if (btn.dataset.action === 'save-minutes'){
+        const input = list.querySelector(`[data-minutes-input="${id}"]`);
+        const minutes = Number(input.value);
+        if (!Number.isFinite(minutes) || minutes < 0){ alert('Pon un número de minutos válido.'); return; }
+        const { error } = await supabase.from('smart_plugs').update({ minutes_before_on: minutes }).eq('id', id);
+        if (error){ alert('No se ha podido guardar: ' + error.message); return; }
+        await renderPlugsList();
       }
     });
   });
@@ -1450,12 +1466,13 @@ document.getElementById('plugForm').addEventListener('submit', async (e) => {
   const submitBtn = document.getElementById('plugSubmitBtn');
   const name = document.getElementById('plug_name').value.trim();
   const deviceId = document.getElementById('plug_device_id').value.trim();
+  const minutesBefore = Number(document.getElementById('plug_minutes_before').value) || 0;
   if (!name || !deviceId){
     msgEl.textContent = 'Rellena el nombre y el Device ID.';
     return;
   }
   submitBtn.disabled = true;
-  const { error } = await supabase.from('smart_plugs').insert({ name, device_id: deviceId, active: true });
+  const { error } = await supabase.from('smart_plugs').insert({ name, device_id: deviceId, active: true, minutes_before_on: minutesBefore });
   submitBtn.disabled = false;
   if (error){
     msgEl.textContent = 'No se ha podido añadir: ' + error.message;
@@ -1463,6 +1480,7 @@ document.getElementById('plugForm').addEventListener('submit', async (e) => {
   }
   msgEl.textContent = '';
   document.getElementById('plugForm').reset();
+  document.getElementById('plug_minutes_before').value = 360;
   await renderPlugsList();
 });
 
