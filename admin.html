@@ -1978,16 +1978,28 @@ function showCalDay(dateStr, reservations){
   list.innerHTML = `<h3 style="font-size:16px; margin-bottom:14px; text-transform:capitalize;">${fmtDate(dateStr)}</h3>` +
     reservations.map(r => {
       const plan = ALL_PLANS.find(p => p.id === r.pricing_plan_id);
+      const extras = [];
+      if (r.wants_cleaning) extras.push('Limpieza');
+      if (r.wants_decoration) extras.push(`Decoración${r.decoration_theme ? ' (' + r.decoration_theme + ')' : ''}${r.decoration_cost ? ' — coste interno ' + formatPrice(r.decoration_cost) : ''}`);
+      if (r.kids_menus_count) extras.push(`${r.kids_menus_count} menú(s) infantil(es)`);
+      if (r.wants_catering) extras.push('Catering');
+      if (r.wants_animation) extras.push('Animación');
       return `
         <div class="res-card">
           <div class="res-head">
             <h3>${r.full_name}</h3>
             <span class="badge ${r.status}">${r.status}</span>
           </div>
+          <div style="font-size:12px; color:var(--ink-soft); margin:-6px 0 10px;">🕓 Reserva creada el ${fmtDateTime(r.created_at)}</div>
           <div class="res-meta">
-            <div>⏰ ${r.start_time}-${r.end_time} · 🎉 ${r.event_type}</div>
-            <div>📞 ${r.phone}</div>
-            ${plan ? `<div>💶 Total est. ${formatPrice(reservationTotal(r))}</div>` : ''}
+            <div>📅 ${fmtDate(r.event_date)} · ⏰ ${r.start_time}-${r.end_time}</div>
+            <div>🎉 ${r.event_type}${r.guests_estimate ? ' · 👥 ' + r.guests_estimate + ' invitados' : ''}</div>
+            <div>📞 ${r.phone}${r.email ? ' · ' + r.email : ''}</div>
+            ${plan ? `<div>💶 ${plan.label} — ${formatPrice(plan.price)} · Total est. ${formatPrice(reservationTotal(r))}</div>` : ''}
+            ${extras.length ? `<div>➕ ${extras.join(', ')}</div>` : ''}
+            ${r.coupon_code ? `<div>🏷️ Cupón ${r.coupon_code} (-${formatPrice(r.discount_amount || 0)})</div>` : ''}
+            ${r.message ? `<div>💬 “${r.message}”</div>` : ''}
+            ${r.deposit_paid ? `<div>✅ Señal pagada${r.deposit_method ? ' (' + (r.deposit_method === 'bizum' ? 'Bizum' : 'Efectivo') + ')' : ''}</div>` : ''}
             <div>${SOURCE_LABELS[r.source] || r.source || ''}</div>
           </div>
           <div class="res-actions">
