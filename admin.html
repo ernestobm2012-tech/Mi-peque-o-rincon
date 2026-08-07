@@ -526,6 +526,10 @@
         <h3 style="margin-bottom:14px;">🏆 Clientes más frecuentes</h3>
         <div id="statsTopClients"></div>
       </div>
+      <div class="res-card">
+        <h3 style="margin-bottom:14px;">🏷️ Uso de cupones</h3>
+        <div id="statsCouponUsage"></div>
+      </div>
     </div>
   </div>
 
@@ -1610,6 +1614,7 @@ async function renderEstadisticas(){
   renderStatsEventTypeChart(rows);
   renderStatsWeekdayChart(rows);
   renderStatsTopClients(rows);
+  renderStatsCouponUsage(rows);
 }
 
 function renderStatsRevenueChart(rows){
@@ -1696,6 +1701,30 @@ function renderStatsTopClients(rows){
       <div class="chart-row">
         <div class="chart-month-lbl" style="text-transform:none;" title="${c.name}">${c.name}</div>
         <div class="chart-bar-track"><div class="chart-bar-fill ${i === 0 ? 'top' : 'net'}" style="width:${pct}%">${c.count}</div></div>
+      </div>`;
+  }).join('');
+}
+
+async function renderStatsCouponUsage(rows){
+  const el = document.getElementById('statsCouponUsage');
+  const byCode = {};
+  rows.forEach(r => {
+    if (!r.coupon_code) return;
+    byCode[r.coupon_code] = (byCode[r.coupon_code] || 0) + 1;
+  });
+
+  const { data: coupons } = await supabase.from('coupons').select('code').order('code');
+  (coupons || []).forEach(c => { if (!(c.code in byCode)) byCode[c.code] = 0; });
+
+  const entries = Object.entries(byCode).sort((a, b) => b[1] - a[1]);
+  if (!entries.length){ el.innerHTML = '<p class="empty-msg">Todavía no hay cupones creados.</p>'; return; }
+  const max = Math.max(...entries.map(e => e[1]), 1);
+  el.innerHTML = entries.map(([code, count], i) => {
+    const pct = Math.max(4, Math.round((count / max) * 100));
+    return `
+      <div class="chart-row">
+        <div class="chart-month-lbl" style="text-transform:none;" title="${code}">${code}</div>
+        <div class="chart-bar-track"><div class="chart-bar-fill ${count > 0 && i === 0 ? 'top' : 'net'}" style="width:${pct}%">${count} ${count === 1 ? 'uso' : 'usos'}</div></div>
       </div>`;
   }).join('');
 }
