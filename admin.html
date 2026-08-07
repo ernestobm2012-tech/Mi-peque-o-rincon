@@ -3195,28 +3195,33 @@ function renderNrPlanOptions(dateStr, selectedPlanId){
 let nrAppliedCoupon = null;
 let nrManualDiscount = 0;
 
-function nrBaseTotal(){
+function nrPlanPrice(){
   const planRadio = document.querySelector('#nrPlanOptions input[name="nr_pricing_plan"]:checked');
   const plan = planRadio ? ALL_PLANS.find(p => p.id === planRadio.value) : null;
+  return plan ? Number(plan.price) : 0;
+}
+
+function nrExtrasTotal(){
   const wantsCleaning = document.getElementById('nr_wants_cleaning').checked;
   const wantsKids = document.getElementById('nr_wants_kids_menu').checked;
   const kidsCount = wantsKids ? Number(document.getElementById('nr_kids_menus').value || 0) : 0;
 
-  let total = plan ? Number(plan.price) : 0;
-  if (wantsCleaning) total += getExtraPrice('limpieza');
-  total += kidsCount * getExtraPrice('infantil');
-  return total;
+  let extras = 0;
+  if (wantsCleaning) extras += getExtraPrice('limpieza');
+  extras += kidsCount * getExtraPrice('infantil');
+  return extras;
 }
 
-function nrCurrentDiscount(base){
-  if (nrAppliedCoupon) return computeDiscount(base, nrAppliedCoupon);
+// El cupón solo descuenta el precio de la sala; limpieza y menús infantiles se cobran siempre completos.
+function nrCurrentDiscount(planPrice){
+  if (nrAppliedCoupon) return computeDiscount(planPrice, nrAppliedCoupon);
   return nrManualDiscount || 0;
 }
 
 function updateNrTotal(){
-  const base = nrBaseTotal();
-  const discount = nrCurrentDiscount(base);
-  const final = Math.max(0, base - discount);
+  const planPrice = nrPlanPrice();
+  const discount = nrCurrentDiscount(planPrice);
+  const final = Math.max(0, planPrice - discount) + nrExtrasTotal();
   document.getElementById('nrTotalAmount').textContent = formatPrice(final);
 }
 
@@ -3379,7 +3384,7 @@ newResForm.addEventListener('submit', async (e) => {
     kids_menus_count: wantsKidsMenu ? Number(document.getElementById('nr_kids_menus').value || 1) : 0,
     message: document.getElementById('nr_message').value.trim() || null,
     coupon_code: nrAppliedCoupon ? nrAppliedCoupon.code : (document.getElementById('nr_coupon_code').value.trim() || null),
-    discount_amount: nrCurrentDiscount(nrBaseTotal()),
+    discount_amount: nrCurrentDiscount(nrPlanPrice()),
   };
 
   const submitBtn = newResForm.querySelector('button[type="submit"]');

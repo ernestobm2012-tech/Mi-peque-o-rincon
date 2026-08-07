@@ -1498,12 +1498,14 @@ function updateSummary(){
   const kidsCount = wantsKids ? Number(document.getElementById('kids_menus').value || 0) : 0;
   const wantsDeco = document.getElementById('wants_decoration').checked;
 
-  let total = plan ? Number(plan.price) : 0;
-  if (wantsCleaning) total += getExtraPrice('limpieza');
-  total += kidsCount * getExtraPrice('infantil');
+  const planPrice = plan ? Number(plan.price) : 0;
+  let extras = 0;
+  if (wantsCleaning) extras += getExtraPrice('limpieza');
+  extras += kidsCount * getExtraPrice('infantil');
 
-  const discount = appliedCoupon ? computeDiscount(total, appliedCoupon) : 0;
-  const finalTotal = Math.max(0, total - discount);
+  // El cupón solo descuenta el precio de la sala; limpieza y menús infantiles se cobran siempre completos.
+  const discount = appliedCoupon ? computeDiscount(planPrice, appliedCoupon) : 0;
+  const finalTotal = Math.max(0, planPrice - discount) + extras;
 
   document.getElementById('totalAmount').textContent = formatPrice(finalTotal);
   document.getElementById('totalDecoNote').hidden = !wantsDeco;
@@ -1511,7 +1513,7 @@ function updateSummary(){
   const couponNote = document.getElementById('couponAppliedNote');
   if (appliedCoupon && discount > 0){
     couponNote.hidden = false;
-    couponNote.innerHTML = `Cupón <strong>${appliedCoupon.code}</strong> aplicado (${couponSummary(appliedCoupon)}): descuento de ${formatPrice(discount)} sobre ${formatPrice(total)}.`;
+    couponNote.innerHTML = `Cupón <strong>${appliedCoupon.code}</strong> aplicado (${couponSummary(appliedCoupon)}): descuento de ${formatPrice(discount)} sobre ${formatPrice(planPrice)}.`;
   } else {
     couponNote.hidden = true;
   }
@@ -1625,10 +1627,9 @@ async function initForm(){
     const wantsCleaning = document.getElementById('wants_cleaning').checked;
     const kidsCount = wantsKidsMenu ? Number(document.getElementById('kids_menus').value || 1) : 0;
 
-    let baseTotal = Number(ALL_PLANS.find(p => p.id === planRadio.value)?.price || 0);
-    if (wantsCleaning) baseTotal += getExtraPrice('limpieza');
-    baseTotal += kidsCount * getExtraPrice('infantil');
-    const discount = appliedCoupon ? computeDiscount(baseTotal, appliedCoupon) : 0;
+    const planPrice = Number(ALL_PLANS.find(p => p.id === planRadio.value)?.price || 0);
+    // El cupón solo descuenta el precio de la sala; limpieza y menús infantiles se cobran siempre completos.
+    const discount = appliedCoupon ? computeDiscount(planPrice, appliedCoupon) : 0;
 
     const payload = {
       full_name: document.getElementById('full_name').value.trim(),
