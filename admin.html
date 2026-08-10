@@ -1032,6 +1032,14 @@ function waNumber(phone){
   return digits;
 }
 
+// Tarifas tipo "3 horas a elegir": la franja guardada (start_time/end_time) es la ventana completa
+// dentro de la cual el cliente debe elegir sus horas concretas, no el horario ya cerrado.
+function flexHoursFromPlan(plan){
+  if (!plan || !/a elegir/i.test(plan.label)) return null;
+  const match = plan.label.match(/(\d+)\s*horas?/i);
+  return match ? match[1] : null;
+}
+
 function buildConfirmMessage(r, plan){
   const items = [];
   if (plan) items.push(`${formatPrice(plan.price)} de alquiler`);
@@ -1041,14 +1049,21 @@ function buildConfirmMessage(r, plan){
     items.push(`${formatPrice(kidsMenuRevenue(r))} de menú${n > 1 ? 's' : ''} infantil${n > 1 ? 'es' : ''} (${n})`);
   }
   const total = plan ? reservationTotal(r) : null;
+  const flexHours = flexHoursFromPlan(plan);
 
-  let msg = `Hola ${r.full_name} 👋 Te confirmamos tu reserva en *Mi Pequeño Rincón* para el ${fmtDate(r.event_date)}, de ${r.start_time} a ${r.end_time} (${r.event_type}).`;
+  let msg = flexHours
+    ? `Hola ${r.full_name} 👋 Te confirmamos tu reserva en *Mi Pequeño Rincón* para el ${fmtDate(r.event_date)} (${r.event_type}), dentro de la franja de ${r.start_time} a ${r.end_time}.`
+    : `Hola ${r.full_name} 👋 Te confirmamos tu reserva en *Mi Pequeño Rincón* para el ${fmtDate(r.event_date)}, de ${r.start_time} a ${r.end_time} (${r.event_type}).`;
   if (items.length){
     msg += `\n\n${items.join(' + ')}`;
     if (r.coupon_code && Number(r.discount_amount) > 0) msg += ` - ${formatPrice(r.discount_amount)} (cupón *${r.coupon_code}*)`;
     if (total != null) msg += ` = *${formatPrice(total)}* total`;
   } else if (total != null){
     msg += `\n\nTotal estimado: ${formatPrice(total)}.`;
+  }
+
+  if (flexHours){
+    msg += `\n\n📌 Tu tarifa incluye *${flexHours} horas a elegir* dentro de esa franja de ${r.start_time} a ${r.end_time}. Contesta a este mensaje diciéndonos qué ${flexHours} horas exactas quieres (por ejemplo, de 17:00 a 20:00) para dejarlo cerrado.`;
   }
 
   msg += `\n\nPara cerrar la reserva pedimos una señal de 20€ (efectivo o Bizum)`;
