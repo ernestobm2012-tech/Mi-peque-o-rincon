@@ -277,8 +277,10 @@ async function init(){
     document.getElementById(id).addEventListener('input', renderContractPreview);
   });
 
-  setupSignaturePad();
+  // El canvas tiene que estar visible (fuera de display:none) antes de medir su tamaño,
+  // si no clientWidth/clientHeight salen a 0 y la firma no se puede dibujar.
   showState('formState');
+  setupSignaturePad();
 }
 
 function renderContractPreview(){
