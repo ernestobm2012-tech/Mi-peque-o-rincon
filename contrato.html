@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Firmar contrato — Mi Pequeño Rincón</title>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,500&family=Work+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#F7F2E7;
+    --cream-2:#E7EFC4;
+    --ink:#221F19;
+    --ink-soft:#4A473E;
+    --olive:#7C9A44;
+    --olive-dark:#4B5E22;
+    --gold:#B4924E;
+    --line: rgba(34,31,25,.16);
+    --radius: 2px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--cream);
+    color:var(--ink);
+    font-family:'Work Sans', sans-serif;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{ font-family:'Fraunces', serif; font-weight:500; letter-spacing:-0.01em; color:var(--ink); margin:0 0 8px; }
+  .wrap{ max-width:760px; margin:0 auto; padding:28px 20px 80px; }
+  .brand{ display:flex; align-items:center; gap:12px; margin-bottom:28px; }
+  .brand img{ height:52px; width:auto; border-radius:50%; }
+  .brand span{ font-family:'Fraunces', serif; font-size:19px; }
+  .card{ background:#fff; border:1px solid var(--line); border-radius:var(--radius); padding:24px; margin-bottom:22px; }
+  .summary-row{ display:flex; justify-content:space-between; gap:10px; padding:7px 0; border-bottom:1px solid var(--line); font-size:14.5px; }
+  .summary-row:last-child{ border-bottom:none; }
+  .summary-row b{ color:var(--ink-soft); font-weight:600; }
+  label{ display:block; font-size:13.5px; font-weight:600; color:var(--ink-soft); margin:16px 0 6px; }
+  input[type="text"], input[type="tel"], input[type="email"]{
+    width:100%; padding:11px 12px; font-size:15px; border:1px solid var(--line); border-radius:var(--radius);
+    font-family:'Work Sans', sans-serif; background:var(--cream); color:var(--ink);
+  }
+  .contract-text{ font-size:13.5px; color:var(--ink-soft); max-height:340px; overflow-y:auto; border:1px solid var(--line); padding:16px; background:var(--cream); border-radius:var(--radius); white-space:pre-wrap; }
+  .contract-text p{ margin:0 0 12px; }
+  .contract-text mark{ background:var(--cream-2); color:var(--ink); font-weight:600; padding:0 3px; border-radius:2px; }
+  canvas{ width:100%; height:180px; border:1px dashed var(--line); border-radius:var(--radius); background:#fff; touch-action:none; display:block; }
+  .sig-actions{ display:flex; justify-content:flex-end; margin-top:8px; }
+  .sig-actions button{ background:none; border:none; color:var(--ink-soft); text-decoration:underline; cursor:pointer; font-size:13px; }
+  .check-row{ display:flex; align-items:flex-start; gap:10px; margin-top:20px; font-size:14px; }
+  .check-row input{ margin-top:3px; }
+  .btn-primary{
+    display:inline-block; width:100%; margin-top:22px; padding:14px 20px; text-align:center;
+    background:var(--olive-dark); color:#fff; border:none; border-radius:var(--radius); font-size:15.5px;
+    font-family:'Work Sans', sans-serif; font-weight:600; cursor:pointer;
+  }
+  .btn-primary:disabled{ opacity:.5; cursor:not-allowed; }
+  .msg{ margin-top:14px; font-size:14px; }
+  .msg.err{ color:#a33; }
+  .msg.ok{ color:var(--olive-dark); }
+  .state-box{ text-align:center; padding:60px 20px; }
+  .state-box h2{ margin-bottom:12px; }
+  .state-box p{ color:var(--ink-soft); }
+  .hidden{ display:none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand"><img src="assets/logo-mpr.jpg" alt=""><span>Mi Pequeño Rincón</span></div>
+
+  <div id="loadingState" class="state-box"><p>Cargando contrato…</p></div>
+
+  <div id="invalidState" class="state-box hidden">
+    <h2>Enlace no válido</h2>
+    <p>Este enlace de contrato no existe o ha caducado. Contacta con nosotros para que te enviemos uno nuevo.</p>
+  </div>
+
+  <div id="signedState" class="state-box hidden">
+    <h2>Contrato ya firmado ✅</h2>
+    <p>Este contrato ya se firmó correctamente. Si necesitas corregir algún dato, contacta con nosotros y te enviaremos un enlace nuevo.</p>
+  </div>
+
+  <div id="formState" class="hidden">
+    <div class="card">
+      <h2>Resumen de tu reserva</h2>
+      <div class="summary-row"><span>Cliente</span><b id="sumName"></b></div>
+      <div class="summary-row"><span>Tipo de evento</span><b id="sumEventType"></b></div>
+      <div class="summary-row"><span>Fecha</span><b id="sumDate"></b></div>
+      <div class="summary-row"><span>Horario</span><b id="sumHours"></b></div>
+      <div class="summary-row"><span>Precio total</span><b id="sumPrice"></b></div>
+    </div>
+
+    <form id="contractForm">
+      <div class="card">
+        <h2>Tus datos</h2>
+        <p style="color:var(--ink-soft); font-size:13.5px; margin-top:-4px;">Revisa que estén bien y completa lo que falte. Estos datos aparecerán en el contrato.</p>
+        <label for="f_full_name">Nombre completo</label>
+        <input type="text" id="f_full_name" required>
+        <label for="f_dni">DNI / CIF</label>
+        <input type="text" id="f_dni" required placeholder="Ej: 12345678A">
+        <label for="f_address">Domicilio completo</label>
+        <input type="text" id="f_address" required placeholder="Calle, número, localidad, provincia">
+        <label for="f_phone">Teléfono</label>
+        <input type="tel" id="f_phone" required>
+        <label for="f_email">Correo electrónico</label>
+        <input type="email" id="f_email" placeholder="Opcional">
+      </div>
+
+      <div class="card">
+        <h2>Contrato de alquiler de sala de eventos</h2>
+        <div class="contract-text" id="contractText"></div>
+      </div>
+
+      <div class="card">
+        <h2>Firma</h2>
+        <label>Dibuja tu firma en el recuadro</label>
+        <canvas id="sigCanvas"></canvas>
+        <div class="sig-actions"><button type="button" id="clearSigBtn">Borrar firma</button></div>
+        <label for="f_sig_name">Escribe tu nombre completo como firma</label>
+        <input type="text" id="f_sig_name" required placeholder="Nombre y apellidos">
+        <div class="check-row">
+          <input type="checkbox" id="f_accept" required>
+          <label for="f_accept" style="margin:0; font-weight:400; color:var(--ink);">He leído y acepto los términos y condiciones de este contrato de alquiler.</label>
+        </div>
+        <button type="submit" class="btn-primary" id="submitBtn">Firmar y enviar contrato</button>
+        <p class="msg" id="formMsg"></p>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+const SUPABASE_URL = 'https://ztsdkfwnqrlmsirfvoat.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0c2RrZnducXJsbXNpcmZ2b2F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwOTM5OTksImV4cCI6MjA5ODY2OTk5OX0.ODimfaCqTpK8fkY4Oobk8kSR3rppb_afmoTTXG8H2os';
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+function formatPrice(n){ return `${Number(n).toFixed(2).replace(/\.00$/, '')}€`; }
+function fmtDate(dateStr){
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+}
+function fmtDateShort(dateStr){
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+function showState(id){
+  ['loadingState','invalidState','signedState','formState'].forEach(s => {
+    document.getElementById(s).classList.toggle('hidden', s !== id);
+  });
+}
+
+function esc(s){
+  return String(s || '').replace(/[&<>]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[c]));
+}
+
+function buildContractHtml(ph){
+  return `
+<p><strong>CONTRATO DE ALQUILER DE SALA DE EVENTOS</strong></p>
+<p><strong>LO SUSCRIBEN</strong></p>
+<p>De una parte, como arrendador Beatriz Espinilla Cabalgante con DNI 47497563X, en representación legal de Mi pequeño rincón, con domicilio social C/Guadalajara, 1, local 5, 45960 Chozas de Canales (Toledo).</p>
+<p>Y de otra parte, como arrendatario/a D/Dña <mark>${ph.nombre}</mark>, mayor de edad con CIF/DNI <mark>${ph.dni}</mark>, en adelante el CLIENTE, cuyo domicilio se encuentra en <mark>${ph.domicilio}</mark>, con número de teléfono <mark>${ph.telefono}</mark> y correo electrónico <mark>${ph.email}</mark>.</p>
+<p>Ambas partes tienen y se reconocen con capacidad legal suficiente para el presente otorgamiento, comprometiéndose a no impugnar este documento que constituye un contrato de arrendamiento de finca urbana para uso distinto del de vivienda, con arreglo a las siguientes estipulaciones:</p>
+<p>1.- Beatriz Espinilla Cabalgante arrienda a D/Dª <mark>${ph.nombre}</mark> la sala de eventos del local sito en C/Guadalajara, 1, local 5, 45960 Chozas de Canales (Toledo), para que la arrendataria proceda a celebración del evento privado. Dicha sala se encuentra equipada con las siguientes instalaciones y utensilios: 4 mesas plegables, 2 mesas rectangulares de catering, dos mesas altas de catering, una mesa redonda plegable, 34 sillas, horno, microondas, cafetera, frigorífico, menaje, TV 58 pulgadas con 2 mandos, proyector, altavoz bluetooth con micrófonos inalámbricos, luces led en techo, máquina de humo y 2 paneles verticales con luces led con mando, jardín vertical con 2 paneles de listones y luces led con mando para photocall, parque de bolas, futbolín, máquina arcade, zapatero, espejo de baño y secamanos eléctrico. Estos habrán de ser devueltos a la finalización del arrendamiento en el mismo estado de conservación. El arrendatario declara y reconoce que recibe el bien arrendado en perfecto estado y a su entera satisfacción, siendo plenamente apto para el fin al que se destina.</p>
+<p>2.- El contrato se celebra para que el local sea utilizado en la fecha <mark>${ph.fechaEvento}</mark>, por un único día, en aplicación del artículo 4.3 de la ley 29/1994 de 24 de noviembre, en horario de <mark>${ph.horario}</mark> horas. La parte arrendataria deberá abandonar el local en la hora acordada, en el mismo estado que la encontró, dejándola libre de efectos y enseres y permaneciendo en perfecto estado los servicios de que dispone, al igual que los muebles y enseres citados. Para ello se establece una fianza de 50 euros, la cual se abonará en efectivo en el momento de la entrega del local por parte del arrendador, y que será devuelta en su totalidad al finalizar el evento, siempre y cuando se cumpla lo acordado en este contrato. De no ser así, el arrendador se quedará con ella y, en caso de superar el valor de la misma, se procederá a su peritación y reclamación legal.</p>
+<p>3.- El precio convenido asciende a la cantidad de <mark>${ph.precio}</mark>, incluido el IVA vigente en cada momento. En la fecha de firma se entrega una señal de reserva de 20€ a descontar del precio final. En caso de anulación por parte del arrendatario con menos de 5 días de antelación, esta reserva se pierde o se ofrece un cambio de fecha.</p>
+<p>4.- De forma expresa se conviene, voluntariamente entre las partes, que queda prohibido ceder y subarrendar, tanto total como parcialmente, el bien arrendado bajo ningún concepto.</p>
+<p>5.- El arrendatario se hace directa y exclusivamente responsable de todo lo que ocurra dentro de la propiedad contratada, sean daños y perjuicios que puedan ocasionarse a personas o cosas, así como los deterioros o pérdidas que se produzcan en la misma, eximiendo de toda responsabilidad al arrendador. Siendo por lo tanto toda indemnización o gasto que se genere de éstos de cuenta exclusiva del arrendatario.</p>
+<p>6.- El arrendatario será responsable de toda la comida y bebidas de cualquier tipo que facilite en la fiesta, siendo él el único responsable en caso de que derivado de la ingesta de las mismas se tenga cualquier consecuencia. Mediante este documento se exime a la propiedad de toda responsabilidad a este respecto. Asimismo, el arrendatario se compromete a no llevar a cabo ninguna actividad ilícita en el local, así como a respetar las prohibiciones establecidas legalmente. Por señalar la más importante: la prohibición de suministrar bebidas alcohólicas a menores de 18 años.</p>
+<p>7.- En caso de que la parte arrendataria proceda a la contratación de cualquier trabajador (camarero, monitor, animador…) serán de su cuenta y cargo los gastos que ello genere, tanto en salarios como en impuestos, liberando a la parte arrendadora de toda responsabilidad a este respecto.</p>
+<p>8.- El arrendatario es responsable de tramitar y asumir el pago derivado de cuantos permisos y autorizaciones necesite para llevar a cabo el evento propuesto de acuerdo a la naturaleza del mismo, así como de la póliza de seguro contra todo riesgo y de responsabilidad civil que cubra cualquier eventualidad que pueda ocurrir.</p>
+<p>9.- El arrendatario dejará la sala limpia, recogida y en las mismas condiciones de entrega (toda la basura fuera del local, sillas apiladas y mesas plegadas dentro del almacén, mobiliario en su lugar, bolas dentro de la piscina de bolas, juguetes recogidos, etc.). Si la sala se deja sin recoger y limpiar se descontará de la fianza 25€ en concepto de limpieza.</p>
+<p>10.- Queda terminantemente prohibido lo siguiente: fumar dentro del local y en el interior del centro comercial en aplicación de la Ley 28/2005, de 26 de diciembre de 2005; el almacenamiento y uso de cualquier sustancia inflamable o peligrosa, como combustible, fuegos artificiales, petardos, etc.; sacar mobiliario o vajilla a la acera y a la vía pública; exceder del aforo máximo de 37 personas, computando por igual tanto los adultos como los niños; causar molestias a la vecindad; dejar a los menores de edad sin vigilancia o que los mismos utilicen las instalaciones sin supervisión; hacer ruidos superiores al que marca la legislación vigente en el momento; explotar dentro del local y del centro comercial globos de confeti.</p>
+<p>11.- Los datos personales serán tratados confidencialmente según el artículo 5.1.f del RGPD.</p>
+<p>12.- El arrendatario responde con sus derechos y propiedades de las deudas y responsabilidades derivadas de este contrato. Para la resolución de cuantas cuestiones pudieran derivarse del otorgamiento de este documento, ambas partes, con renuncia de su propio fuero, se someten a la jurisdicción de los tribunales de Illescas. El incumplimiento por cualquiera de las partes de las obligaciones resultantes del presente contrato dará derecho a la parte que hubiere cumplido con las suyas a exigir el cumplimiento de las mismas, o a promover la resolución del contrato, de acuerdo a lo dispuesto en el artículo 1.124 del Código Civil. Conforme las partes con cuanto llevan expuesto, y después de leer y comprender el auténtico significado práctico y económico del mismo, lo firman en la fecha indicada al inicio.</p>
+<p><strong>DEVOLUCIÓN DE FIANZA</strong></p>
+<p>Para la devolución de la fianza deberán estar todos los apartados marcados dejando constancia de que todo está en orden y en perfecto estado: limpieza y buen funcionamiento de cocina, frigorífico, horno, microondas, cafetera y enseres (3 cuchillos, paleta, tijeras, corta pizzas, abridor de botellas, escurridor, tabla de cortar, tapa microondas y rejilla grill); parque de bolas limpio y con todas las bolas dentro de la piscina (es obligatorio acceder descalzo al parque y sin comida); baños; suelo; manteles limpios (para ello es obligatorio el uso de manteles); y conservación de disfraces (13), micrófonos (2) y pie de micrófono, diana electrónica y dardos (6), futbolín (2 pelotas), máquina arcade, monitor TV, proyector, máquina de humo, luces de colores, luces led, paneles de madera y jardín vertical. Está totalmente prohibido pegar en las paredes cualquier tipo de decoración.</p>
+<p>En Chozas de Canales, a <mark>${ph.fechaFirma}</mark>.</p>`;
+}
+
+const url = new URL(location.href);
+const token = url.searchParams.get('token');
+
+let ALL_PLANS = [];
+let ALL_EXTRAS = [];
+let contractData = null;
+let signaturePad = null;
+
+function getExtraPrice(keyword){
+  const e = ALL_EXTRAS.find(x => x.name.toLowerCase().includes(keyword));
+  return e ? Number(e.price) : 0;
+}
+
+function reservationTotalFromData(d){
+  const plan = ALL_PLANS.find(p => p.id === d.pricing_plan_id);
+  let total = plan ? Number(plan.price) : 0;
+  if (d.wants_cleaning) total += getExtraPrice('limpieza');
+  total += (d.kids_menus_count || 0) * getExtraPrice('infantil');
+  total -= Number(d.discount_amount || 0);
+  return Math.max(0, total);
+}
+
+function setupSignaturePad(){
+  const canvas = document.getElementById('sigCanvas');
+  const ratio = window.devicePixelRatio || 1;
+  canvas.width = canvas.clientWidth * ratio;
+  canvas.height = canvas.clientHeight * ratio;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(ratio, ratio);
+  ctx.strokeStyle = '#221F19';
+  ctx.lineWidth = 2.2;
+  ctx.lineCap = 'round';
+  let drawing = false;
+  let hasDrawn = false;
+
+  const pos = (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const p = e.touches ? e.touches[0] : e;
+    return { x: p.clientX - rect.left, y: p.clientY - rect.top };
+  };
+  const start = (e) => { drawing = true; hasDrawn = true; const p = pos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); e.preventDefault(); };
+  const move = (e) => { if (!drawing) return; const p = pos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); e.preventDefault(); };
+  const end = () => { drawing = false; };
+
+  canvas.addEventListener('mousedown', start);
+  canvas.addEventListener('mousemove', move);
+  window.addEventListener('mouseup', end);
+  canvas.addEventListener('touchstart', start, { passive: false });
+  canvas.addEventListener('touchmove', move, { passive: false });
+  canvas.addEventListener('touchend', end);
+
+  document.getElementById('clearSigBtn').addEventListener('click', () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    hasDrawn = false;
+  });
+
+  signaturePad = {
+    isEmpty: () => !hasDrawn,
+    toDataURL: () => canvas.toDataURL('image/png'),
+  };
+}
+
+async function init(){
+  if (!token){ showState('invalidState'); return; }
+
+  const [{ data, error }, { data: plans }, { data: extras }] = await Promise.all([
+    supabase.rpc('get_contract_data', { p_token: token }),
+    supabase.from('pricing_plans').select('*'),
+    supabase.from('extras').select('*'),
+  ]);
+  ALL_PLANS = plans || [];
+  ALL_EXTRAS = extras || [];
+
+  if (error || !data || !data.length){ showState('invalidState'); return; }
+  contractData = data[0];
+
+  if (contractData.already_signed){ showState('signedState'); return; }
+
+  const total = reservationTotalFromData(contractData);
+  document.getElementById('sumName').textContent = contractData.full_name;
+  document.getElementById('sumEventType').textContent = contractData.event_type;
+  document.getElementById('sumDate').textContent = fmtDate(contractData.event_date);
+  document.getElementById('sumHours').textContent = `${contractData.start_time.slice(0,5)} - ${contractData.end_time.slice(0,5)}`;
+  document.getElementById('sumPrice').textContent = formatPrice(total);
+
+  document.getElementById('f_full_name').value = contractData.full_name || '';
+  document.getElementById('f_phone').value = contractData.phone || '';
+  document.getElementById('f_email').value = contractData.email || '';
+
+  renderContractPreview();
+  ['f_full_name','f_dni','f_address','f_phone','f_email'].forEach(id => {
+    document.getElementById(id).addEventListener('input', renderContractPreview);
+  });
+
+  setupSignaturePad();
+  showState('formState');
+}
+
+function renderContractPreview(){
+  const total = reservationTotalFromData(contractData);
+  const ph = {
+    nombre: esc(document.getElementById('f_full_name').value) || '________________',
+    dni: esc(document.getElementById('f_dni').value) || '________________',
+    domicilio: esc(document.getElementById('f_address').value) || '________________',
+    telefono: esc(document.getElementById('f_phone').value) || '________________',
+    email: esc(document.getElementById('f_email').value) || '________________',
+    fechaEvento: fmtDateShort(contractData.event_date),
+    horario: `${contractData.start_time.slice(0,5)} a ${contractData.end_time.slice(0,5)}`,
+    precio: formatPrice(total),
+    fechaFirma: fmtDateShort(new Date().toISOString().slice(0,10)),
+  };
+  document.getElementById('contractText').innerHTML = buildContractHtml(ph);
+}
+
+document.getElementById('contractForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const msgEl = document.getElementById('formMsg');
+  msgEl.textContent = '';
+  msgEl.className = 'msg';
+
+  if (!signaturePad || signaturePad.isEmpty()){
+    msgEl.textContent = 'Dibuja tu firma en el recuadro antes de enviar.';
+    msgEl.className = 'msg err';
+    return;
+  }
+  if (!document.getElementById('f_accept').checked){
+    msgEl.textContent = 'Tienes que aceptar los términos del contrato.';
+    msgEl.className = 'msg err';
+    return;
+  }
+
+  const submitBtn = document.getElementById('submitBtn');
+  submitBtn.disabled = true;
+
+  const { error } = await supabase.rpc('submit_contract_signature', {
+    p_token: token,
+    p_dni: document.getElementById('f_dni').value.trim(),
+    p_address: document.getElementById('f_address').value.trim(),
+    p_full_name: document.getElementById('f_full_name').value.trim(),
+    p_phone: document.getElementById('f_phone').value.trim(),
+    p_email: document.getElementById('f_email').value.trim() || null,
+    p_signature_typed_name: document.getElementById('f_sig_name').value.trim(),
+    p_signature_image: signaturePad.toDataURL(),
+    p_accepted: true,
+    p_user_agent: navigator.userAgent,
+  });
+
+  if (error){
+    msgEl.textContent = 'No se ha podido guardar la firma: ' + error.message;
+    msgEl.className = 'msg err';
+    submitBtn.disabled = false;
+    return;
+  }
+
+  showState('signedState');
+  document.getElementById('signedState').querySelector('h2').textContent = '¡Contrato firmado! ✅';
+  document.getElementById('signedState').querySelector('p').textContent = 'Gracias, hemos recibido tu contrato firmado correctamente. ¡Nos vemos pronto!';
+});
+
+init();
+</script>
+</body>
+</html>
