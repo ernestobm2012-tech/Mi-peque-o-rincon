@@ -1098,6 +1098,12 @@ function buildReviewRequestMessage(r){
   return `Hola ${r.full_name} 👋 Esperamos que lo pasarais genial en tu evento en *Mi Pequeño Rincón* 🌿 Si te ha gustado la experiencia, nos ayudaría muchísimo que nos dejaras una reseña en Google, se tarda un minuto y significa mucho para nosotros: ${GOOGLE_REVIEW_URL}\n\n¡Gracias! 💛`;
 }
 
+const CONTRACT_BASE_URL = new URL('contrato.html', location.href).href;
+
+function buildContractMessage(r, token){
+  return `Hola ${r.full_name} 👋 Para completar tu reserva en *Mi Pequeño Rincón* necesitamos que rellenes y firmes el contrato de alquiler desde este enlace:\n\n${CONTRACT_BASE_URL}?token=${token}\n\nSolo tardarás un par de minutos. ¡Gracias!`;
+}
+
 function addDays(dateStr, n){
   const d = new Date(dateStr + 'T00:00:00');
   d.setDate(d.getDate() + n);
@@ -1129,6 +1135,18 @@ function reservationTotal(r){
 
 function kidsMenuRevenue(r){
   return (r.kids_menus_count || 0) * getExtraPrice('infantil');
+}
+
+// Añade `_contractSignedAt` a cada reserva consultando qué contratos ya se han firmado.
+async function attachContractSignedFlags(rows){
+  if (!rows || !rows.length) return rows;
+  const { data: signedRows } = await supabase
+    .from('contract_signatures')
+    .select('reservation_id, signed_at')
+    .in('reservation_id', rows.map(r => r.id));
+  const signedMap = new Map((signedRows || []).map(s => [s.reservation_id, s.signed_at]));
+  rows.forEach(r => { r._contractSignedAt = signedMap.get(r.id) || null; });
+  return rows;
 }
 
 function cleaningRevenue(r){
@@ -1246,6 +1264,84 @@ function openInvoicePrintView(inv){
   const win = window.open('', '_blank');
   if (!win){ alert('El navegador ha bloqueado la ventana. Permite las ventanas emergentes para ver la factura.'); return; }
   win.document.write(buildInvoiceHtml(inv));
+  win.document.close();
+}
+
+// Texto íntegro del contrato de alquiler, con los datos ya rellenados por el cliente en contrato.html.
+function buildContractSignedHtml(r, plan, sig){
+  const total = reservationTotal(r);
+  const nombre = sig.client_full_name;
+  const dni = sig.client_dni;
+  const domicilio = sig.client_address;
+  const telefono = sig.client_phone || r.phone;
+  const email = sig.client_email || r.email || '';
+  const fechaEvento = fmtDateShort(r.event_date);
+  const horario = `${r.start_time.slice(0,5)} a ${r.end_time.slice(0,5)}`;
+  const precio = formatPrice(total);
+  const fechaFirma = fmtDateShort(sig.signed_at.slice(0,10));
+
+  return `<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Contrato — ${nombre}</title>
+<style>
+  body{ font-family: 'Georgia', 'Times New Roman', serif; color:#222; margin:40px; font-size:13.5px; line-height:1.6; }
+  h1{ font-size:20px; text-align:center; margin-bottom:4px; }
+  h2{ font-size:15px; text-align:center; margin-bottom:22px; }
+  p{ margin:0 0 12px; text-align:justify; }
+  .sign-block{ display:flex; justify-content:space-between; gap:40px; margin-top:40px; }
+  .sign-col{ flex:1; text-align:center; }
+  .sign-col img{ max-width:100%; max-height:110px; border-bottom:1px solid #999; }
+  .sign-col .name{ margin-top:6px; font-weight:bold; }
+  .meta{ font-size:11.5px; color:#777; margin-top:6px; }
+  @media print{ .no-print{ display:none; } body{ margin:15mm; } }
+</style>
+</head>
+<body>
+  <h1>CONTRATO DE ALQUILER DE SALA DE EVENTOS</h1>
+  <h2>Mi Pequeño Rincón</h2>
+  <p><strong>LO SUSCRIBEN</strong></p>
+  <p>De una parte, como arrendador Beatriz Espinilla Cabalgante con DNI 47497563X, en representación legal de Mi pequeño rincón, con domicilio social C/Guadalajara, 1, local 5, 45960 Chozas de Canales (Toledo).</p>
+  <p>Y de otra parte, como arrendatario/a D/Dña <strong>${nombre}</strong>, mayor de edad con CIF/DNI <strong>${dni}</strong>, en adelante el CLIENTE, cuyo domicilio se encuentra en <strong>${domicilio}</strong>, con número de teléfono <strong>${telefono}</strong> y correo electrónico <strong>${email}</strong>.</p>
+  <p>Ambas partes tienen y se reconocen con capacidad legal suficiente para el presente otorgamiento, comprometiéndose a no impugnar este documento que constituye un contrato de arrendamiento de finca urbana para uso distinto del de vivienda, con arreglo a las siguientes estipulaciones:</p>
+  <p>1.- Beatriz Espinilla Cabalgante arrienda a D/Dª <strong>${nombre}</strong> la sala de eventos del local sito en C/Guadalajara, 1, local 5, 45960 Chozas de Canales (Toledo), para que la arrendataria proceda a celebración del evento privado. Dicha sala se encuentra equipada con las siguientes instalaciones y utensilios: 4 mesas plegables, 2 mesas rectangulares de catering, dos mesas altas de catering, una mesa redonda plegable, 34 sillas, horno, microondas, cafetera, frigorífico, menaje, TV 58 pulgadas con 2 mandos, proyector, altavoz bluetooth con micrófonos inalámbricos, luces led en techo, máquina de humo y 2 paneles verticales con luces led con mando, jardín vertical con 2 paneles de listones y luces led con mando para photocall, parque de bolas, futbolín, máquina arcade, zapatero, espejo de baño y secamanos eléctrico. Estos habrán de ser devueltos a la finalización del arrendamiento en el mismo estado de conservación. El arrendatario declara y reconoce que recibe el bien arrendado en perfecto estado y a su entera satisfacción, siendo plenamente apto para el fin al que se destina.</p>
+  <p>2.- El contrato se celebra para que el local sea utilizado en la fecha <strong>${fechaEvento}</strong>, por un único día, en aplicación del artículo 4.3 de la ley 29/1994 de 24 de noviembre, en horario de <strong>${horario}</strong> horas. La parte arrendataria deberá abandonar el local en la hora acordada, en el mismo estado que la encontró, dejándola libre de efectos y enseres y permaneciendo en perfecto estado los servicios de que dispone, al igual que los muebles y enseres citados. Para ello se establece una fianza de 50 euros, la cual se abonará en efectivo en el momento de la entrega del local por parte del arrendador, y que será devuelta en su totalidad al finalizar el evento, siempre y cuando se cumpla lo acordado en este contrato. De no ser así, el arrendador se quedará con ella y, en caso de superar el valor de la misma, se procederá a su peritación y reclamación legal.</p>
+  <p>3.- El precio convenido asciende a la cantidad de <strong>${precio}</strong>, incluido el IVA vigente en cada momento. En la fecha de firma se entrega una señal de reserva de 20€ a descontar del precio final. En caso de anulación por parte del arrendatario con menos de 5 días de antelación, esta reserva se pierde o se ofrece un cambio de fecha.</p>
+  <p>4.- De forma expresa se conviene, voluntariamente entre las partes, que queda prohibido ceder y subarrendar, tanto total como parcialmente, el bien arrendado bajo ningún concepto.</p>
+  <p>5.- El arrendatario se hace directa y exclusivamente responsable de todo lo que ocurra dentro de la propiedad contratada, sean daños y perjuicios que puedan ocasionarse a personas o cosas, así como los deterioros o pérdidas que se produzcan en la misma, eximiendo de toda responsabilidad al arrendador. Siendo por lo tanto toda indemnización o gasto que se genere de éstos de cuenta exclusiva del arrendatario.</p>
+  <p>6.- El arrendatario será responsable de toda la comida y bebidas de cualquier tipo que facilite en la fiesta, siendo él el único responsable en caso de que derivado de la ingesta de las mismas se tenga cualquier consecuencia. Mediante este documento se exime a la propiedad de toda responsabilidad a este respecto. Asimismo, el arrendatario se compromete a no llevar a cabo ninguna actividad ilícita en el local, así como a respetar las prohibiciones establecidas legalmente. Por señalar la más importante: la prohibición de suministrar bebidas alcohólicas a menores de 18 años.</p>
+  <p>7.- En caso de que la parte arrendataria proceda a la contratación de cualquier trabajador (camarero, monitor, animador…) serán de su cuenta y cargo los gastos que ello genere, tanto en salarios como en impuestos, liberando a la parte arrendadora de toda responsabilidad a este respecto.</p>
+  <p>8.- El arrendatario es responsable de tramitar y asumir el pago derivado de cuantos permisos y autorizaciones necesite para llevar a cabo el evento propuesto de acuerdo a la naturaleza del mismo, así como de la póliza de seguro contra todo riesgo y de responsabilidad civil que cubra cualquier eventualidad que pueda ocurrir.</p>
+  <p>9.- El arrendatario dejará la sala limpia, recogida y en las mismas condiciones de entrega (toda la basura fuera del local, sillas apiladas y mesas plegadas dentro del almacén, mobiliario en su lugar, bolas dentro de la piscina de bolas, juguetes recogidos, etc.). Si la sala se deja sin recoger y limpiar se descontará de la fianza 25€ en concepto de limpieza.</p>
+  <p>10.- Queda terminantemente prohibido lo siguiente: fumar dentro del local y en el interior del centro comercial en aplicación de la Ley 28/2005, de 26 de diciembre de 2005; el almacenamiento y uso de cualquier sustancia inflamable o peligrosa, como combustible, fuegos artificiales, petardos, etc.; sacar mobiliario o vajilla a la acera y a la vía pública; exceder del aforo máximo de 37 personas, computando por igual tanto los adultos como los niños; causar molestias a la vecindad; dejar a los menores de edad sin vigilancia o que los mismos utilicen las instalaciones sin supervisión; hacer ruidos superiores al que marca la legislación vigente en el momento; explotar dentro del local y del centro comercial globos de confeti.</p>
+  <p>11.- Los datos personales serán tratados confidencialmente según el artículo 5.1.f del RGPD.</p>
+  <p>12.- El arrendatario responde con sus derechos y propiedades de las deudas y responsabilidades derivadas de este contrato. Para la resolución de cuantas cuestiones pudieran derivarse del otorgamiento de este documento, ambas partes, con renuncia de su propio fuero, se someten a la jurisdicción de los tribunales de Illescas. El incumplimiento por cualquiera de las partes de las obligaciones resultantes del presente contrato dará derecho a la parte que hubiere cumplido con las suyas a exigir el cumplimiento de las mismas, o a promover la resolución del contrato, de acuerdo a lo dispuesto en el artículo 1.124 del Código Civil. Conforme las partes con cuanto llevan expuesto, y después de leer y comprender el auténtico significado práctico y económico del mismo, lo firman en la fecha indicada al inicio.</p>
+  <p><strong>DEVOLUCIÓN DE FIANZA</strong></p>
+  <p>Para la devolución de la fianza deberán estar todos los apartados marcados dejando constancia de que todo está en orden y en perfecto estado: limpieza y buen funcionamiento de cocina, frigorífico, horno, microondas, cafetera y enseres (3 cuchillos, paleta, tijeras, corta pizzas, abridor de botellas, escurridor, tabla de cortar, tapa microondas y rejilla grill); parque de bolas limpio y con todas las bolas dentro de la piscina (es obligatorio acceder descalzo al parque y sin comida); baños; suelo; manteles limpios (para ello es obligatorio el uso de manteles); y conservación de disfraces (13), micrófonos (2) y pie de micrófono, diana electrónica y dardos (6), futbolín (2 pelotas), máquina arcade, monitor TV, proyector, máquina de humo, luces de colores, luces led, paneles de madera y jardín vertical. Está totalmente prohibido pegar en las paredes cualquier tipo de decoración.</p>
+  <p>En Chozas de Canales, a ${fechaFirma}.</p>
+  <div class="sign-block">
+    <div class="sign-col">
+      <div>Firma del CLIENTE (arrendatario):</div>
+      <img src="${sig.signature_image}" alt="Firma">
+      <div class="name">${sig.signature_typed_name}</div>
+      <div class="meta">Firmado electrónicamente el ${fmtDateTime(sig.signed_at)}</div>
+    </div>
+    <div class="sign-col">
+      <div>Firma del REPRESENTANTE (arrendador):</div>
+      <div style="height:110px;"></div>
+      <div class="name">Beatriz Espinilla Cabalgante</div>
+    </div>
+  </div>
+  <p class="no-print" style="margin-top:36px; text-align:center;"><button onclick="window.print()" style="padding:10px 20px; font-size:14px; cursor:pointer;">Imprimir / Guardar PDF</button></p>
+</body>
+</html>`;
+}
+
+function openContractPrintView(r, plan, sig){
+  const win = window.open('', '_blank');
+  if (!win){ alert('El navegador ha bloqueado la ventana. Permite las ventanas emergentes para ver el contrato.'); return; }
+  win.document.write(buildContractSignedHtml(r, plan, sig));
   win.document.close();
 }
 
@@ -2006,6 +2102,14 @@ function reservationCardHtml(r){
              <button class="btn btn-ghost" data-action="mark-deposit" data-method="efectivo" data-id="${r.id}">💵 Efectivo</button>
              <button class="btn btn-ghost" data-action="mark-deposit" data-method="bizum" data-id="${r.id}">📱 Bizum</button>`}
       </div>` : ''}
+      ${r.status === 'confirmada' ? `
+      <div style="margin-top:10px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+        ${r._contractSignedAt
+          ? `<span class="badge confirmada">📄 Contrato firmado el ${fmtDate(r._contractSignedAt.slice(0,10))}</span><button class="btn btn-ghost" data-action="view-contract" data-id="${r.id}">👁️ Ver contrato</button>`
+          : r.contract_token
+            ? `<span style="font-size:13px; color:var(--ink-soft);">📄 Contrato enviado, pendiente de firma</span><button class="btn btn-ghost" data-action="resend-contract" data-id="${r.id}">🔁 Reenviar enlace</button>`
+            : `<button class="btn btn-ghost" data-action="send-contract" data-id="${r.id}">📄 Enviar contrato</button>`}
+      </div>` : ''}
       ${r.status === 'confirmada' && r.event_date <= ymd(new Date()) ? `
       <div style="margin-top:10px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
         ${r.review_requested_at
@@ -2133,6 +2237,34 @@ function bindReservationCardActions(container, findReservation, onChange){
           return;
         }
         await onChange();
+      } else if (action === 'send-contract' || action === 'resend-contract'){
+        btn.disabled = true;
+        let token = r.contract_token;
+        if (!token){
+          token = crypto.randomUUID();
+          const { error } = await supabase.from('reservations').update({ contract_token: token, contract_sent_at: new Date().toISOString() }).eq('id', id).select();
+          if (error){
+            setActionMsg('No se ha podido generar el enlace del contrato: ' + error.message, 'err');
+            btn.disabled = false;
+            return;
+          }
+        }
+        const msg = buildContractMessage(r, token);
+        const opened = openWhatsApp(r.phone, msg);
+        setActionMsg(
+          opened
+            ? `Se ha abierto WhatsApp para enviarle el contrato a ${r.full_name}.`
+            : `Enlace de contrato generado, pero el navegador ha bloqueado la ventana de WhatsApp. <a href="https://wa.me/${waNumber(r.phone)}?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">Ábrela manualmente aquí</a>.`,
+          'ok'
+        );
+        await onChange();
+      } else if (action === 'view-contract'){
+        const { data: sig, error } = await supabase.from('contract_signatures').select('*').eq('reservation_id', id).maybeSingle();
+        if (error || !sig){
+          setActionMsg('No se ha podido cargar el contrato firmado.', 'err');
+          return;
+        }
+        openContractPrintView(r, plan, sig);
       } else if (action === 'edit'){
         openEditResModal(r);
       } else if (action === 'partial-cancel'){
@@ -2174,6 +2306,8 @@ async function loadReservations(){
     resList.innerHTML = `<p class="empty-msg">${searchTerm.trim() ? 'No se han encontrado reservas con esa búsqueda.' : 'No hay reservas en este filtro.'}</p>`;
     return;
   }
+
+  await attachContractSignedFlags(filteredData);
 
   resList.innerHTML = filteredData.map(reservationCardHtml).join('');
 
@@ -2273,6 +2407,7 @@ async function renderCalendarState(){
   ]);
   const data = visibleReservations(rawData);
   const invoicedResIds = new Set((invRows || []).map(x => x.reservation_id));
+  await attachContractSignedFlags(data);
 
   const byDate = {};
   (data || []).forEach(r => {
@@ -2325,6 +2460,7 @@ async function refreshCalDay(dateStr){
   await renderCalendarState();
   const { data: rawData } = await supabase.from('reservations').select('*').eq('event_date', dateStr);
   const data = visibleReservations(rawData);
+  await attachContractSignedFlags(data);
   showCalDay(dateStr, data);
 }
 
