@@ -1692,19 +1692,25 @@ document.addEventListener('click', (e) => {
   if (link) supabase.from('social_clicks').insert({ network: link.dataset.social }).then(() => {});
 });
 
+// Si un paso falla (p. ej. un corte de red al cargar una galería), que no bloquee los demás:
+// sin esto, un solo fallo dejaba sin cargar cosas tan importantes como el calendario o el formulario.
+async function safeInit(fn, label){
+  try { await fn(); } catch (err) { console.error(`Error cargando ${label}:`, err); }
+}
+
 (async function init(){
-  await loadEventTypes();
-  await loadSalaGallery();
-  await loadCatasGallery();
-  await loadDecorations();
-  await loadOfertas();
-  await loadCateringGallery();
-  await loadFotosEventosGallery();
-  await loadVideos();
-  await loadPricing();
-  await loadFestivos();
-  await loadAvailability();
-  await initForm();
+  await safeInit(loadEventTypes, 'tipos de evento');
+  await safeInit(loadSalaGallery, 'galería de la sala');
+  await safeInit(loadCatasGallery, 'galería de catas');
+  await safeInit(loadDecorations, 'decoraciones');
+  await safeInit(loadOfertas, 'ofertas');
+  await safeInit(loadCateringGallery, 'galería de catering');
+  await safeInit(loadFotosEventosGallery, 'fotos de eventos');
+  await safeInit(loadVideos, 'vídeos');
+  await safeInit(loadPricing, 'tarifas');
+  await safeInit(loadFestivos, 'festivos');
+  await safeInit(loadAvailability, 'disponibilidad');
+  await safeInit(initForm, 'formulario de reserva');
 })();
 </script>
 
