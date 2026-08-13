@@ -735,14 +735,17 @@
         <label>Tarifa</label>
         <div class="plan-options" id="nrPlanOptions"></div>
       </div>
+      <div class="field">
+        <div class="checkbox-row"><input type="checkbox" id="nr_custom_hours"><label for="nr_custom_hours" style="margin:0; text-transform:none; font-size:14px;">Horario personalizado</label></div>
+      </div>
       <div class="field-row">
         <div class="field">
           <label for="nr_start_time">Hora de inicio</label>
-          <input type="time" id="nr_start_time" required>
+          <input type="time" id="nr_start_time" required disabled>
         </div>
         <div class="field">
           <label for="nr_end_time">Hora de fin</label>
-          <input type="time" id="nr_end_time" required>
+          <input type="time" id="nr_end_time" required disabled>
         </div>
       </div>
       <div class="field">
@@ -3356,6 +3359,7 @@ function renderNrPlanOptions(dateStr, selectedPlanId){
   }).join('');
 
   const fillTimes = (input) => {
+    if (document.getElementById('nr_custom_hours').checked) return;
     if (input.dataset.start) document.getElementById('nr_start_time').value = input.dataset.start;
     if (input.dataset.end) document.getElementById('nr_end_time').value = input.dataset.end === '00:00' ? '23:59' : input.dataset.end;
   };
@@ -3369,6 +3373,25 @@ function renderNrPlanOptions(dateStr, selectedPlanId){
   }
   updateNrTotal();
 }
+
+// El horario solo se puede tocar a mano si está marcado "Horario personalizado";
+// si no, sigue siempre a la tarifa elegida.
+function syncCustomHoursState(){
+  const checked = document.getElementById('nr_custom_hours').checked;
+  document.getElementById('nr_start_time').disabled = !checked;
+  document.getElementById('nr_end_time').disabled = !checked;
+}
+
+document.getElementById('nr_custom_hours').addEventListener('change', (e) => {
+  syncCustomHoursState();
+  if (!e.target.checked){
+    const planRadio = document.querySelector('#nrPlanOptions input[name="nr_pricing_plan"]:checked');
+    if (planRadio){
+      if (planRadio.dataset.start) document.getElementById('nr_start_time').value = planRadio.dataset.start;
+      if (planRadio.dataset.end) document.getElementById('nr_end_time').value = planRadio.dataset.end === '00:00' ? '23:59' : planRadio.dataset.end;
+    }
+  }
+});
 
 let nrAppliedCoupon = null;
 let nrManualDiscount = 0;
@@ -3442,6 +3465,7 @@ let editingId = null;
 function openNewResModal(){
   editingId = null;
   newResForm.reset();
+  syncCustomHoursState();
   document.getElementById('nrKidsMenuField').hidden = true;
   document.getElementById('nrDecorationField').hidden = true;
   newResMsg.textContent = '';
@@ -3474,6 +3498,17 @@ function openEditResModal(r){
   document.getElementById('nr_start_time').value = (r.start_time || '').slice(0,5);
   document.getElementById('nr_end_time').value = (r.end_time || '').slice(0,5);
   document.getElementById('nr_manual_price').value = r.manual_price != null ? r.manual_price : '';
+
+  // Si el horario guardado no coincide con el de la tarifa, es que ya era un horario a medida:
+  // marcamos "Horario personalizado" para que se vea editable con su valor real.
+  const editPlan = ALL_PLANS.find(p => p.id === r.pricing_plan_id);
+  const [editPlanStart, editPlanEndRaw] = (editPlan?.hours_range || '').split(' a ').map(s => (s||'').trim());
+  const editPlanEnd = editPlanEndRaw === '00:00' ? '23:59' : editPlanEndRaw;
+  const isCustomHours = !editPlan
+    || document.getElementById('nr_start_time').value !== editPlanStart
+    || document.getElementById('nr_end_time').value !== editPlanEnd;
+  document.getElementById('nr_custom_hours').checked = isCustomHours;
+  syncCustomHoursState();
 
   document.getElementById('nr_wants_cleaning').checked = !!r.wants_cleaning;
   const wantsKids = !!r.kids_menus_count;
