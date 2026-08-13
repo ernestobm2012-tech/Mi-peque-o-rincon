@@ -197,8 +197,13 @@ function getExtraPrice(keyword){
 }
 
 function reservationTotalFromData(d){
-  const plan = ALL_PLANS.find(p => p.id === d.pricing_plan_id);
-  let total = plan ? Number(plan.price) : 0;
+  let total;
+  if (d.manual_price != null){
+    total = Number(d.manual_price);
+  } else {
+    const plan = ALL_PLANS.find(p => p.id === d.pricing_plan_id);
+    total = plan ? Number(plan.price) : 0;
+  }
   if (d.wants_cleaning) total += getExtraPrice('limpieza');
   total += (d.kids_menus_count || 0) * getExtraPrice('infantil');
   total -= Number(d.discount_amount || 0);

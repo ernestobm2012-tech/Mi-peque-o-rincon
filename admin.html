@@ -746,6 +746,11 @@
         </div>
       </div>
       <div class="field">
+        <label for="nr_manual_price">Precio de la sala manual (opcional)</label>
+        <input type="number" id="nr_manual_price" min="0" step="0.01" placeholder="Déjalo vacío para usar el precio de la tarifa">
+        <p class="field-note" style="font-size:12.5px; margin-top:6px; color:var(--ink-soft);">Si lo rellenas, sustituye el precio de la tarifa de arriba solo para esta reserva (para precios especiales acordados con el cliente). Los extras (limpieza, menús) se siguen sumando aparte.</p>
+      </div>
+      <div class="field">
         <label>Extras</label>
         <div class="checkbox-row"><input type="checkbox" id="nr_wants_cleaning"><label for="nr_wants_cleaning" style="margin:0; text-transform:none; font-size:14px;">Servicio de limpieza</label></div>
 
@@ -1042,7 +1047,7 @@ function flexHoursFromPlan(plan){
 
 function buildConfirmMessage(r, plan){
   const items = [];
-  if (plan) items.push(`${formatPrice(plan.price)} de alquiler`);
+  if (plan) items.push(`${formatPrice(roomPrice(r))} de alquiler`);
   if (r.wants_cleaning) items.push(`${formatPrice(getExtraPrice('limpieza'))} de limpieza`);
   if (r.kids_menus_count){
     const n = r.kids_menus_count;
@@ -1124,9 +1129,16 @@ function getExtraPrice(keyword){
   return e ? Number(e.price) : 0;
 }
 
-function reservationTotal(r){
+// Precio de la sala para esta reserva: el manual_price acordado con el cliente si existe,
+// si no el precio de lista de la tarifa elegida.
+function roomPrice(r){
+  if (r.manual_price != null && r.manual_price !== '') return Number(r.manual_price);
   const plan = ALL_PLANS.find(p => p.id === r.pricing_plan_id);
-  let total = plan ? Number(plan.price) : 0;
+  return plan ? Number(plan.price) : 0;
+}
+
+function reservationTotal(r){
+  let total = roomPrice(r);
   if (r.wants_cleaning) total += getExtraPrice('limpieza');
   total += (r.kids_menus_count || 0) * getExtraPrice('infantil');
   total -= Number(r.discount_amount || 0);
@@ -1604,9 +1616,7 @@ const IVA_RATE = 0.21;
 // Solo el alquiler de la sala lleva IVA; limpieza y menús infantiles los gestionan
 // colaboradores externos que se encargan de sus propios impuestos.
 function roomRevenue(r){
-  const plan = ALL_PLANS.find(p => p.id === r.pricing_plan_id);
-  const planPrice = plan ? Number(plan.price) : 0;
-  return Math.max(0, planPrice - Number(r.discount_amount || 0));
+  return Math.max(0, roomPrice(r) - Number(r.discount_amount || 0));
 }
 
 function roomRevenueNet(r){
@@ -2088,7 +2098,7 @@ function reservationCardHtml(r){
         <div>📅 ${fmtDate(r.event_date)} · ⏰ ${r.start_time}-${r.end_time}</div>
         <div>🎉 ${r.event_type}${r.guests_estimate ? ' · 👥 ' + r.guests_estimate + ' invitados' : ''}</div>
         <div>📞 ${r.phone}${r.email ? ' · ' + r.email : ''}</div>
-        ${plan ? `<div>💶 ${plan.label} — ${formatPrice(plan.price)} · Total est. ${formatPrice(reservationTotal(r))}</div>` : ''}
+        ${plan ? `<div>💶 ${plan.label} — ${formatPrice(roomPrice(r))}${r.manual_price != null ? ' (precio manual)' : ''} · Total est. ${formatPrice(reservationTotal(r))}</div>` : ''}
         ${extras.length ? `<div>➕ ${extras.join(', ')}</div>` : ''}
         ${r.coupon_code ? `<div>🏷️ Cupón ${r.coupon_code} (-${formatPrice(r.discount_amount || 0)})</div>` : ''}
         ${r.message ? `<div>💬 “${r.message}”</div>` : ''}
@@ -2749,7 +2759,7 @@ function showPcList(title, reservations, cancelsByRes){
             <div>📅 ${fmtDate(r.event_date)} · ⏰ ${r.start_time}-${r.end_time}</div>
             <div>🎉 ${r.event_type}${r.guests_estimate ? ' · 👥 ' + r.guests_estimate + ' invitados' : ''}</div>
             <div>📞 ${r.phone}${r.email ? ' · ' + r.email : ''}</div>
-            ${plan ? `<div>💶 ${plan.label} — ${formatPrice(plan.price)} · Total est. ${formatPrice(reservationTotal(r))}</div>` : ''}
+            ${plan ? `<div>💶 ${plan.label} — ${formatPrice(roomPrice(r))}${r.manual_price != null ? ' (precio manual)' : ''} · Total est. ${formatPrice(reservationTotal(r))}</div>` : ''}
             ${extras.length ? `<div>➕ ${extras.join(', ')}</div>` : ''}
             ${r.coupon_code ? `<div>🏷️ Cupón ${r.coupon_code} (-${formatPrice(r.discount_amount || 0)})</div>` : ''}
             ${r.message ? `<div>💬 “${r.message}”</div>` : ''}
@@ -3285,8 +3295,7 @@ invReservationSelect.addEventListener('change', () => {
   document.getElementById('inv_name').value = r.full_name;
   document.getElementById('inv_phone').value = r.phone || '';
   document.getElementById('inv_email').value = r.email || '';
-  const plan = ALL_PLANS.find(p => p.id === r.pricing_plan_id);
-  document.getElementById('inv_total').value = plan ? Number(plan.price).toFixed(2) : '';
+  document.getElementById('inv_total').value = roomPrice(r).toFixed(2);
   updateInvoiceBreakdown();
 });
 
@@ -3365,6 +3374,8 @@ let nrAppliedCoupon = null;
 let nrManualDiscount = 0;
 
 function nrPlanPrice(){
+  const manualPrice = document.getElementById('nr_manual_price').value;
+  if (manualPrice !== '') return Number(manualPrice);
   const planRadio = document.querySelector('#nrPlanOptions input[name="nr_pricing_plan"]:checked');
   const plan = planRadio ? ALL_PLANS.find(p => p.id === planRadio.value) : null;
   return plan ? Number(plan.price) : 0;
@@ -3462,6 +3473,7 @@ function openEditResModal(r){
   renderNrPlanOptions(r.event_date, r.pricing_plan_id);
   document.getElementById('nr_start_time').value = (r.start_time || '').slice(0,5);
   document.getElementById('nr_end_time').value = (r.end_time || '').slice(0,5);
+  document.getElementById('nr_manual_price').value = r.manual_price != null ? r.manual_price : '';
 
   document.getElementById('nr_wants_cleaning').checked = !!r.wants_cleaning;
   const wantsKids = !!r.kids_menus_count;
@@ -3498,6 +3510,7 @@ document.getElementById('nr_wants_kids_menu').addEventListener('change', (e) => 
   updateNrTotal();
 });
 document.getElementById('nr_kids_menus').addEventListener('input', updateNrTotal);
+document.getElementById('nr_manual_price').addEventListener('input', updateNrTotal);
 document.getElementById('nr_wants_decoration').addEventListener('change', (e) => {
   document.getElementById('nrDecorationField').hidden = !e.target.checked;
 });
@@ -3554,6 +3567,7 @@ newResForm.addEventListener('submit', async (e) => {
     message: document.getElementById('nr_message').value.trim() || null,
     coupon_code: nrAppliedCoupon ? nrAppliedCoupon.code : (document.getElementById('nr_coupon_code').value.trim() || null),
     discount_amount: nrCurrentDiscount(nrPlanPrice()),
+    manual_price: document.getElementById('nr_manual_price').value !== '' ? Number(document.getElementById('nr_manual_price').value) : null,
   };
 
   const submitBtn = newResForm.querySelector('button[type="submit"]');
