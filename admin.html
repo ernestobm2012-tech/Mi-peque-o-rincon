@@ -879,7 +879,7 @@ const SUPABASE_URL = 'https://ztsdkfwnqrlmsirfvoat.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0c2RrZnducXJsbXNpcmZ2b2F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwOTM5OTksImV4cCI6MjA5ODY2OTk5OX0.ODimfaCqTpK8fkY4Oobk8kSR3rppb_afmoTTXG8H2os';
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-const VAPID_PUBLIC_KEY = 'BI2DB0JYsl3IMvs-P7LxCKa5K1niBnsxzC0_vn3DCogMIb7DeTaNVsq54k-jWZTReIHPeaaL9pfvlSpl1J0TDcQ';
+const VAPID_PUBLIC_KEY = 'BFx6mErzfrL63SqtXSw53urXScDwHJSthenPkQ1XVlqltYFmdPI0dPACmbX7Dcvls0x1D_RQc7VxycxdWfcUAOk';
 
 let swRegistration = null;
 if ('serviceWorker' in navigator){
@@ -896,6 +896,18 @@ function urlBase64ToUint8Array(base64String){
   return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
 }
 
+// Si la clave VAPID cambia (por ejemplo al renovar el sistema de notificaciones), las
+// suscripciones antiguas del navegador quedan inválidas aunque él las siga recordando.
+function subscriptionKeyMatches(existing){
+  const actual = existing?.options?.applicationServerKey;
+  if (!actual) return false;
+  const expected = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+  const actualArr = new Uint8Array(actual);
+  if (actualArr.length !== expected.length) return false;
+  for (let i = 0; i < actualArr.length; i++) if (actualArr[i] !== expected[i]) return false;
+  return true;
+}
+
 async function checkNotifButton(){
   const btn = document.getElementById('enableNotifBtn');
   if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)){
@@ -907,7 +919,7 @@ async function checkNotifButton(){
   }
   if (Notification.permission === 'granted' && swRegistration){
     const existing = await swRegistration.pushManager.getSubscription();
-    btn.hidden = !!existing;
+    btn.hidden = !!existing && subscriptionKeyMatches(existing);
   } else {
     btn.hidden = Notification.permission === 'denied';
   }
@@ -928,6 +940,8 @@ async function enableNotifications(){
     return;
   }
   try {
+    const existing = await swRegistration.pushManager.getSubscription();
+    if (existing && !subscriptionKeyMatches(existing)) await existing.unsubscribe();
     const subscription = await swRegistration.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
