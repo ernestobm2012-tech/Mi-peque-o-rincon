@@ -3475,9 +3475,11 @@ async function nrApplyCoupon(){
 document.getElementById('nrApplyCouponBtn').addEventListener('click', nrApplyCoupon);
 
 let editingId = null;
+let editingOriginalStatus = null;
 
 function openNewResModal(){
   editingId = null;
+  editingOriginalStatus = null;
   newResForm.reset();
   syncCustomHoursState();
   document.getElementById('nrKidsMenuField').hidden = true;
@@ -3496,10 +3498,13 @@ function openNewResModal(){
 
 function openEditResModal(r){
   editingId = r.id;
+  editingOriginalStatus = r.status;
   newResForm.reset();
   newResMsg.textContent = '';
   document.getElementById('newResTitle').textContent = 'Modificar reserva';
-  document.getElementById('newResSubmitBtn').textContent = 'Guardar cambios';
+  document.getElementById('newResSubmitBtn').textContent = editingOriginalStatus === 'cancelada'
+    ? 'Guardar y reactivar como confirmada'
+    : 'Guardar cambios';
 
   document.getElementById('nr_full_name').value = r.full_name || '';
   document.getElementById('nr_phone').value = r.phone || '';
@@ -3581,13 +3586,17 @@ newResForm.addEventListener('submit', async (e) => {
     return;
   }
 
-  if (!editingId){
-    const { data: conflicts } = await supabase
+  // Al reactivar una reserva anulada (o crear una nueva) comprobamos que ese día siga libre.
+  const willBeConfirmed = !editingId || editingOriginalStatus === 'cancelada';
+  if (willBeConfirmed){
+    let conflictQuery = supabase
       .from('reservations')
       .select('id, full_name')
       .eq('event_date', document.getElementById('nr_event_date').value)
       .eq('status', 'confirmada')
       .limit(1);
+    if (editingId) conflictQuery = conflictQuery.neq('id', editingId);
+    const { data: conflicts } = await conflictQuery;
     if (conflicts && conflicts.length){
       newResMsg.textContent = `⚠️ Ese día ya tienes confirmada la reserva de ${conflicts[0].full_name}. No se ha guardado.`;
       return;
@@ -3624,8 +3633,11 @@ newResForm.addEventListener('submit', async (e) => {
 
   let error, successMsg;
   if (editingId){
+    if (editingOriginalStatus === 'cancelada') payload.status = 'confirmada';
     ({ error } = await supabase.from('reservations').update(payload).eq('id', editingId).select());
-    successMsg = `Reserva de <strong>${payload.full_name}</strong> actualizada en Supabase.`;
+    successMsg = editingOriginalStatus === 'cancelada'
+      ? `Reserva de <strong>${payload.full_name}</strong> actualizada y reactivada como confirmada en Supabase.`
+      : `Reserva de <strong>${payload.full_name}</strong> actualizada en Supabase.`;
   } else {
     payload.status = 'confirmada';
     payload.source = 'presencial';
