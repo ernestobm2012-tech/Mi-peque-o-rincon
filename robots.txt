@@ -1,2 +1,6 @@
 User-agent: *
-Disallow: /
+Allow: /
+Disallow: /admin.html
+Disallow: /gimnasio/
+
+Sitemap: https://mipequenorincon.es/sitemap.xml

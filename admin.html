@@ -1,0 +1,3664 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Panel de reservas — Mi Pequeño Rincón</title>
+<link rel="manifest" href="admin-manifest.webmanifest">
+<meta name="theme-color" content="#4B5E22">
+<link rel="icon" href="assets/icon-192.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MPR Admin">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,500&family=Work+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#F7F2E7;
+    --cream-2:#E7EFC4;
+    --ink:#221F19;
+    --ink-soft:#4A473E;
+    --olive:#7C9A44;
+    --olive-dark:#4B5E22;
+    --gold:#B4924E;
+    --line: rgba(34,31,25,.14);
+    --radius: 2px;
+    --maxw: 780px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--cream); color:var(--ink);
+    font-family:'Work Sans', sans-serif; line-height:1.55; -webkit-font-smoothing:antialiased;
+  }
+  h1,h2{ font-family:'Fraunces', serif; font-weight:500; margin:0; color:var(--ink); }
+  .wrap{ max-width:var(--maxw); margin:0 auto; padding:40px 24px 80px; }
+  .eyebrow{ font-size:12px; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:var(--olive-dark); margin-bottom:8px; }
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:8px; cursor:pointer;
+    padding:12px 22px; font-size:14px; font-weight:500; border-radius:var(--radius); border:1px solid transparent;
+    text-decoration:none;
+  }
+  .btn[hidden]{ display:none; }
+  .btn-primary{ background:var(--olive-dark); color:var(--cream); }
+  .btn-primary:hover{ background:var(--ink); }
+  .btn-deny{ background:#7A2E22; color:#fff; }
+  .btn-deny:hover{ background:#5a2018; }
+  .btn-ghost{ border-color:var(--line); color:var(--ink); background:transparent; font-size:12.5px; padding:8px 14px; }
+  .btn-ghost:hover{ background:var(--cream-2); }
+  .btn[disabled]{ opacity:.5; cursor:default; }
+
+  #loginView{ max-width:380px; margin:80px auto; text-align:center; }
+  #loginView input{
+    width:100%; padding:12px 14px; border:1px solid var(--line); background:#fff; font-size:14.5px;
+    border-radius:var(--radius); margin:18px 0; font-family:inherit;
+  }
+  #loginView input[type="checkbox"]{ width:auto; padding:0; margin:0; }
+  #loginMsg{ margin-top:14px; font-size:13.5px; color:var(--ink-soft); min-height:1.4em; }
+
+  .top-row{ display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:28px; flex-wrap:wrap; }
+  select#statusFilter{ padding:8px 12px; border:1px solid var(--line); border-radius:var(--radius); font-family:inherit; font-size:13.5px; background:#fff; }
+
+  .res-card{ background:#fff; border:1px solid var(--line); padding:22px 24px; margin-bottom:18px; }
+  .res-head{ display:flex; justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap; }
+  .res-head h3{ font-size:18px; }
+  .badge{ font-size:11px; text-transform:uppercase; letter-spacing:.05em; padding:3px 10px; border-radius:999px; font-weight:600; }
+  .badge.pendiente{ background:#F7EBD3; color:#6B4F17; }
+  .badge.confirmada{ background:#EAF0E2; color:var(--olive-dark); }
+  .badge.cancelada{ background:#F6E4E0; color:#7A2E22; }
+  .badge.parcial{ background:#FBE4CE; color:#9A4B14; }
+  .res-meta{ font-size:13.5px; color:var(--ink-soft); margin-top:6px; }
+  .res-meta div{ margin-top:3px; }
+  .res-actions{ display:flex; gap:10px; margin-top:16px; flex-wrap:wrap; }
+  .empty-msg{ color:var(--ink-soft); font-size:14px; padding:20px 0; }
+  #actionMsg.ok{ display:block; background:#EAF0E2; color:var(--olive-dark); border:1px solid var(--olive); }
+  #actionMsg.err{ display:block; background:#F6E4E0; color:#7A2E22; border:1px solid #C0685A; }
+  #actionMsg a{ color:inherit; font-weight:600; }
+
+  .stats-row{ display:flex; gap:16px; margin-bottom:24px; flex-wrap:wrap; }
+  .stat-card{ background:#fff; border:1px solid var(--line); padding:16px 20px; flex:1; min-width:170px; }
+  .stat-card .num{ font-family:'Fraunces',serif; font-size:28px; color:var(--olive-dark); display:block; }
+  .stat-card .lbl{ font-size:11.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.04em; margin-top:4px; display:block; }
+  .stat-card.clickable{ cursor:pointer; transition:background .15s; }
+  .stat-card.clickable:hover{ background:var(--cream-2); }
+  .stats-months{ background:#fff; border:1px solid var(--line); padding:14px 20px; margin-bottom:24px; font-size:13px; color:var(--ink-soft); }
+  .stats-months summary{ cursor:pointer; font-weight:500; color:var(--ink); }
+  .stats-months table{ width:100%; border-collapse:collapse; margin-top:10px; }
+  .stats-months td{ padding:4px 0; border-bottom:1px dashed var(--line); }
+  .stats-months td:last-child{ text-align:right; }
+  .stats-extra-row{ display:flex; flex-direction:column; gap:6px; margin-top:12px; padding-top:12px; border-top:1px dashed var(--line); }
+  .stats-extra-row strong{ color:var(--olive-dark); }
+
+  /* ---------- Manual reservation modal ---------- */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(34,31,25,.55); z-index:100;
+    display:flex; align-items:center; justify-content:center; padding:20px;
+  }
+  .modal-overlay[hidden]{ display:none; }
+  .modal-box{
+    background:var(--cream); max-width:600px; width:100%; max-height:90vh; overflow-y:auto;
+    padding:32px; position:relative; border-radius:var(--radius);
+  }
+  .modal-close{
+    position:absolute; top:16px; right:16px; background:none; border:none; cursor:pointer;
+    font-size:22px; line-height:1; color:var(--ink-soft); padding:4px;
+  }
+  .modal-close:hover{ color:var(--ink); }
+  .field{ margin-bottom:16px; }
+  .field label{ display:block; font-size:12px; letter-spacing:.03em; color:var(--ink-soft); margin-bottom:6px; text-transform:uppercase;}
+  .field input, .field select, .field textarea{
+    width:100%; padding:11px 13px; border:1px solid var(--line); background:#fff;
+    font-family:'Work Sans',sans-serif; font-size:14.5px; color:var(--ink); border-radius:var(--radius);
+  }
+  .field textarea{ resize:vertical; min-height:70px; }
+  .filter-input{
+    padding:10px 13px; border:1px solid var(--line); background:#fff;
+    font-family:'Work Sans',sans-serif; font-size:14px; color:var(--ink); border-radius:var(--radius);
+  }
+  .field-row{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .checkbox-row{ display:flex; align-items:center; gap:8px; font-size:14px; margin-bottom:10px;}
+  .checkbox-row input{ width:auto; }
+  .conditional-field{ margin-top:8px; padding-left:26px; }
+  .plan-options{ display:flex; flex-direction:column; gap:8px; }
+  .plan-option{
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    border:1px solid var(--line); padding:10px 14px; cursor:pointer; font-size:14px; background:#fff;
+  }
+  .plan-option input{ width:auto; margin-right:10px; }
+  .plan-option .amt{ font-family:'Fraunces',serif; color:var(--olive-dark); white-space:nowrap; }
+  .total-row{ display:flex; justify-content:space-between; align-items:baseline; border-top:1px solid var(--line); padding-top:14px; margin-top:6px; }
+  .total-row .amt{ font-family:'Fraunces',serif; font-size:22px; color:var(--olive-dark); }
+
+  .tabs-row{ display:flex; gap:8px; margin-bottom:24px; border-bottom:1px solid var(--line); flex-wrap:wrap; }
+  .tab-btn{
+    background:none; border:none; cursor:pointer; padding:10px 4px; margin-right:18px;
+    font-family:inherit; font-size:14px; color:var(--ink-soft); border-bottom:2px solid transparent;
+  }
+  .tab-btn.active{ color:var(--ink); border-bottom-color:var(--olive-dark); font-weight:500; }
+
+  /* ---------- Calendar ---------- */
+  .cal-nav{ display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; gap:12px; }
+  .cal-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:6px; }
+  .cal-grid .dow{ font-size:11px; text-transform:uppercase; letter-spacing:.03em; color:var(--ink-soft); text-align:center; padding-bottom:4px; }
+  .cal-day{
+    background:#fff; border:1px solid var(--line); min-height:64px; padding:6px; cursor:default;
+    font-size:12.5px; display:flex; flex-direction:column; gap:4px; position:relative;
+  }
+  .cal-day-badge{
+    position:absolute; top:3px; right:3px; background:#E7EFC4; color:#2f5233;
+    font-weight:700; font-size:10px; width:15px; height:15px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; line-height:1;
+  }
+  .cal-day.clickable{ cursor:pointer; }
+  .cal-day.clickable:hover{ background:var(--cream-2); }
+  .cal-day.empty{ background:none; border:none; }
+  .cal-day .daynum{ font-weight:600; }
+  .cal-day.status-pendiente{ background:#C9A227; border-color:#C9A227; }
+  .cal-day.status-pendiente .daynum{ color:#221F19; }
+  .cal-day.status-pendiente.clickable:hover{ background:#b3901f; }
+  .cal-day.status-confirmada{ background:var(--olive-dark); border-color:var(--olive-dark); }
+  .cal-day.status-confirmada .daynum{ color:var(--cream); }
+  .cal-day.status-confirmada.clickable:hover{ background:#3c4b1b; }
+  .cal-day.status-cancelada{ background:#7A2E22; border-color:#7A2E22; }
+  .cal-day.status-cancelada .daynum{ color:var(--cream); }
+  .cal-day.status-cancelada.clickable:hover{ background:#5c2119; }
+
+  /* ---------- Calendario del panel oculto (colores propios) ---------- */
+  .cal-day.pc-pendiente{ background:#C9AEE0; border-color:#C9AEE0; }
+  .cal-day.pc-pendiente .daynum{ color:#3B2A4D; }
+  .cal-day.pc-pendiente.clickable:hover{ background:#b697d1; }
+  .cal-day.pc-confirmada{ background:var(--olive-dark); border-color:var(--olive-dark); }
+  .cal-day.pc-confirmada .daynum{ color:var(--cream); }
+  .cal-day.pc-confirmada.clickable:hover{ background:#3c4b1b; }
+  .cal-day.pc-parcial{ background:#E2762E; border-color:#E2762E; }
+  .cal-day.pc-parcial .daynum{ color:#fff; }
+  .cal-day.pc-parcial.clickable:hover{ background:#c9631f; }
+  .cal-day.pc-cancelada{ background:#7A2E22; border-color:#7A2E22; }
+  .cal-day.pc-cancelada .daynum{ color:var(--cream); }
+  .cal-day.pc-cancelada.clickable:hover{ background:#5c2119; }
+
+  /* ---------- Clients ---------- */
+  .client-card{ background:#fff; border:1px solid var(--line); padding:16px 20px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap; }
+  .client-card .name{ font-weight:500; }
+  .client-card .meta{ font-size:12.5px; color:var(--ink-soft); margin-top:3px; }
+  .client-card .count{ font-family:'Fraunces',serif; font-size:24px; color:var(--olive-dark); text-align:center; }
+  .client-card .count-lbl{ font-size:10.5px; text-transform:uppercase; color:var(--ink-soft); text-align:center; }
+  .frequent-badge{ font-size:11px; background:#F7EBD3; color:#6B4F17; padding:3px 10px; border-radius:999px; font-weight:600; }
+
+  /* ---------- Coupons ---------- */
+  .coupon-card{ background:#fff; border:1px solid var(--line); padding:14px 20px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap; }
+  .coupon-card .code{ font-family:'Fraunces',serif; font-size:18px; }
+  .coupon-card .meta{ font-size:12.5px; color:var(--ink-soft); margin-top:3px; }
+  .coupon-badge{ font-size:11px; text-transform:uppercase; letter-spacing:.05em; padding:3px 10px; border-radius:999px; font-weight:600; }
+  .coupon-badge.active{ background:#EAF0E2; color:var(--olive-dark); }
+  .coupon-badge.inactive{ background:#F6E4E0; color:#7A2E22; }
+
+  /* ---------- Gallery ---------- */
+  .gallery-section-title{ margin:28px 0 14px; font-size:16px; }
+  .gallery-section-title:first-child{ margin-top:0; }
+  .gallery-admin-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:14px; }
+  .gallery-admin-card{ background:#fff; border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; }
+  .gallery-admin-card img{ width:100%; height:140px; object-fit:contain; background:var(--cream); display:block; }
+  .gallery-admin-card .gallery-admin-meta{ padding:10px 12px; }
+  .gallery-admin-card .gallery-admin-meta p{ font-size:12.5px; color:var(--ink-soft); margin:0 0 8px; min-height:1.3em; }
+
+  /* ---------- Gráficos ---------- */
+  .chart-legend{ display:flex; gap:20px; font-size:12.5px; color:var(--ink-soft); margin-bottom:18px; flex-wrap:wrap; }
+  .chart-swatch{ display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:6px; vertical-align:middle; }
+  .chart-swatch-billed{ background:var(--gold); }
+  .chart-swatch-net{ background:var(--olive-dark); }
+  .chart-row{ margin-bottom:16px; }
+  .chart-row .chart-month-lbl{ font-size:13.5px; font-weight:500; margin-bottom:5px; text-transform:capitalize; }
+  .chart-bar-track{ background:var(--cream-2); border-radius:2px; overflow:hidden; height:24px; margin-bottom:4px; }
+  .chart-bar-fill{ height:100%; border-radius:2px; display:flex; align-items:center; padding-left:8px; box-sizing:border-box; font-size:11.5px; color:#fff; white-space:nowrap; min-width:fit-content; }
+  .chart-bar-fill.billed{ background:var(--gold); }
+  .chart-bar-fill.net{ background:var(--olive-dark); }
+  .chart-bar-fill.top{ background:var(--gold); }
+
+  /* ---------- Impuestos ---------- */
+  .tax-table{ width:100%; border-collapse:collapse; font-size:13.5px; }
+  .tax-table th{ text-align:right; font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-soft); padding:8px 6px; border-bottom:1px solid var(--line); }
+  .tax-table th:first-child, .tax-table td:first-child{ text-align:left; }
+  .tax-table td{ padding:8px 6px; border-bottom:1px dashed var(--line); text-align:right; }
+  .tax-table tfoot td{ font-weight:600; border-top:1px solid var(--line); border-bottom:none; }
+  .tax-table tr.quarter-header td{ text-align:left; text-transform:capitalize; font-weight:600; color:var(--olive-dark); background:var(--cream-2); padding-top:12px; border-bottom:none; }
+  .tax-table tr.quarter-subtotal td{ font-weight:600; border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
+</style>
+</head>
+<body>
+
+<div id="loginView">
+  <p class="eyebrow">Mi Pequeño Rincón</p>
+  <h1>Panel de reservas</h1>
+  <p style="color:var(--ink-soft); margin-top:14px; font-size:14.5px;">Inicia sesión con tu usuario y contraseña.</p>
+  <form id="loginForm">
+    <input type="email" id="loginEmail" placeholder="tu@email.com" required autocomplete="username">
+    <input type="password" id="loginPassword" placeholder="Contraseña" required autocomplete="current-password">
+    <label style="display:flex; align-items:center; gap:8px; font-size:13.5px; color:var(--ink-soft); margin:10px 0; justify-content:center;">
+      <input type="checkbox" id="loginRemember" style="width:auto;"> Recordar contraseña en este dispositivo
+    </label>
+    <button type="submit" class="btn btn-primary" style="width:100%;">Entrar</button>
+  </form>
+  <p id="loginMsg"></p>
+</div>
+
+<div class="wrap" id="dashView" hidden>
+  <div class="top-row">
+    <div>
+      <p class="eyebrow">Mi Pequeño Rincón</p>
+      <h1>Panel de reservas</h1>
+    </div>
+    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+      <button class="btn btn-ghost" id="enableNotifBtn" hidden>🔔 Activar notificaciones</button>
+      <button class="btn btn-primary" id="newResBtn">+ Reserva manual</button>
+      <button class="btn btn-ghost" id="logoutBtn">Salir</button>
+      <button class="btn btn-ghost" id="hiddenPanelBtn" style="font-size:11px; padding:5px 8px;" title="Acceso restringido">🔒</button>
+    </div>
+  </div>
+  <p id="notifMsg" style="font-size:13px; color:var(--ink-soft); margin-top:-10px; margin-bottom:20px;"></p>
+
+  <div class="tabs-row">
+    <button class="tab-btn active" data-tab="tabReservas">Reservas</button>
+    <button class="tab-btn" data-tab="tabCalendario">Calendario</button>
+    <button class="tab-btn" data-tab="tabClientes">Clientes</button>
+    <button class="tab-btn" data-tab="tabCupones">Cupones</button>
+    <button class="tab-btn" data-tab="tabGaleria">Galería web</button>
+    <button class="tab-btn" data-tab="tabGraficos">Gráficos</button>
+    <button class="tab-btn" data-tab="tabEstadisticas">Estadísticas</button>
+    <button class="tab-btn" data-tab="tabImpuestos">Impuestos</button>
+    <button class="tab-btn" data-tab="tabFacturas">Facturas</button>
+    <button class="tab-btn" data-tab="tabEnchufes">Enchufes</button>
+  </div>
+
+  <p id="actionMsg" style="display:none; font-size:13.5px; padding:10px 14px; margin-bottom:18px; border-radius:2px;"></p>
+
+  <div id="tabReservas" class="tab-panel">
+    <div class="stats-row">
+      <div class="stat-card">
+        <span class="num" id="statIncome">0€</span>
+        <span class="lbl">Ingresos totales de alquiler (sin menús)</span>
+      </div>
+      <div class="stat-card">
+        <span class="num" id="statConfirmed">0</span>
+        <span class="lbl">Reservas confirmadas</span>
+      </div>
+      <div class="stat-card">
+        <span class="num" id="statPending">0</span>
+        <span class="lbl">Reservas pendientes</span>
+      </div>
+    </div>
+    <details class="stats-months">
+      <summary>Ver ingresos por mes</summary>
+      <div class="stats-extra-row">
+        <span>🧹 Limpieza (aparte): <strong id="statCleaning">0 reservas · 0€</strong></span>
+        <span>🍕 Menús infantiles (subcontratado, aparte): <strong id="statKidsMenus">0 unidades · 0€</strong></span>
+        <span>🎈 Decoración (coste interno): <strong id="statDecorCost">0 reservas · 0€</strong></span>
+      </div>
+      <table id="statsMonthsTable"></table>
+    </details>
+
+    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:18px;">
+      <select id="statusFilter" class="filter-input">
+        <option value="pendiente">Pendientes</option>
+        <option value="confirmada">Confirmadas</option>
+        <option value="cancelada">Canceladas</option>
+        <option value="todas">Todas</option>
+      </select>
+      <input type="search" id="resSearchInput" class="filter-input" placeholder="Buscar por nombre o teléfono" style="flex:1; min-width:200px;">
+    </div>
+    <div id="resList"></div>
+  </div>
+
+  <div id="tabCalendario" class="tab-panel" hidden>
+    <div class="cal-nav">
+      <button type="button" class="btn btn-ghost" id="calPrevBtn">← Mes anterior</button>
+      <h2 id="calLabel" style="font-size:18px; text-transform:capitalize;"></h2>
+      <button type="button" class="btn btn-ghost" id="calNextBtn">Mes siguiente →</button>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+    <div id="calDayList" style="margin-top:24px;"></div>
+  </div>
+
+  <div id="tabClientes" class="tab-panel" hidden>
+    <p style="color:var(--ink-soft); font-size:14px; margin-bottom:18px;">Clientes ordenados por número de reservas confirmadas — útil para valorar descuentos de fidelidad.</p>
+    <div id="clientsList"></div>
+  </div>
+
+  <div id="tabCupones" class="tab-panel" hidden>
+    <div class="res-card" style="margin-bottom:24px;">
+      <h3 style="margin-bottom:16px;" id="couponFormTitle">Nuevo cupón</h3>
+      <form id="couponForm">
+        <div class="field-row">
+          <div class="field">
+            <label for="cp_code">Código</label>
+            <input type="text" id="cp_code" required style="text-transform:uppercase;" placeholder="VERANO10">
+          </div>
+          <div class="field">
+            <label for="cp_type">Tipo de descuento</label>
+            <select id="cp_type">
+              <option value="percentage">Porcentaje (%)</option>
+              <option value="fixed_amount">Cantidad fija (€)</option>
+              <option value="fixed_price">Precio final (€)</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="cp_value" id="cp_value_label">Valor (%)</label>
+            <input type="number" id="cp_value" min="0" step="0.01" required>
+          </div>
+          <div class="field">
+            <label for="cp_expires">Caduca (opcional)</label>
+            <input type="date" id="cp_expires">
+          </div>
+        </div>
+        <div class="field">
+          <label for="cp_applies_to">Aplica a</label>
+          <select id="cp_applies_to">
+            <option value="todos">Todas las tarifas</option>
+            <option value="lunes_jueves">Solo entre semana (lunes a jueves)</option>
+            <option value="viernes_domingo_festivos">Solo fin de semana, festivos y vísperas</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="cp_description">Descripción interna (opcional)</label>
+          <input type="text" id="cp_description" placeholder="Ej: promo Instagram julio, cliente fiel Laura...">
+        </div>
+        <div style="display:flex; gap:10px; align-items:center;">
+          <button type="submit" class="btn btn-primary" id="couponSubmitBtn">Crear cupón</button>
+          <button type="button" class="btn btn-ghost" id="couponCancelEditBtn" hidden>Cancelar edición</button>
+        </div>
+        <p id="couponFormMsg" style="font-size:13.5px; margin-top:10px; color:var(--ink-soft);"></p>
+      </form>
+    </div>
+    <div id="couponsList"></div>
+  </div>
+
+  <div id="tabGaleria" class="tab-panel" hidden>
+    <div class="res-card" style="margin-bottom:24px;">
+      <h3 style="margin-bottom:16px;">Añadir foto a la web</h3>
+      <form id="galleryForm">
+        <div class="field">
+          <label for="gal_section">Sección de la web</label>
+          <select id="gal_section" required>
+            <option value="sala-juegos">La sala — Zona de juegos</option>
+            <option value="sala-mesas">La sala — Mesas para eventos</option>
+            <option value="sala-escenario">La sala — Zona de proyector, escenario y photocall</option>
+            <option value="sala-aseo">La sala — Aseo</option>
+            <option value="sala-cocina">La sala — Cocina</option>
+            <option value="catas">Catas de vino</option>
+            <option value="decoraciones">Decoraciones</option>
+            <option value="ofertas">Ofertas</option>
+            <option value="catering">Catering</option>
+            <option value="fotos-eventos">Fotos eventos</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="gal_file">Foto</label>
+          <input type="file" id="gal_file" accept="image/*" required>
+        </div>
+        <div class="field">
+          <label for="gal_caption">Descripción (opcional)</label>
+          <input type="text" id="gal_caption" placeholder="Ej: Decoración cumpleaños temática unicornio">
+        </div>
+        <button type="submit" class="btn btn-primary" id="galSubmitBtn">Subir foto</button>
+        <p id="galFormMsg" style="font-size:13.5px; margin-top:10px; color:var(--ink-soft);"></p>
+      </form>
+    </div>
+    <div class="res-card" style="margin-bottom:24px;">
+      <h3 style="margin-bottom:16px;">Vídeos de YouTube</h3>
+      <form id="videoForm">
+        <div class="field">
+          <label for="video_url">Enlace de YouTube</label>
+          <input type="text" id="video_url" placeholder="https://www.youtube.com/watch?v=..." required>
+        </div>
+        <div class="field">
+          <label for="video_caption">Descripción (opcional)</label>
+          <input type="text" id="video_caption" placeholder="Ej: Vídeo de la boda de Marta y Carlos">
+        </div>
+        <button type="submit" class="btn btn-primary" id="videoSubmitBtn">Añadir vídeo</button>
+        <p id="videoFormMsg" style="font-size:13.5px; margin-top:10px; color:var(--ink-soft);"></p>
+      </form>
+      <div id="videosAdminList" class="gallery-admin-grid" style="margin-top:20px;"></div>
+    </div>
+    <div class="res-card" style="margin-bottom:24px;">
+      <h3 style="margin-bottom:6px;">Fotos de los tipos de evento</h3>
+      <p style="font-size:13.5px; color:var(--ink-soft); margin-bottom:16px;">Si le pones una foto a un tipo de evento, en la web se podrá pinchar en su tarjeta para verla en grande.</p>
+      <div id="eventTypePhotos" class="gallery-admin-grid"></div>
+    </div>
+    <div id="galleryAdminSections"></div>
+  </div>
+
+  <div id="tabGraficos" class="tab-panel" hidden>
+    <p style="color:var(--ink-soft); font-size:14px; margin-bottom:18px;">Ingresos del alquiler de la sala por mes (solo reservas confirmadas). "Facturado" es el importe cobrado, con el 21% de IVA incluido; "Ganado" es lo que queda una vez descontado ese IVA.</p>
+    <div class="chart-legend">
+      <span><i class="chart-swatch chart-swatch-billed"></i> Facturado (con IVA)</span>
+      <span><i class="chart-swatch chart-swatch-net"></i> Ganado (sin IVA)</span>
+    </div>
+    <div id="chartMonths"></div>
+
+    <h3 style="margin:32px 0 6px;">Visitas a la web</h3>
+    <p style="color:var(--ink-soft); font-size:14px; margin-bottom:18px;">"Visitas" cuenta cada carga de la página principal; "Visitantes únicos" cuenta dispositivos distintos (si alguien recarga o vuelve a entrar, no suma otra vez). No cuenta el panel de admin.</p>
+    <div class="stats-row" style="margin-bottom:24px;">
+      <div class="stat-card">
+        <span class="num" id="visitsTotal">0</span>
+        <span class="lbl">Visitas totales</span>
+      </div>
+      <div class="stat-card">
+        <span class="num" id="visitsUniqueTotal">0</span>
+        <span class="lbl">Visitantes únicos totales</span>
+      </div>
+      <div class="stat-card">
+        <span class="num" id="visitsMonth">0</span>
+        <span class="lbl">Visitas este mes</span>
+      </div>
+      <div class="stat-card">
+        <span class="num" id="visitsUniqueMonth">0</span>
+        <span class="lbl">Visitantes únicos este mes</span>
+      </div>
+    </div>
+    <table class="tax-table" id="visitsMonthsTable"></table>
+
+    <h3 style="margin:32px 0 6px;">Clics en redes sociales</h3>
+    <p style="color:var(--ink-soft); font-size:14px; margin-bottom:18px;">Veces que se ha pinchado en cualquiera de los enlaces a cada red social dentro de la web.</p>
+    <div class="stats-row" style="margin-bottom:24px;">
+      <div class="stat-card">
+        <span class="num" id="socialFacebookTotal">0</span>
+        <span class="lbl">Facebook</span>
+      </div>
+      <div class="stat-card">
+        <span class="num" id="socialInstagramTotal">0</span>
+        <span class="lbl">Instagram</span>
+      </div>
+      <div class="stat-card">
+        <span class="num" id="socialTiktokTotal">0</span>
+        <span class="lbl">TikTok</span>
+      </div>
+    </div>
+    <table class="tax-table" id="socialMonthsTable"></table>
+  </div>
+
+  <div id="tabEstadisticas" class="tab-panel" hidden>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; flex-wrap:wrap; gap:10px;">
+      <p style="color:var(--ink-soft); font-size:14px; margin:0;">Solo tiene en cuenta reservas confirmadas.</p>
+      <select id="statsRange" class="filter-input">
+        <option value="30">Últimos 30 días</option>
+        <option value="90">Últimos 90 días</option>
+        <option value="365" selected>Último año</option>
+        <option value="all">Todo el historial</option>
+      </select>
+    </div>
+    <div class="stats-row" style="margin-bottom:24px;">
+      <div class="stat-card">
+        <span class="num" id="statsKpiCount">0</span>
+        <span class="lbl">Reservas confirmadas</span>
+      </div>
+      <div class="stat-card">
+        <span class="num" id="statsKpiClients">0</span>
+        <span class="lbl">Clientes distintos</span>
+      </div>
+      <div class="stat-card">
+        <span class="num" id="statsKpiRevenue">0€</span>
+        <span class="lbl">Dinero ganado</span>
+      </div>
+      <div class="stat-card">
+        <span class="num" id="statsKpiTicket">0€</span>
+        <span class="lbl">Ticket medio</span>
+      </div>
+    </div>
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(340px,1fr)); gap:24px;">
+      <div class="res-card">
+        <h3 style="margin-bottom:14px;">💶 Ingresos por mes</h3>
+        <div id="statsRevenueChart"></div>
+      </div>
+      <div class="res-card">
+        <h3 style="margin-bottom:14px;">🎉 Tipo de evento más solicitado</h3>
+        <div id="statsEventTypeChart"></div>
+      </div>
+      <div class="res-card">
+        <h3 style="margin-bottom:14px;">📅 Día de la semana más solicitado</h3>
+        <div id="statsWeekdayChart"></div>
+      </div>
+      <div class="res-card">
+        <h3 style="margin-bottom:14px;">🏆 Clientes más frecuentes</h3>
+        <div id="statsTopClients"></div>
+      </div>
+      <div class="res-card">
+        <h3 style="margin-bottom:14px;">🏷️ Uso de cupones</h3>
+        <div id="statsCouponUsage"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tabImpuestos" class="tab-panel" hidden>
+    <p style="color:var(--ink-soft); font-size:14px; margin-bottom:18px;">El IVA (21%) solo se aplica al alquiler de la sala. La limpieza y los menús infantiles los gestionan colaboradores externos que se encargan de sus propios impuestos, así que no se incluyen aquí.</p>
+    <div class="stats-row">
+      <div class="stat-card">
+        <span class="num" id="taxBaseTotal">0€</span>
+        <span class="lbl">Base imponible (alquiler)</span>
+      </div>
+      <div class="stat-card">
+        <span class="num" id="taxIvaTotal">0€</span>
+        <span class="lbl">IVA repercutido (21%)</span>
+      </div>
+      <div class="stat-card">
+        <span class="num" id="taxGrossTotal">0€</span>
+        <span class="lbl">Total facturado (con IVA)</span>
+      </div>
+    </div>
+    <div class="res-card">
+      <table class="tax-table" id="taxMonthsTable"></table>
+    </div>
+  </div>
+
+  <div id="tabFacturas" class="tab-panel" hidden>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; flex-wrap:wrap; gap:10px;">
+      <p style="color:var(--ink-soft); font-size:14px; margin:0;">Genera facturas con el mismo modelo que ya usas, y guárdalas como PDF desde el diálogo de impresión.</p>
+      <button type="button" class="btn btn-primary" id="newInvoiceBtn">+ Nueva factura</button>
+    </div>
+    <div style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap; margin-bottom:24px; background:#fff; border:1px solid var(--line); padding:16px 18px;">
+      <div class="field" style="margin:0;">
+        <label for="inv_zip_quarter">Trimestre</label>
+        <select id="inv_zip_quarter" class="filter-input">
+          <option value="1">1er trimestre (ene-mar)</option>
+          <option value="2">2º trimestre (abr-jun)</option>
+          <option value="3">3er trimestre (jul-sep)</option>
+          <option value="4">4º trimestre (oct-dic)</option>
+        </select>
+      </div>
+      <div class="field" style="margin:0;">
+        <label for="inv_zip_year">Año</label>
+        <input type="number" id="inv_zip_year" class="filter-input" style="width:100px;">
+      </div>
+      <button type="button" class="btn btn-ghost" id="downloadQuarterZipBtn">⬇️ Descargar PDFs del trimestre (ZIP)</button>
+      <span id="zipDownloadMsg" style="font-size:13px; color:var(--ink-soft);"></span>
+    </div>
+    <div id="invoicesList"></div>
+  </div>
+
+  <div id="tabEnchufes" class="tab-panel" hidden>
+    <p style="color:var(--ink-soft); font-size:14px; margin-bottom:18px;">Enciende automáticamente tus enchufes inteligentes (Tuya / Smart Life) antes de cada reserva confirmada, y se apagan solos a la hora de fin. Cada enchufe tiene su propia antelación (por ejemplo, luces 6 horas antes, y un enchufe "disparador" para el aire 30 minutos antes). Se revisa cada 15 minutos.</p>
+
+    <div class="res-card" style="margin-bottom:24px;">
+      <h3 style="margin-bottom:14px;">Conexión con Tuya</h3>
+      <form id="plugSettingsForm">
+        <div class="field-row">
+          <div class="field">
+            <label for="plug_client_id">Client ID (Access ID)</label>
+            <input type="text" id="plug_client_id">
+          </div>
+          <div class="field">
+            <label for="plug_client_secret">Client Secret (Access Secret)</label>
+            <input type="password" id="plug_client_secret">
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary" id="plugSettingsSubmitBtn">Guardar conexión</button>
+        <p id="plugSettingsMsg" style="font-size:13.5px; margin-top:10px; color:var(--ink-soft);"></p>
+      </form>
+    </div>
+
+    <div class="res-card">
+      <h3 style="margin-bottom:14px;">Enchufes</h3>
+      <form id="plugForm" style="margin-bottom:20px;">
+        <div class="field-row">
+          <div class="field">
+            <label for="plug_name">Nombre</label>
+            <input type="text" id="plug_name" placeholder="Ej: Luces sala, Disparador aire...">
+          </div>
+          <div class="field">
+            <label for="plug_device_id">Device ID (de Tuya)</label>
+            <input type="text" id="plug_device_id">
+          </div>
+          <div class="field">
+            <label for="plug_minutes_before">Minutos de antelación</label>
+            <input type="number" id="plug_minutes_before" min="0" step="5" value="360" style="max-width:110px;">
+          </div>
+        </div>
+        <p class="field-note" style="font-size:12.5px; color:var(--ink-soft); margin:-8px 0 12px;">Ej: 360 = 6 horas antes, 30 = media hora antes.</p>
+        <button type="submit" class="btn btn-ghost" id="plugSubmitBtn">+ Añadir enchufe</button>
+        <p id="plugFormMsg" style="font-size:13.5px; margin-top:10px; color:var(--ink-soft);"></p>
+      </form>
+      <div id="plugsList"></div>
+    </div>
+  </div>
+
+  <div id="tabAnulaciones" class="tab-panel" hidden>
+    <button type="button" class="btn btn-ghost" id="pcBackBtn" style="margin-bottom:18px;">← Volver a Reservas</button>
+    <div class="stats-row" id="pcStatsRow">
+      <div class="stat-card clickable" data-filter="confirmed">
+        <span class="num" id="pcConfirmedTotal">0€</span>
+        <span class="lbl">Aceptadas (<span id="pcConfirmedCount">0</span>)</span>
+      </div>
+      <div class="stat-card clickable" data-filter="pending">
+        <span class="num" id="pcPendingTotal">0€</span>
+        <span class="lbl">Pendientes (<span id="pcPendingCount">0</span>)</span>
+      </div>
+      <div class="stat-card clickable" data-filter="cancelled">
+        <span class="num" id="pcCancelledTotal">0€</span>
+        <span class="lbl">Anuladas (<span id="pcCancelledCount">0</span>)</span>
+      </div>
+      <div class="stat-card clickable" data-filter="partial">
+        <span class="num" id="pcTotal">0€</span>
+        <span class="lbl">Anuladas parcialmente (<span id="pcCount">0</span>)</span>
+      </div>
+      <div class="stat-card clickable" data-filter="cleaning">
+        <span class="num" id="pcCleaningTotal">0€</span>
+        <span class="lbl">🧹 Limpieza (<span id="pcCleaningCount">0</span>)</span>
+      </div>
+      <div class="stat-card clickable" data-filter="decoration">
+        <span class="num" id="pcDecorTotal">0€</span>
+        <span class="lbl">🎈 Decoración (<span id="pcDecorCount">0</span>)</span>
+      </div>
+    </div>
+    <div class="res-card" style="margin-bottom:24px;">
+      <h3 style="margin-bottom:6px;">Ingresos reales por mes</h3>
+      <p style="font-size:13.5px; color:var(--ink-soft); margin-bottom:14px;">De reservas aceptadas y anuladas parcialmente: alquiler de la sala + decoración + limpieza + 1€ por cada menú infantil. "Real" sin el IVA del alquiler, "Total" pagando ese IVA. 🎈 Decoración · 🧹 Limpieza · 🍕 Menú infantil (suman al total) · 🎭 Animación · 🍽️ Catering (solo informativos, no suman).</p>
+      <table class="tax-table" id="pcIncomeTable"></table>
+    </div>
+    <div class="cal-nav">
+      <button type="button" class="btn btn-ghost" id="pcCalPrevBtn">← Mes anterior</button>
+      <h2 id="pcCalLabel" style="font-size:18px; text-transform:capitalize;"></h2>
+      <button type="button" class="btn btn-ghost" id="pcCalNextBtn">Mes siguiente →</button>
+    </div>
+    <div class="cal-grid" id="pcCalGrid"></div>
+    <div id="pcCalDayList" style="margin-top:24px;"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="pinModal" hidden>
+  <div class="modal-box" style="max-width:320px; text-align:center;">
+    <button type="button" class="modal-close" id="pinClose" aria-label="Cerrar">×</button>
+    <h3 style="font-size:18px; margin-bottom:16px;">Acceso restringido</h3>
+    <form id="pinForm">
+      <input type="password" id="pinInput" inputmode="numeric" placeholder="Contraseña" style="width:100%; text-align:center; font-size:20px; letter-spacing:4px; padding:10px; box-sizing:border-box;" required>
+      <button type="submit" class="btn btn-primary" style="margin-top:14px; width:100%;">Entrar</button>
+      <p id="pinMsg" style="font-size:13px; margin-top:10px; color:var(--ink-soft);"></p>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="partialCancelModal" hidden>
+  <div class="modal-box" style="max-width:420px;">
+    <button type="button" class="modal-close" id="partialCancelClose" aria-label="Cerrar">×</button>
+    <h3 style="font-size:18px; margin-bottom:16px;">Anulación parcial</h3>
+    <p id="partialCancelResName" style="font-size:13.5px; color:var(--ink-soft); margin-bottom:4px;"></p>
+    <p id="partialCancelResAmount" style="font-size:13.5px; color:var(--olive-dark); font-weight:600; margin-bottom:16px;"></p>
+    <form id="partialCancelForm">
+      <div class="field">
+        <label for="pc_note">Motivo (opcional)</label>
+        <input type="text" id="pc_note" placeholder="Ej: el cliente canceló el catering">
+      </div>
+      <p style="font-size:12.5px; color:var(--ink-soft); margin:-6px 0 14px;">Al confirmar, la reserva se anulará y desaparecerá de Reservas y Calendario. Solo quedará registrada en el panel oculto.</p>
+      <button type="submit" class="btn btn-primary" id="partialCancelSubmitBtn">Confirmar anulación</button>
+      <p id="partialCancelMsg" style="font-size:13px; margin-top:10px; color:var(--ink-soft);"></p>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="newResModal" hidden>
+  <div class="modal-box">
+    <button type="button" class="modal-close" id="newResClose" aria-label="Cerrar">×</button>
+    <h2 style="font-size:22px; margin-bottom:20px;" id="newResTitle">Nueva reserva manual</h2>
+    <form id="newResForm">
+      <div class="field">
+        <label for="nr_full_name">Nombre y apellidos</label>
+        <input type="text" id="nr_full_name" required>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="nr_phone">Teléfono</label>
+          <input type="tel" id="nr_phone" required placeholder="6xx xxx xxx">
+        </div>
+        <div class="field">
+          <label for="nr_email">Email (opcional)</label>
+          <input type="email" id="nr_email">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="nr_event_type">Tipo de evento</label>
+          <select id="nr_event_type" required></select>
+        </div>
+        <div class="field">
+          <label for="nr_guests">Nº invitados aprox.</label>
+          <input type="number" id="nr_guests" min="1">
+        </div>
+      </div>
+      <div class="field">
+        <label for="nr_event_date">Fecha del evento</label>
+        <input type="date" id="nr_event_date" required>
+      </div>
+      <div class="field">
+        <label>Tarifa</label>
+        <div class="plan-options" id="nrPlanOptions"></div>
+      </div>
+      <div class="field">
+        <div class="checkbox-row"><input type="checkbox" id="nr_custom_hours"><label for="nr_custom_hours" style="margin:0; text-transform:none; font-size:14px;">Horario personalizado</label></div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="nr_start_time">Hora de inicio</label>
+          <input type="time" id="nr_start_time" required disabled>
+        </div>
+        <div class="field">
+          <label for="nr_end_time">Hora de fin</label>
+          <input type="time" id="nr_end_time" required disabled>
+        </div>
+      </div>
+      <div class="field">
+        <label for="nr_manual_price">Precio de la sala manual (opcional)</label>
+        <input type="number" id="nr_manual_price" min="0" step="0.01" placeholder="Déjalo vacío para usar el precio de la tarifa">
+        <p class="field-note" style="font-size:12.5px; margin-top:6px; color:var(--ink-soft);">Si lo rellenas, sustituye el precio de la tarifa de arriba solo para esta reserva (para precios especiales acordados con el cliente). Los extras (limpieza, menús) se siguen sumando aparte.</p>
+      </div>
+      <div class="field">
+        <label>Extras</label>
+        <div class="checkbox-row"><input type="checkbox" id="nr_wants_cleaning"><label for="nr_wants_cleaning" style="margin:0; text-transform:none; font-size:14px;">Servicio de limpieza</label></div>
+
+        <div class="checkbox-row"><input type="checkbox" id="nr_wants_kids_menu"><label for="nr_wants_kids_menu" style="margin:0; text-transform:none; font-size:14px;">Menús infantiles</label></div>
+        <div class="conditional-field" id="nrKidsMenuField" hidden>
+          <label for="nr_kids_menus">¿Cuántos?</label>
+          <input type="number" id="nr_kids_menus" min="1" value="1">
+        </div>
+
+        <div class="checkbox-row"><input type="checkbox" id="nr_wants_decoration"><label for="nr_wants_decoration" style="margin:0; text-transform:none; font-size:14px;">Decoración personalizada</label></div>
+        <div class="conditional-field" id="nrDecorationField" hidden>
+          <label for="nr_decoration_theme">Temática</label>
+          <input type="text" id="nr_decoration_theme">
+          <label for="nr_decoration_cost" style="margin-top:10px;">Coste interno de la decoración (opcional, solo visible aquí)</label>
+          <input type="number" id="nr_decoration_cost" min="0" step="0.01">
+        </div>
+
+        <div class="checkbox-row"><input type="checkbox" id="nr_wants_catering"><label for="nr_wants_catering" style="margin:0; text-transform:none; font-size:14px;">Catering (precio a consultar)</label></div>
+        <div class="checkbox-row"><input type="checkbox" id="nr_wants_animation"><label for="nr_wants_animation" style="margin:0; text-transform:none; font-size:14px;">Animación (precio a consultar)</label></div>
+      </div>
+      <div class="field">
+        <label for="nr_message">Notas (opcional)</label>
+        <textarea id="nr_message"></textarea>
+      </div>
+      <div class="field">
+        <label for="nr_coupon_code">Cupón de descuento (opcional)</label>
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="nr_coupon_code" style="text-transform:uppercase;" placeholder="CÓDIGO">
+          <button type="button" class="btn btn-ghost" id="nrApplyCouponBtn" style="flex:none;">Aplicar</button>
+        </div>
+        <p class="field-note" id="nrCouponMsg" style="font-size:12.5px; margin-top:6px; color:var(--ink-soft);"></p>
+      </div>
+      <div class="total-row">
+        <span style="text-transform:uppercase; font-size:12px; letter-spacing:.03em; color:var(--ink-soft);">Total estimado</span>
+        <span class="amt" id="nrTotalAmount">0€</span>
+      </div>
+      <p style="margin-top:20px;">
+        <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;" id="newResSubmitBtn">Guardar reserva confirmada</button>
+      </p>
+      <p id="newResMsg" style="font-size:13.5px; margin-top:10px; color:var(--ink-soft);"></p>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="invoiceModal" hidden>
+  <div class="modal-box">
+    <button type="button" class="modal-close" id="invoiceClose" aria-label="Cerrar">×</button>
+    <h2 style="font-size:22px; margin-bottom:20px;" id="invoiceModalTitle">Nueva factura</h2>
+    <form id="invoiceForm">
+      <div class="field">
+        <label for="inv_reservation">Rellenar desde una reserva (opcional)</label>
+        <select id="inv_reservation">
+          <option value="">— Sin reserva / rellenar a mano —</option>
+        </select>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="inv_number">Nº factura</label>
+          <input type="text" id="inv_number" required>
+        </div>
+        <div class="field">
+          <label for="inv_date">Fecha</label>
+          <input type="date" id="inv_date" required>
+        </div>
+      </div>
+      <div class="field">
+        <label for="inv_name">Nombre del cliente</label>
+        <input type="text" id="inv_name" required>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="inv_dni">DNI (opcional)</label>
+          <input type="text" id="inv_dni">
+        </div>
+        <div class="field">
+          <label for="inv_address">Dirección (opcional)</label>
+          <input type="text" id="inv_address">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="inv_phone">Teléfono (opcional)</label>
+          <input type="tel" id="inv_phone">
+        </div>
+        <div class="field">
+          <label for="inv_email">Correo (opcional)</label>
+          <input type="email" id="inv_email">
+        </div>
+      </div>
+      <div class="field">
+        <label for="inv_concept">Concepto</label>
+        <input type="text" id="inv_concept" required>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="inv_total">Total cobrado (con IVA)</label>
+          <input type="number" id="inv_total" min="0" step="0.01" required>
+        </div>
+        <div class="field">
+          <label for="inv_payment">Forma de pago</label>
+          <select id="inv_payment">
+            <option value="Efectivo">Efectivo</option>
+            <option value="Bizum">Bizum</option>
+            <option value="Transferencia">Transferencia</option>
+          </select>
+        </div>
+      </div>
+      <p id="invoiceBreakdown" style="font-size:13.5px; color:var(--ink-soft); margin:-6px 0 14px;"></p>
+      <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;" id="invoiceSubmitBtn">Guardar y ver factura</button>
+      <p id="invoiceFormMsg" style="font-size:13.5px; margin-top:10px; color:var(--ink-soft);"></p>
+    </form>
+  </div>
+</div>
+
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { computeDiscount, lookupCoupon, couponSummary, formatPrice, couponAppliesTo, COUPON_SCOPE_LABELS } from './assets/coupons.js';
+import { jsPDF } from 'https://esm.sh/jspdf@2.5.2';
+import html2canvas from 'https://esm.sh/html2canvas@1.4.1';
+import JSZip from 'https://esm.sh/jszip@3.10.1';
+
+const SUPABASE_URL = 'https://ztsdkfwnqrlmsirfvoat.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0c2RrZnducXJsbXNpcmZ2b2F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwOTM5OTksImV4cCI6MjA5ODY2OTk5OX0.ODimfaCqTpK8fkY4Oobk8kSR3rppb_afmoTTXG8H2os';
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const VAPID_PUBLIC_KEY = 'BFx6mErzfrL63SqtXSw53urXScDwHJSthenPkQ1XVlqltYFmdPI0dPACmbX7Dcvls0x1D_RQc7VxycxdWfcUAOk';
+
+let swRegistration = null;
+if ('serviceWorker' in navigator){
+  window.addEventListener('load', async () => {
+    try { swRegistration = await navigator.serviceWorker.register('./sw-admin.js'); }
+    catch { swRegistration = null; }
+  });
+}
+
+function urlBase64ToUint8Array(base64String){
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+}
+
+// Si la clave VAPID cambia (por ejemplo al renovar el sistema de notificaciones), las
+// suscripciones antiguas del navegador quedan inválidas aunque él las siga recordando.
+function subscriptionKeyMatches(existing){
+  const actual = existing?.options?.applicationServerKey;
+  if (!actual) return false;
+  const expected = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+  const actualArr = new Uint8Array(actual);
+  if (actualArr.length !== expected.length) return false;
+  for (let i = 0; i < actualArr.length; i++) if (actualArr[i] !== expected[i]) return false;
+  return true;
+}
+
+async function checkNotifButton(){
+  const btn = document.getElementById('enableNotifBtn');
+  if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)){
+    btn.hidden = true;
+    return;
+  }
+  if (!swRegistration){
+    try { swRegistration = await navigator.serviceWorker.ready; } catch { /* noop */ }
+  }
+  if (Notification.permission === 'granted' && swRegistration){
+    const existing = await swRegistration.pushManager.getSubscription();
+    btn.hidden = !!existing && subscriptionKeyMatches(existing);
+  } else {
+    btn.hidden = Notification.permission === 'denied';
+  }
+}
+
+async function enableNotifications(){
+  const notifMsg = document.getElementById('notifMsg');
+  if (!swRegistration){
+    try { swRegistration = await navigator.serviceWorker.ready; } catch { /* noop */ }
+  }
+  if (!swRegistration){
+    notifMsg.textContent = 'No se ha podido activar: el navegador no admite notificaciones aquí.';
+    return;
+  }
+  const permission = await Notification.requestPermission();
+  if (permission !== 'granted'){
+    notifMsg.textContent = 'No se han activado las notificaciones. Puedes activarlas más tarde desde este mismo botón.';
+    return;
+  }
+  try {
+    const existing = await swRegistration.pushManager.getSubscription();
+    if (existing && !subscriptionKeyMatches(existing)) await existing.unsubscribe();
+    const subscription = await swRegistration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+    });
+    const json = subscription.toJSON();
+    const { error } = await supabase.from('push_subscriptions').insert({
+      endpoint: json.endpoint,
+      p256dh: json.keys.p256dh,
+      auth: json.keys.auth,
+    });
+    if (error && error.code !== '23505'){
+      notifMsg.textContent = 'No se ha podido guardar la suscripción: ' + error.message;
+      return;
+    }
+    notifMsg.textContent = 'Notificaciones activadas en este dispositivo ✅';
+    await checkNotifButton();
+  } catch (err){
+    notifMsg.textContent = 'No se ha podido activar la notificación: ' + err.message;
+  }
+}
+
+document.getElementById('enableNotifBtn').addEventListener('click', enableNotifications);
+
+const loginView = document.getElementById('loginView');
+const dashView = document.getElementById('dashView');
+const loginForm = document.getElementById('loginForm');
+const loginMsg = document.getElementById('loginMsg');
+const statusFilter = document.getElementById('statusFilter');
+const resSearchInput = document.getElementById('resSearchInput');
+const resList = document.getElementById('resList');
+
+function matchesReservationSearch(r, term){
+  const t = term.trim().toLowerCase();
+  if (!t) return true;
+  const name = (r.full_name || '').toLowerCase();
+  if (name.includes(t)) return true;
+  const termDigits = t.replace(/\D/g, '');
+  if (!termDigits) return false;
+  const phoneDigits = (r.phone || '').replace(/\D/g, '');
+  return phoneDigits.includes(termDigits);
+}
+
+let ALL_PLANS = [];
+let ALL_EXTRAS = [];
+let EVENT_TYPES = [];
+let FESTIVOS = new Set();
+let HIDDEN_RESERVATION_IDS = new Set();
+
+async function refreshHiddenReservationIds(){
+  const { data } = await supabase.from('partial_cancellations').select('reservation_id');
+  HIDDEN_RESERVATION_IDS = new Set((data || []).map(c => c.reservation_id));
+}
+
+function visibleReservations(list){
+  return (list || []).filter(r => !HIDDEN_RESERVATION_IDS.has(r.id));
+}
+
+const LOGIN_REMEMBER_KEY = 'mpr_admin_remember';
+(function restoreRememberedLogin(){
+  const saved = JSON.parse(localStorage.getItem(LOGIN_REMEMBER_KEY) || 'null');
+  if (saved){
+    document.getElementById('loginEmail').value = saved.email || '';
+    document.getElementById('loginPassword').value = saved.password || '';
+    document.getElementById('loginRemember').checked = true;
+  }
+})();
+
+loginForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const remember = document.getElementById('loginRemember').checked;
+  loginMsg.textContent = 'Entrando…';
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error){
+    loginMsg.textContent = 'Usuario o contraseña incorrectos.';
+    return;
+  }
+  if (remember){
+    localStorage.setItem(LOGIN_REMEMBER_KEY, JSON.stringify({ email, password }));
+  } else {
+    localStorage.removeItem(LOGIN_REMEMBER_KEY);
+  }
+  loginMsg.textContent = '';
+});
+
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+  await supabase.auth.signOut();
+  window.location.reload();
+});
+
+statusFilter.addEventListener('change', loadReservations);
+resSearchInput.addEventListener('input', loadReservations);
+
+function fmtDate(d){
+  return new Date(d + 'T00:00:00').toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+function fmtDateTime(iso){
+  const d = new Date(iso);
+  const datePart = d.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+  const timePart = d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+  return `${datePart} a las ${timePart}`;
+}
+
+function waNumber(phone){
+  let digits = (phone || '').replace(/\D/g, '');
+  if (digits.startsWith('0034')) digits = digits.slice(2);
+  if (digits.length === 9) digits = '34' + digits;
+  return digits;
+}
+
+// Tarifas tipo "3 horas a elegir": la franja guardada (start_time/end_time) es la ventana completa
+// dentro de la cual el cliente debe elegir sus horas concretas, no el horario ya cerrado.
+function flexHoursFromPlan(plan){
+  if (!plan || !/a elegir/i.test(plan.label)) return null;
+  const match = plan.label.match(/(\d+)\s*horas?/i);
+  return match ? match[1] : null;
+}
+
+function buildConfirmMessage(r, plan){
+  const items = [];
+  if (plan) items.push(`${formatPrice(roomPrice(r))} de alquiler`);
+  if (r.wants_cleaning) items.push(`${formatPrice(getExtraPrice('limpieza'))} de limpieza`);
+  if (r.kids_menus_count){
+    const n = r.kids_menus_count;
+    items.push(`${formatPrice(kidsMenuRevenue(r))} de menú${n > 1 ? 's' : ''} infantil${n > 1 ? 'es' : ''} (${n})`);
+  }
+  const total = plan ? reservationTotal(r) : null;
+  const flexHours = flexHoursFromPlan(plan);
+
+  let msg = flexHours
+    ? `Hola ${r.full_name} 👋 Te confirmamos tu reserva en *Mi Pequeño Rincón* para el ${fmtDate(r.event_date)} (${r.event_type}), dentro de la franja de ${r.start_time} a ${r.end_time}.`
+    : `Hola ${r.full_name} 👋 Te confirmamos tu reserva en *Mi Pequeño Rincón* para el ${fmtDate(r.event_date)}, de ${r.start_time} a ${r.end_time} (${r.event_type}).`;
+  if (items.length){
+    msg += `\n\n${items.join(' + ')}`;
+    if (r.coupon_code && Number(r.discount_amount) > 0) msg += ` - ${formatPrice(r.discount_amount)} (cupón *${r.coupon_code}*)`;
+    if (total != null) msg += ` = *${formatPrice(total)}* total`;
+  } else if (total != null){
+    msg += `\n\nTotal estimado: ${formatPrice(total)}.`;
+  }
+
+  if (flexHours){
+    msg += `\n\n📌 Tu tarifa incluye *${flexHours} horas a elegir* dentro de esa franja de ${r.start_time} a ${r.end_time}. Contesta a este mensaje diciéndonos qué ${flexHours} horas exactas quieres (por ejemplo, de 17:00 a 20:00) para dejarlo cerrado.`;
+  }
+
+  msg += `\n\nPara cerrar la reserva pedimos una señal de 20€ (efectivo o Bizum)`;
+  if (r.wants_decoration) msg += `, más otros 20€ de señal por la decoración personalizada`;
+  msg += `. El día del evento se pide además una fianza de 50€ en efectivo, que se devuelve si la sala queda en las mismas condiciones de uso y limpieza. Está prohibido pegar en las paredes cualquier tipo de decoración; hacerlo conllevará la pérdida total de la fianza.`;
+  if (r.wants_cleaning) msg += ` La limpieza (${formatPrice(getExtraPrice('limpieza'))}) también se paga en efectivo.`;
+  msg += `\n\n🎥 Recuerda que en todas las reservas grabamos gratis una felicitación en nuestra *silla interactiva*. Para poder prepararla, mándanos por aquí el *nombre y la edad* de quien celebra el evento (y si quieres, también fotos o vídeos suyos), con al menos *24 horas de antelación* al evento. Si no nos llega a tiempo, no podremos hacer la felicitación.`;
+  msg += `\n\n¡Te esperamos! 🌿`;
+  return msg;
+}
+
+function buildDenyMessage(r){
+  return `Hola ${r.full_name}, gracias por tu interés en *Mi Pequeño Rincón*. Sentimos decirte que la fecha del ${fmtDate(r.event_date)} (${r.start_time}-${r.end_time}) ya no está disponible. Si quieres, dinos otra fecha y miramos la disponibilidad. ¡Gracias por escribirnos!`;
+}
+
+function buildDateTakenMessage(r){
+  return `Hola ${r.full_name}, gracias por tu interés en *Mi Pequeño Rincón*. Sentimos decirte que la fecha del ${fmtDate(r.event_date)} (${r.start_time}-${r.end_time}) ya ha sido reservada por otra persona. Si quieres, dinos otra fecha y miramos la disponibilidad. ¡Gracias por escribirnos!`;
+}
+
+function buildCancelMessage(r){
+  return `Hola ${r.full_name}, te informamos de que tu reserva en *Mi Pequeño Rincón* del ${fmtDate(r.event_date)} (${r.start_time}-${r.end_time}) ha sido anulada. Si tienes cualquier duda o quieres buscar otra fecha, contacta con nosotros. Disculpa las molestias.`;
+}
+
+function buildDepositMessage(r, method){
+  const methodLabel = method === 'bizum' ? ' por Bizum' : method === 'efectivo' ? ' en efectivo' : '';
+  return `Hola ${r.full_name} 👋 Confirmamos que hemos recibido tu señal de 20€${methodLabel} para la reserva del ${fmtDate(r.event_date)} en *Mi Pequeño Rincón*. Ese importe se descontará del precio final el día del evento. ¡Gracias!`;
+}
+
+const GOOGLE_REVIEW_URL = 'https://g.page/r/CWvTXLQwN02wEBM/review';
+
+function buildReviewRequestMessage(r){
+  return `Hola ${r.full_name} 👋 Esperamos que lo pasarais genial en tu evento en *Mi Pequeño Rincón* 🌿 Si te ha gustado la experiencia, nos ayudaría muchísimo que nos dejaras una reseña en Google, se tarda un minuto y significa mucho para nosotros: ${GOOGLE_REVIEW_URL}\n\n¡Gracias! 💛`;
+}
+
+const CONTRACT_BASE_URL = new URL('contrato.html', location.href).href;
+
+function buildContractMessage(r, token){
+  return `Hola ${r.full_name} 👋 Para completar tu reserva en *Mi Pequeño Rincón* necesitamos que rellenes y firmes el contrato de alquiler desde este enlace:\n\n${CONTRACT_BASE_URL}?token=${token}\n\nSolo tardarás un par de minutos. ¡Gracias!`;
+}
+
+function addDays(dateStr, n){
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate() + n);
+  return ymd(d);
+}
+
+function dayGroupFor(dateStr){
+  const d = new Date(dateStr + 'T00:00:00');
+  const dow = d.getDay();
+  const isWeekend = dow === 0 || dow === 5 || dow === 6;
+  const isFestivo = FESTIVOS.has(dateStr);
+  const isVisperaFestivo = FESTIVOS.has(addDays(dateStr, 1));
+  return (isWeekend || isFestivo || isVisperaFestivo) ? 'viernes_domingo_festivos' : 'lunes_jueves';
+}
+
+function getExtraPrice(keyword){
+  const e = ALL_EXTRAS.find(x => x.name.toLowerCase().includes(keyword));
+  return e ? Number(e.price) : 0;
+}
+
+// Precio de la sala para esta reserva: el manual_price acordado con el cliente si existe,
+// si no el precio de lista de la tarifa elegida.
+function roomPrice(r){
+  if (r.manual_price != null && r.manual_price !== '') return Number(r.manual_price);
+  const plan = ALL_PLANS.find(p => p.id === r.pricing_plan_id);
+  return plan ? Number(plan.price) : 0;
+}
+
+function reservationTotal(r){
+  let total = roomPrice(r);
+  if (r.wants_cleaning) total += getExtraPrice('limpieza');
+  total += (r.kids_menus_count || 0) * getExtraPrice('infantil');
+  total -= Number(r.discount_amount || 0);
+  return Math.max(0, total);
+}
+
+function kidsMenuRevenue(r){
+  return (r.kids_menus_count || 0) * getExtraPrice('infantil');
+}
+
+// Añade `_contractSignedAt` a cada reserva consultando qué contratos ya se han firmado.
+async function attachContractSignedFlags(rows){
+  if (!rows || !rows.length) return rows;
+  const { data: signedRows } = await supabase
+    .from('contract_signatures')
+    .select('reservation_id, signed_at')
+    .in('reservation_id', rows.map(r => r.id));
+  const signedMap = new Map((signedRows || []).map(s => [s.reservation_id, s.signed_at]));
+  rows.forEach(r => { r._contractSignedAt = signedMap.get(r.id) || null; });
+  return rows;
+}
+
+function cleaningRevenue(r){
+  return r.wants_cleaning ? getExtraPrice('limpieza') : 0;
+}
+
+// ---------- Facturas ----------
+const BUSINESS_INFO = {
+  name: 'BEATRIZ ESPINILLA CABALGANTE',
+  dni: '47497563X',
+  address: 'CALLE RUMANIA 38',
+  postal: '45960 CHOZAS DE CANALES',
+  province: 'TOLEDO',
+  email: 'mipqrincón@gmail.com',
+  phone: 'Tlf: 624 2978 77',
+};
+
+function invoiceBreakdownFromTotal(total, rate){
+  const t = Number(total) || 0;
+  const base = t / (1 + rate / 100);
+  const iva = t - base;
+  return { base, iva, total: t };
+}
+
+function fmtDateShort(dateStr){
+  const [y, m, d] = (dateStr || '').split('-');
+  return y && m && d ? `${d}/${m}/${y}` : (dateStr || '');
+}
+
+async function suggestNextInvoiceNumber(){
+  const year = new Date().getFullYear();
+  const { data } = await supabase
+    .from('invoices')
+    .select('invoice_number')
+    .like('invoice_number', `${year}%`)
+    .order('invoice_number', { ascending: false })
+    .limit(1);
+  if (!data || !data.length) return '';
+  const last = data[0].invoice_number;
+  const suffix = last.slice(String(year).length);
+  const n = parseInt(suffix, 10);
+  if (Number.isNaN(n)) return '';
+  return `${year}${String(n + 1).padStart(suffix.length, '0')}`;
+}
+
+function buildInvoiceHtml(inv){
+  const { base, iva, total } = invoiceBreakdownFromTotal(inv.total_amount, inv.iva_rate);
+  return `<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Factura ${inv.invoice_number}</title>
+<style>
+  body{ font-family: Arial, Helvetica, sans-serif; color:#222; margin:40px; }
+  .head{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:24px; }
+  .head h1{ color:#2f5233; font-size:26px; margin:0 0 14px; }
+  .head .biz p{ margin:2px 0; font-size:13px; }
+  .head img{ height:150px; }
+  table{ border-collapse:collapse; margin-top:18px; font-size:13.5px; }
+  td, th{ padding:6px 10px; }
+  .meta, .cliente{ width:auto; }
+  .meta td:first-child{ font-weight:bold; width:130px; }
+  .meta td:last-child{ background:#E7EFC4; width:200px; }
+  .cliente th{ background:#cfcfcf; text-align:center; }
+  .cliente td:first-child{ font-weight:bold; width:130px; }
+  .cliente td:last-child{ background:#E7EFC4; text-align:center; width:200px; }
+  .concepto{ width:100%; }
+  .concepto th{ background:#cfcfcf; }
+  .concepto td{ background:#E7EFC4; }
+  .concepto .num{ text-align:right; width:140px; }
+  .totales td.num{ text-align:right; }
+  .pago{ margin-top:24px; font-size:13.5px; }
+  @media print{ .no-print{ display:none; } body{ margin:15mm; } }
+</style>
+</head>
+<body>
+  <div class="head">
+    <div class="biz">
+      <h1>FACTURA</h1>
+      <p>${BUSINESS_INFO.name}</p>
+      <p>${BUSINESS_INFO.dni}</p>
+      <p>${BUSINESS_INFO.address}</p>
+      <p>${BUSINESS_INFO.postal}</p>
+      <p>${BUSINESS_INFO.province}</p>
+      <p>${BUSINESS_INFO.email}</p>
+      <p>${BUSINESS_INFO.phone}</p>
+    </div>
+    <img src="assets/logo-mpr.jpg" alt="Mi Pequeño Rincón">
+  </div>
+  <table class="meta">
+    <tr><td>FECHA:</td><td>${fmtDateShort(inv.issue_date)}</td></tr>
+    <tr><td>Nº FACTURA:</td><td>${inv.invoice_number}</td></tr>
+  </table>
+  <table class="cliente">
+    <tr><th colspan="2">CLIENTE</th></tr>
+    <tr><td>NOMBRE:</td><td>${inv.client_name}</td></tr>
+    <tr><td>DNI:</td><td>${inv.client_dni || ''}</td></tr>
+    <tr><td>DIRECCIÓN:</td><td>${inv.client_address || ''}</td></tr>
+    <tr><td>TELÉFONO:</td><td>${inv.client_phone || ''}</td></tr>
+    <tr><td>CORREO:</td><td>${inv.client_email || ''}</td></tr>
+  </table>
+  <table class="concepto">
+    <tr><th>CONCEPTO</th><th class="num">PRECIO</th></tr>
+    <tr><td>${inv.concept}</td><td class="num">${formatPrice(base)}</td></tr>
+    <tr class="totales"><td></td><td class="num">${inv.iva_rate}%IVA ${formatPrice(iva)}</td></tr>
+    <tr class="totales"><td></td><td class="num"><strong>TOTAL ${formatPrice(total)}</strong></td></tr>
+  </table>
+  <p class="pago"><strong>FORMA DE PAGO:</strong> ${inv.payment_method || ''}</p>
+  <p class="no-print" style="margin-top:36px;"><button onclick="window.print()" style="padding:10px 20px; font-size:14px; cursor:pointer;">Imprimir / Guardar PDF</button></p>
+</body>
+</html>`;
+}
+
+function openInvoicePrintView(inv){
+  const win = window.open('', '_blank');
+  if (!win){ alert('El navegador ha bloqueado la ventana. Permite las ventanas emergentes para ver la factura.'); return; }
+  win.document.write(buildInvoiceHtml(inv));
+  win.document.close();
+}
+
+// Texto íntegro del contrato de alquiler, con los datos ya rellenados por el cliente en contrato.html.
+function buildContractSignedHtml(r, plan, sig){
+  const total = reservationTotal(r);
+  const nombre = sig.client_full_name;
+  const dni = sig.client_dni;
+  const domicilio = sig.client_address;
+  const telefono = sig.client_phone || r.phone;
+  const email = sig.client_email || r.email || '';
+  const fechaEvento = fmtDateShort(r.event_date);
+  const horario = `${r.start_time.slice(0,5)} a ${r.end_time.slice(0,5)}`;
+  const precio = formatPrice(total);
+  const fechaFirma = fmtDateShort(sig.signed_at.slice(0,10));
+
+  return `<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Contrato — ${nombre}</title>
+<style>
+  body{ font-family: 'Georgia', 'Times New Roman', serif; color:#222; margin:40px; font-size:13.5px; line-height:1.6; }
+  h1{ font-size:20px; text-align:center; margin-bottom:4px; }
+  h2{ font-size:15px; text-align:center; margin-bottom:22px; }
+  p{ margin:0 0 12px; text-align:justify; }
+  .sign-block{ display:flex; justify-content:space-between; gap:40px; margin-top:40px; }
+  .sign-col{ flex:1; text-align:center; }
+  .sign-col img{ max-width:100%; max-height:110px; border-bottom:1px solid #999; }
+  .sign-col .name{ margin-top:6px; font-weight:bold; }
+  .meta{ font-size:11.5px; color:#777; margin-top:6px; }
+  @media print{ .no-print{ display:none; } body{ margin:15mm; } }
+</style>
+</head>
+<body>
+  <h1>CONTRATO DE ALQUILER DE SALA DE EVENTOS</h1>
+  <h2>Mi Pequeño Rincón</h2>
+  <p><strong>LO SUSCRIBEN</strong></p>
+  <p>De una parte, como arrendador Beatriz Espinilla Cabalgante con DNI 47497563X, en representación legal de Mi pequeño rincón, con domicilio social C/Guadalajara, 1, local 5, 45960 Chozas de Canales (Toledo).</p>
+  <p>Y de otra parte, como arrendatario/a D/Dña <strong>${nombre}</strong>, mayor de edad con CIF/DNI <strong>${dni}</strong>, en adelante el CLIENTE, cuyo domicilio se encuentra en <strong>${domicilio}</strong>, con número de teléfono <strong>${telefono}</strong> y correo electrónico <strong>${email}</strong>.</p>
+  <p>Ambas partes tienen y se reconocen con capacidad legal suficiente para el presente otorgamiento, comprometiéndose a no impugnar este documento que constituye un contrato de arrendamiento de finca urbana para uso distinto del de vivienda, con arreglo a las siguientes estipulaciones:</p>
+  <p>1.- Beatriz Espinilla Cabalgante arrienda a D/Dª <strong>${nombre}</strong> la sala de eventos del local sito en C/Guadalajara, 1, local 5, 45960 Chozas de Canales (Toledo), para que la arrendataria proceda a celebración del evento privado. Dicha sala se encuentra equipada con las siguientes instalaciones y utensilios: 4 mesas plegables, 2 mesas rectangulares de catering, dos mesas altas de catering, una mesa redonda plegable, 34 sillas, horno, microondas, cafetera, frigorífico, menaje, TV 58 pulgadas con 2 mandos, proyector, altavoz bluetooth con micrófonos inalámbricos, luces led en techo, máquina de humo y 2 paneles verticales con luces led con mando, jardín vertical con 2 paneles de listones y luces led con mando para photocall, parque de bolas, futbolín, máquina arcade, zapatero, espejo de baño y secamanos eléctrico. Estos habrán de ser devueltos a la finalización del arrendamiento en el mismo estado de conservación. El arrendatario declara y reconoce que recibe el bien arrendado en perfecto estado y a su entera satisfacción, siendo plenamente apto para el fin al que se destina.</p>
+  <p>2.- El contrato se celebra para que el local sea utilizado en la fecha <strong>${fechaEvento}</strong>, por un único día, en aplicación del artículo 4.3 de la ley 29/1994 de 24 de noviembre, en horario de <strong>${horario}</strong> horas. La parte arrendataria deberá abandonar el local en la hora acordada, en el mismo estado que la encontró, dejándola libre de efectos y enseres y permaneciendo en perfecto estado los servicios de que dispone, al igual que los muebles y enseres citados. Para ello se establece una fianza de 50 euros, la cual se abonará en efectivo en el momento de la entrega del local por parte del arrendador, y que será devuelta en su totalidad al finalizar el evento, siempre y cuando se cumpla lo acordado en este contrato. De no ser así, el arrendador se quedará con ella y, en caso de superar el valor de la misma, se procederá a su peritación y reclamación legal.</p>
+  <p>3.- El precio convenido asciende a la cantidad de <strong>${precio}</strong>, incluido el IVA vigente en cada momento. En la fecha de firma se entrega una señal de reserva de 20€ a descontar del precio final. En caso de anulación por parte del arrendatario con menos de 5 días de antelación, esta reserva se pierde o se ofrece un cambio de fecha.</p>
+  <p>4.- De forma expresa se conviene, voluntariamente entre las partes, que queda prohibido ceder y subarrendar, tanto total como parcialmente, el bien arrendado bajo ningún concepto.</p>
+  <p>5.- El arrendatario se hace directa y exclusivamente responsable de todo lo que ocurra dentro de la propiedad contratada, sean daños y perjuicios que puedan ocasionarse a personas o cosas, así como los deterioros o pérdidas que se produzcan en la misma, eximiendo de toda responsabilidad al arrendador. Siendo por lo tanto toda indemnización o gasto que se genere de éstos de cuenta exclusiva del arrendatario.</p>
+  <p>6.- El arrendatario será responsable de toda la comida y bebidas de cualquier tipo que facilite en la fiesta, siendo él el único responsable en caso de que derivado de la ingesta de las mismas se tenga cualquier consecuencia. Mediante este documento se exime a la propiedad de toda responsabilidad a este respecto. Asimismo, el arrendatario se compromete a no llevar a cabo ninguna actividad ilícita en el local, así como a respetar las prohibiciones establecidas legalmente. Por señalar la más importante: la prohibición de suministrar bebidas alcohólicas a menores de 18 años.</p>
+  <p>7.- En caso de que la parte arrendataria proceda a la contratación de cualquier trabajador (camarero, monitor, animador…) serán de su cuenta y cargo los gastos que ello genere, tanto en salarios como en impuestos, liberando a la parte arrendadora de toda responsabilidad a este respecto.</p>
+  <p>8.- El arrendatario es responsable de tramitar y asumir el pago derivado de cuantos permisos y autorizaciones necesite para llevar a cabo el evento propuesto de acuerdo a la naturaleza del mismo, así como de la póliza de seguro contra todo riesgo y de responsabilidad civil que cubra cualquier eventualidad que pueda ocurrir.</p>
+  <p>9.- El arrendatario dejará la sala limpia, recogida y en las mismas condiciones de entrega (toda la basura fuera del local, sillas apiladas y mesas plegadas dentro del almacén, mobiliario en su lugar, bolas dentro de la piscina de bolas, juguetes recogidos, etc.). Si la sala se deja sin recoger y limpiar se descontará de la fianza 25€ en concepto de limpieza.</p>
+  <p>10.- Queda terminantemente prohibido lo siguiente: fumar dentro del local y en el interior del centro comercial en aplicación de la Ley 28/2005, de 26 de diciembre de 2005; el almacenamiento y uso de cualquier sustancia inflamable o peligrosa, como combustible, fuegos artificiales, petardos, etc.; sacar mobiliario o vajilla a la acera y a la vía pública; exceder del aforo máximo de 37 personas, computando por igual tanto los adultos como los niños; causar molestias a la vecindad; dejar a los menores de edad sin vigilancia o que los mismos utilicen las instalaciones sin supervisión; hacer ruidos superiores al que marca la legislación vigente en el momento; explotar dentro del local y del centro comercial globos de confeti.</p>
+  <p>11.- Los datos personales serán tratados confidencialmente según el artículo 5.1.f del RGPD.</p>
+  <p>12.- El arrendatario responde con sus derechos y propiedades de las deudas y responsabilidades derivadas de este contrato. Para la resolución de cuantas cuestiones pudieran derivarse del otorgamiento de este documento, ambas partes, con renuncia de su propio fuero, se someten a la jurisdicción de los tribunales de Illescas. El incumplimiento por cualquiera de las partes de las obligaciones resultantes del presente contrato dará derecho a la parte que hubiere cumplido con las suyas a exigir el cumplimiento de las mismas, o a promover la resolución del contrato, de acuerdo a lo dispuesto en el artículo 1.124 del Código Civil. Conforme las partes con cuanto llevan expuesto, y después de leer y comprender el auténtico significado práctico y económico del mismo, lo firman en la fecha indicada al inicio.</p>
+  <p><strong>DEVOLUCIÓN DE FIANZA</strong></p>
+  <p>Para la devolución de la fianza deberán estar todos los apartados marcados dejando constancia de que todo está en orden y en perfecto estado: limpieza y buen funcionamiento de cocina, frigorífico, horno, microondas, cafetera y enseres (3 cuchillos, paleta, tijeras, corta pizzas, abridor de botellas, escurridor, tabla de cortar, tapa microondas y rejilla grill); parque de bolas limpio y con todas las bolas dentro de la piscina (es obligatorio acceder descalzo al parque y sin comida); baños; suelo; manteles limpios (para ello es obligatorio el uso de manteles); y conservación de disfraces (13), micrófonos (2) y pie de micrófono, diana electrónica y dardos (6), futbolín (2 pelotas), máquina arcade, monitor TV, proyector, máquina de humo, luces de colores, luces led, paneles de madera y jardín vertical. Está totalmente prohibido pegar en las paredes cualquier tipo de decoración.</p>
+  <p>En Chozas de Canales, a ${fechaFirma}.</p>
+  <div class="sign-block">
+    <div class="sign-col">
+      <div>Firma del CLIENTE (arrendatario):</div>
+      <img src="${sig.signature_image}" alt="Firma">
+      <div class="name">${sig.signature_typed_name}</div>
+      <div class="meta">Firmado electrónicamente el ${fmtDateTime(sig.signed_at)}</div>
+    </div>
+    <div class="sign-col">
+      <div>Firma del REPRESENTANTE (arrendador):</div>
+      <img src="assets/firma-beatriz.png" alt="Firma">
+      <div class="name">Beatriz Espinilla Cabalgante</div>
+    </div>
+  </div>
+  <p class="no-print" style="margin-top:36px; text-align:center;"><button onclick="window.print()" style="padding:10px 20px; font-size:14px; cursor:pointer;">Imprimir / Guardar PDF</button></p>
+</body>
+</html>`;
+}
+
+function openContractPrintView(r, plan, sig){
+  const win = window.open('', '_blank');
+  if (!win){ alert('El navegador ha bloqueado la ventana. Permite las ventanas emergentes para ver el contrato.'); return; }
+  win.document.write(buildContractSignedHtml(r, plan, sig));
+  win.document.close();
+}
+
+async function renderInvoiceToCanvas(inv){
+  const iframe = document.createElement('iframe');
+  iframe.style.position = 'fixed';
+  iframe.style.left = '-9999px';
+  iframe.style.top = '0';
+  iframe.style.width = '900px';
+  iframe.style.height = '1200px';
+  iframe.style.border = '0';
+  document.body.appendChild(iframe);
+
+  await new Promise((resolve) => {
+    iframe.onload = () => {
+      const img = iframe.contentDocument.querySelector('img');
+      if (!img || img.complete){ resolve(); return; }
+      img.onload = resolve;
+      img.onerror = resolve;
+    };
+    iframe.srcdoc = buildInvoiceHtml(inv);
+  });
+
+  const canvas = await html2canvas(iframe.contentDocument.body, { scale: 2, backgroundColor: '#ffffff' });
+  document.body.removeChild(iframe);
+  return canvas;
+}
+
+async function buildInvoicePdfBlob(inv){
+  const canvas = await renderInvoiceToCanvas(inv);
+  const imgData = canvas.toDataURL('image/jpeg', 0.92);
+  const pdf = new jsPDF({ unit: 'px', format: [canvas.width, canvas.height] });
+  pdf.addImage(imgData, 'JPEG', 0, 0, canvas.width, canvas.height);
+  return pdf.output('blob');
+}
+
+document.getElementById('downloadQuarterZipBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('downloadQuarterZipBtn');
+  const msgEl = document.getElementById('zipDownloadMsg');
+  const quarter = Number(document.getElementById('inv_zip_quarter').value);
+  const year = Number(document.getElementById('inv_zip_year').value);
+  if (!year){ msgEl.textContent = 'Indica un año.'; return; }
+
+  const startMonth = (quarter - 1) * 3 + 1;
+  const endMonth = startMonth + 3;
+  const startDate = `${year}-${String(startMonth).padStart(2, '0')}-01`;
+  const endDate = endMonth > 12 ? `${year + 1}-01-01` : `${year}-${String(endMonth).padStart(2, '0')}-01`;
+
+  btn.disabled = true;
+  msgEl.textContent = 'Buscando facturas…';
+
+  const { data, error } = await supabase
+    .from('invoices')
+    .select('*')
+    .gte('issue_date', startDate)
+    .lt('issue_date', endDate)
+    .order('invoice_number', { ascending: true });
+
+  if (error){
+    msgEl.textContent = 'Error buscando facturas: ' + error.message;
+    btn.disabled = false;
+    return;
+  }
+  if (!data || !data.length){
+    msgEl.textContent = `No hay facturas en el ${QUARTER_NAMES[quarter - 1]} de ${year}.`;
+    btn.disabled = false;
+    return;
+  }
+
+  const zip = new JSZip();
+  for (let i = 0; i < data.length; i++){
+    msgEl.textContent = `Generando factura ${i + 1} de ${data.length}…`;
+    const blob = await buildInvoicePdfBlob(data[i]);
+    zip.file(`Factura_${data[i].invoice_number}.pdf`, blob);
+  }
+
+  msgEl.textContent = 'Comprimiendo…';
+  const zipBlob = await zip.generateAsync({ type: 'blob' });
+  const url = URL.createObjectURL(zipBlob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Facturas_T${quarter}_${year}.zip`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+
+  msgEl.textContent = `Descargadas ${data.length} factura(s) del ${QUARTER_NAMES[quarter - 1]} ${year}.`;
+  btn.disabled = false;
+});
+
+(function initInvoiceZipDefaults(){
+  const now = new Date();
+  document.getElementById('inv_zip_year').value = now.getFullYear();
+  document.getElementById('inv_zip_quarter').value = String(Math.ceil((now.getMonth() + 1) / 3));
+})();
+
+async function renderInvoices(){
+  const list = document.getElementById('invoicesList');
+  const { data, error } = await supabase.from('invoices').select('*').order('invoice_number', { ascending: false });
+  if (error){ list.innerHTML = `<p class="empty-msg">Error cargando facturas: ${error.message}</p>`; return; }
+  if (!data || !data.length){ list.innerHTML = `<p class="empty-msg">Todavía no has creado ninguna factura.</p>`; return; }
+  list.innerHTML = data.map(inv => `
+    <div class="res-card">
+      <div class="res-head">
+        <h3>Factura ${inv.invoice_number}</h3>
+        <span class="badge confirmada">${formatPrice(inv.total_amount)}</span>
+      </div>
+      <div class="res-meta">
+        <div>📅 ${fmtDate(inv.issue_date)}</div>
+        <div>🧾 ${inv.client_name}</div>
+        <div>${inv.concept}</div>
+      </div>
+      <div class="res-actions">
+        <button class="btn btn-ghost" data-action="view-invoice" data-id="${inv.id}">🖨️ Ver / Imprimir</button>
+        <button class="btn btn-ghost" data-action="edit-invoice" data-id="${inv.id}">✏️ Editar</button>
+        <button class="btn btn-deny" data-action="delete-invoice" data-id="${inv.id}">🗑️ Borrar</button>
+      </div>
+    </div>
+  `).join('');
+
+  list.querySelectorAll('button[data-action]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.id;
+      const inv = data.find(x => x.id === id);
+      if (btn.dataset.action === 'view-invoice'){
+        openInvoicePrintView(inv);
+      } else if (btn.dataset.action === 'edit-invoice'){
+        await openInvoiceModal(inv);
+      } else if (btn.dataset.action === 'delete-invoice'){
+        if (!confirm(`¿Borrar la factura ${inv.invoice_number}? Hacienda exige que la numeración de facturas sea correlativa y sin huecos, así que solo deberías borrar la última factura emitida si te has equivocado al crearla.`)) return;
+        const { error } = await supabase.from('invoices').delete().eq('id', id);
+        if (error){ alert('No se ha podido borrar: ' + error.message); return; }
+        await renderInvoices();
+      }
+    });
+  });
+}
+
+// ---------- Enchufes inteligentes ----------
+let PLUG_SETTINGS_ID = null;
+
+async function renderPlugSettings(){
+  const { data, error } = await supabase.from('smart_plug_settings').select('*').limit(1).maybeSingle();
+  if (error){
+    document.getElementById('plugSettingsMsg').textContent = 'Error cargando la configuración: ' + error.message;
+    return;
+  }
+  if (data){
+    PLUG_SETTINGS_ID = data.id;
+    document.getElementById('plug_client_id').value = data.tuya_client_id || '';
+    document.getElementById('plug_client_secret').value = data.tuya_client_secret || '';
+  } else {
+    PLUG_SETTINGS_ID = null;
+  }
+}
+
+document.getElementById('plugSettingsForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const msgEl = document.getElementById('plugSettingsMsg');
+  const submitBtn = document.getElementById('plugSettingsSubmitBtn');
+  submitBtn.disabled = true;
+  const payload = {
+    tuya_client_id: document.getElementById('plug_client_id').value.trim(),
+    tuya_client_secret: document.getElementById('plug_client_secret').value.trim(),
+    updated_at: new Date().toISOString(),
+  };
+  const { error } = PLUG_SETTINGS_ID
+    ? await supabase.from('smart_plug_settings').update(payload).eq('id', PLUG_SETTINGS_ID)
+    : await supabase.from('smart_plug_settings').insert(payload);
+  submitBtn.disabled = false;
+  if (error){
+    msgEl.textContent = 'No se ha podido guardar: ' + error.message;
+    return;
+  }
+  msgEl.textContent = 'Conexión guardada.';
+  await renderPlugSettings();
+});
+
+function minutesLabel(mins){
+  if (mins % 60 === 0) return `${mins} min (${mins / 60}h)`;
+  return `${mins} min`;
+}
+
+async function renderPlugsList(){
+  const list = document.getElementById('plugsList');
+  const { data, error } = await supabase.from('smart_plugs').select('*').order('created_at', { ascending: true });
+  if (error){ list.innerHTML = `<p class="empty-msg">Error cargando enchufes: ${error.message}</p>`; return; }
+  if (!data || !data.length){ list.innerHTML = '<p class="empty-msg">Todavía no has añadido ningún enchufe.</p>'; return; }
+  list.innerHTML = data.map(p => `
+    <div class="res-card">
+      <div class="res-head">
+        <h3>${p.name}</h3>
+        <span class="badge ${p.active ? 'confirmada' : 'cancelada'}">${p.active ? 'Activo' : 'Desactivado'}</span>
+      </div>
+      <div class="res-meta">
+        <div>🔌 ${p.device_id}</div>
+        <div>⏱️ Se enciende ${minutesLabel(p.minutes_before_on)} antes</div>
+      </div>
+      <div class="res-actions" style="align-items:center;">
+        <input type="number" min="0" step="5" value="${p.minutes_before_on}" data-minutes-input="${p.id}" style="width:90px; padding:8px 10px; border:1px solid var(--line); border-radius:var(--radius);">
+        <button class="btn btn-ghost" data-action="save-minutes" data-id="${p.id}">Guardar minutos</button>
+        <button class="btn btn-ghost" data-action="toggle-plug" data-id="${p.id}" data-active="${p.active}">${p.active ? 'Desactivar' : 'Activar'}</button>
+        <button class="btn btn-deny" data-action="delete-plug" data-id="${p.id}">🗑️ Borrar</button>
+      </div>
+    </div>
+  `).join('');
+
+  list.querySelectorAll('button[data-action]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.id;
+      if (btn.dataset.action === 'toggle-plug'){
+        const active = btn.dataset.active === 'true';
+        const { error } = await supabase.from('smart_plugs').update({ active: !active }).eq('id', id);
+        if (error){ alert('No se ha podido actualizar: ' + error.message); return; }
+        await renderPlugsList();
+      } else if (btn.dataset.action === 'delete-plug'){
+        if (!confirm('¿Borrar este enchufe de la lista?')) return;
+        const { error } = await supabase.from('smart_plugs').delete().eq('id', id);
+        if (error){ alert('No se ha podido borrar: ' + error.message); return; }
+        await renderPlugsList();
+      } else if (btn.dataset.action === 'save-minutes'){
+        const input = list.querySelector(`[data-minutes-input="${id}"]`);
+        const minutes = Number(input.value);
+        if (!Number.isFinite(minutes) || minutes < 0){ alert('Pon un número de minutos válido.'); return; }
+        const { error } = await supabase.from('smart_plugs').update({ minutes_before_on: minutes }).eq('id', id);
+        if (error){ alert('No se ha podido guardar: ' + error.message); return; }
+        await renderPlugsList();
+      }
+    });
+  });
+}
+
+document.getElementById('plugForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const msgEl = document.getElementById('plugFormMsg');
+  const submitBtn = document.getElementById('plugSubmitBtn');
+  const name = document.getElementById('plug_name').value.trim();
+  const deviceId = document.getElementById('plug_device_id').value.trim();
+  const minutesBefore = Number(document.getElementById('plug_minutes_before').value) || 0;
+  if (!name || !deviceId){
+    msgEl.textContent = 'Rellena el nombre y el Device ID.';
+    return;
+  }
+  submitBtn.disabled = true;
+  const { error } = await supabase.from('smart_plugs').insert({ name, device_id: deviceId, active: true, minutes_before_on: minutesBefore });
+  submitBtn.disabled = false;
+  if (error){
+    msgEl.textContent = 'No se ha podido añadir: ' + error.message;
+    return;
+  }
+  msgEl.textContent = '';
+  document.getElementById('plugForm').reset();
+  document.getElementById('plug_minutes_before').value = 360;
+  await renderPlugsList();
+});
+
+const IVA_RATE = 0.21;
+
+// Solo el alquiler de la sala lleva IVA; limpieza y menús infantiles los gestionan
+// colaboradores externos que se encargan de sus propios impuestos.
+function roomRevenue(r){
+  return Math.max(0, roomPrice(r) - Number(r.discount_amount || 0));
+}
+
+function roomRevenueNet(r){
+  return roomRevenue(r) / (1 + IVA_RATE);
+}
+
+function monthlyRoomRevenue(reservations){
+  const byMonth = {};
+  reservations.forEach(r => {
+    const key = (r.event_date || '').slice(0, 7);
+    if (!key) return;
+    if (!byMonth[key]) byMonth[key] = { gross: 0, net: 0, iva: 0 };
+    const gross = roomRevenue(r);
+    const net = roomRevenueNet(r);
+    byMonth[key].gross += gross;
+    byMonth[key].net += net;
+    byMonth[key].iva += gross - net;
+  });
+  return byMonth;
+}
+
+// "Real" = alquiler sin IVA + decoración + limpieza + 1€ por cada menú infantil.
+// "Total" = lo mismo pero con el alquiler CON IVA (lo que hay que pagar de más al hacienda).
+// En las anulaciones parciales no se descuenta el IVA del alquiler: el importe retenido
+// es una compensación, no una venta sujeta al mismo desglose fiscal.
+function realIncomeForReservation(r, skipIva){
+  const decor = r.wants_decoration ? Number(r.decoration_cost || 0) : 0;
+  const kids = (r.kids_menus_count || 0) * 1;
+  const room = skipIva ? roomRevenue(r) : roomRevenueNet(r);
+  return room + decor + cleaningRevenue(r) + kids;
+}
+
+function totalIncomeForReservation(r){
+  const decor = r.wants_decoration ? Number(r.decoration_cost || 0) : 0;
+  const kids = (r.kids_menus_count || 0) * 1;
+  return roomRevenue(r) + decor + cleaningRevenue(r) + kids;
+}
+
+function monthlyRealIncome(reservations, partialIds){
+  const ids = partialIds || new Set();
+  const byMonth = {};
+  reservations.forEach(r => {
+    const key = (r.event_date || '').slice(0, 7);
+    if (!key) return;
+    if (!byMonth[key]) byMonth[key] = { real: 0, total: 0, reservations: [] };
+    byMonth[key].real += realIncomeForReservation(r, ids.has(r.id));
+    byMonth[key].total += totalIncomeForReservation(r);
+    byMonth[key].reservations.push(r);
+  });
+  return byMonth;
+}
+
+async function renderGraficos(){
+  const { data: rawData, error } = await supabase.from('reservations').select('*');
+  if (error || !rawData) return;
+  const confirmed = visibleReservations(rawData).filter(r => r.status === 'confirmada');
+  const byMonth = monthlyRoomRevenue(confirmed);
+  const months = Object.keys(byMonth).sort().reverse();
+  const container = document.getElementById('chartMonths');
+
+  if (!months.length){
+    container.innerHTML = '<p style="color:var(--ink-soft); font-size:14px;">Todavía no hay reservas confirmadas.</p>';
+    return;
+  }
+
+  const maxGross = Math.max(...months.map(m => byMonth[m].gross), 1);
+  container.innerHTML = months.map(m => {
+    const label = new Date(m + '-01T00:00:00').toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+    const info = byMonth[m];
+    const billedPct = Math.max(4, (info.gross / maxGross) * 100);
+    const netPct = Math.max(4, (info.net / maxGross) * 100);
+    return `
+      <div class="chart-row">
+        <div class="chart-month-lbl">${label}</div>
+        <div class="chart-bar-track"><div class="chart-bar-fill billed" style="width:${billedPct}%">${formatPrice(info.gross)}</div></div>
+        <div class="chart-bar-track"><div class="chart-bar-fill net" style="width:${netPct}%">${formatPrice(info.net)}</div></div>
+      </div>`;
+  }).join('');
+}
+
+// ---------- Estadísticas ----------
+const WEEKDAY_NAMES = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+
+function statsClientKey(r){
+  return waNumber(r.phone) || r.phone || r.full_name;
+}
+
+async function renderEstadisticas(){
+  const kpiCount = document.getElementById('statsKpiCount');
+  kpiCount.textContent = '…';
+
+  const { data: rawData, error } = await supabase.from('reservations').select('*');
+  if (error || !rawData) return;
+  const allConfirmed = visibleReservations(rawData).filter(r => r.status === 'confirmada');
+
+  const range = document.getElementById('statsRange').value;
+  let rows = allConfirmed;
+  if (range !== 'all'){
+    const days = Number(range);
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - days);
+    const cutoffStr = ymd(cutoff);
+    rows = allConfirmed.filter(r => r.event_date >= cutoffStr);
+  }
+
+  const uniqueClients = new Set(rows.map(statsClientKey)).size;
+  const totalRevenue = rows.reduce((sum, r) => sum + reservationTotal(r), 0);
+  const avgTicket = rows.length ? totalRevenue / rows.length : 0;
+
+  document.getElementById('statsKpiCount').textContent = rows.length;
+  document.getElementById('statsKpiClients').textContent = uniqueClients;
+  document.getElementById('statsKpiRevenue').textContent = formatPrice(totalRevenue);
+  document.getElementById('statsKpiTicket').textContent = formatPrice(avgTicket);
+
+  renderStatsRevenueChart(rows);
+  renderStatsEventTypeChart(rows);
+  renderStatsWeekdayChart(rows);
+  renderStatsTopClients(rows);
+  renderStatsCouponUsage(rows);
+}
+
+function renderStatsRevenueChart(rows){
+  const el = document.getElementById('statsRevenueChart');
+  const byMonth = {};
+  rows.forEach(r => {
+    const key = (r.event_date || '').slice(0, 7);
+    if (!key) return;
+    byMonth[key] = (byMonth[key] || 0) + reservationTotal(r);
+  });
+  const months = Object.keys(byMonth).sort().slice(-12);
+  if (!months.length){ el.innerHTML = '<p class="empty-msg">Sin datos en este periodo.</p>'; return; }
+  const max = Math.max(...months.map(m => byMonth[m]), 1);
+  el.innerHTML = months.map(m => {
+    const value = byMonth[m];
+    const pct = Math.max(4, Math.round((value / max) * 100));
+    const label = new Date(m + '-01T00:00:00').toLocaleDateString('es-ES', { month: 'short', year: '2-digit' });
+    return `
+      <div class="chart-row">
+        <div class="chart-month-lbl">${label}</div>
+        <div class="chart-bar-track"><div class="chart-bar-fill net" style="width:${pct}%">${formatPrice(value)}</div></div>
+      </div>`;
+  }).join('');
+}
+
+function renderStatsEventTypeChart(rows){
+  const el = document.getElementById('statsEventTypeChart');
+  const buckets = {};
+  rows.forEach(r => {
+    const key = r.event_type || 'Sin especificar';
+    buckets[key] = (buckets[key] || 0) + 1;
+  });
+  const entries = Object.entries(buckets).sort((a, b) => b[1] - a[1]);
+  if (!entries.length){ el.innerHTML = '<p class="empty-msg">Sin datos en este periodo.</p>'; return; }
+  const max = Math.max(...entries.map(e => e[1]), 1);
+  const total = entries.reduce((s, e) => s + e[1], 0);
+  el.innerHTML = entries.map(([type, count], i) => {
+    const pct = Math.max(4, Math.round((count / max) * 100));
+    const share = Math.round((count / total) * 100);
+    return `
+      <div class="chart-row">
+        <div class="chart-month-lbl">${type}</div>
+        <div class="chart-bar-track"><div class="chart-bar-fill ${i === 0 ? 'top' : 'net'}" style="width:${pct}%">${count} (${share}%)</div></div>
+      </div>`;
+  }).join('');
+}
+
+function renderStatsWeekdayChart(rows){
+  const el = document.getElementById('statsWeekdayChart');
+  const buckets = {};
+  rows.forEach(r => {
+    if (!r.event_date) return;
+    const dow = new Date(r.event_date + 'T00:00:00').getDay();
+    buckets[dow] = (buckets[dow] || 0) + 1;
+  });
+  const entries = Object.entries(buckets).sort((a, b) => Number(a[0]) - Number(b[0]));
+  if (!entries.length){ el.innerHTML = '<p class="empty-msg">Sin datos en este periodo.</p>'; return; }
+  const max = Math.max(...entries.map(e => e[1]), 1);
+  const topDow = entries.reduce((best, e) => (e[1] > best[1] ? e : best), entries[0])[0];
+  el.innerHTML = entries.map(([dow, count]) => {
+    const pct = Math.max(4, Math.round((count / max) * 100));
+    return `
+      <div class="chart-row">
+        <div class="chart-month-lbl">${WEEKDAY_NAMES[dow]}</div>
+        <div class="chart-bar-track"><div class="chart-bar-fill ${dow === topDow ? 'top' : 'net'}" style="width:${pct}%">${count}</div></div>
+      </div>`;
+  }).join('');
+}
+
+function renderStatsTopClients(rows){
+  const el = document.getElementById('statsTopClients');
+  const byClient = {};
+  rows.forEach(r => {
+    const key = statsClientKey(r);
+    if (!byClient[key]) byClient[key] = { name: r.full_name, count: 0 };
+    byClient[key].count += 1;
+  });
+  const top = Object.values(byClient).sort((a, b) => b.count - a.count).slice(0, 8);
+  if (!top.length){ el.innerHTML = '<p class="empty-msg">Sin datos en este periodo.</p>'; return; }
+  const max = Math.max(...top.map(c => c.count), 1);
+  el.innerHTML = top.map((c, i) => {
+    const pct = Math.max(4, Math.round((c.count / max) * 100));
+    return `
+      <div class="chart-row">
+        <div class="chart-month-lbl" style="text-transform:none;" title="${c.name}">${c.name}</div>
+        <div class="chart-bar-track"><div class="chart-bar-fill ${i === 0 ? 'top' : 'net'}" style="width:${pct}%">${c.count}</div></div>
+      </div>`;
+  }).join('');
+}
+
+async function renderStatsCouponUsage(rows){
+  const el = document.getElementById('statsCouponUsage');
+  const byCode = {};
+  rows.forEach(r => {
+    if (!r.coupon_code) return;
+    byCode[r.coupon_code] = (byCode[r.coupon_code] || 0) + 1;
+  });
+
+  const { data: coupons } = await supabase.from('coupons').select('code').order('code');
+  (coupons || []).forEach(c => { if (!(c.code in byCode)) byCode[c.code] = 0; });
+
+  const entries = Object.entries(byCode).sort((a, b) => b[1] - a[1]);
+  if (!entries.length){ el.innerHTML = '<p class="empty-msg">Todavía no hay cupones creados.</p>'; return; }
+  const max = Math.max(...entries.map(e => e[1]), 1);
+  el.innerHTML = entries.map(([code, count], i) => {
+    const pct = Math.max(4, Math.round((count / max) * 100));
+    return `
+      <div class="chart-row">
+        <div class="chart-month-lbl" style="text-transform:none;" title="${code}">${code}</div>
+        <div class="chart-bar-track"><div class="chart-bar-fill ${count > 0 && i === 0 ? 'top' : 'net'}" style="width:${pct}%">${count} ${count === 1 ? 'uso' : 'usos'}</div></div>
+      </div>`;
+  }).join('');
+}
+
+async function renderVisitas(){
+  const { data, error } = await supabase.from('page_views').select('visited_at, visitor_id');
+  const visits = error ? [] : (data || []);
+
+  document.getElementById('visitsTotal').textContent = visits.length;
+  document.getElementById('visitsUniqueTotal').textContent = new Set(visits.map(v => v.visitor_id).filter(Boolean)).size;
+
+  const byMonth = {};
+  visits.forEach(v => {
+    const key = (v.visited_at || '').slice(0, 7);
+    if (!key) return;
+    if (!byMonth[key]) byMonth[key] = { count: 0, visitors: new Set() };
+    byMonth[key].count += 1;
+    if (v.visitor_id) byMonth[key].visitors.add(v.visitor_id);
+  });
+  const months = Object.keys(byMonth).sort().reverse();
+  const currentMonthKey = ymd(new Date()).slice(0, 7);
+  const currentInfo = byMonth[currentMonthKey];
+  document.getElementById('visitsMonth').textContent = currentInfo ? currentInfo.count : 0;
+  document.getElementById('visitsUniqueMonth').textContent = currentInfo ? currentInfo.visitors.size : 0;
+
+  const table = document.getElementById('visitsMonthsTable');
+  if (!months.length){
+    table.innerHTML = '<tr><td>Todavía no hay visitas registradas.</td></tr>';
+    return;
+  }
+  table.innerHTML = `
+    <thead><tr><th>Mes</th><th>Visitas</th><th>Visitantes únicos</th></tr></thead>
+    <tbody>
+      ${months.map(m => {
+        const label = new Date(m + '-01T00:00:00').toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+        return `<tr><td style="text-transform:capitalize;">${label}</td><td>${byMonth[m].count}</td><td>${byMonth[m].visitors.size}</td></tr>`;
+      }).join('')}
+    </tbody>
+  `;
+}
+
+const SOCIAL_NETWORKS = ['facebook', 'instagram', 'tiktok'];
+const SOCIAL_LABELS = { facebook: 'Facebook', instagram: 'Instagram', tiktok: 'TikTok' };
+
+async function renderSocialClicks(){
+  const { data, error } = await supabase.from('social_clicks').select('network, clicked_at');
+  const clicks = error ? [] : (data || []);
+
+  SOCIAL_NETWORKS.forEach(net => {
+    document.getElementById(`social${net.charAt(0).toUpperCase()}${net.slice(1)}Total`).textContent =
+      clicks.filter(c => c.network === net).length;
+  });
+
+  const byMonth = {};
+  clicks.forEach(c => {
+    const key = (c.clicked_at || '').slice(0, 7);
+    if (!key) return;
+    if (!byMonth[key]) byMonth[key] = { facebook: 0, instagram: 0, tiktok: 0 };
+    if (byMonth[key][c.network] != null) byMonth[key][c.network] += 1;
+  });
+  const months = Object.keys(byMonth).sort().reverse();
+  const table = document.getElementById('socialMonthsTable');
+  if (!months.length){
+    table.innerHTML = '<tr><td>Todavía no hay clics registrados.</td></tr>';
+    return;
+  }
+  table.innerHTML = `
+    <thead><tr><th>Mes</th><th>Facebook</th><th>Instagram</th><th>TikTok</th></tr></thead>
+    <tbody>
+      ${months.map(m => {
+        const label = new Date(m + '-01T00:00:00').toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+        const info = byMonth[m];
+        return `<tr><td style="text-transform:capitalize;">${label}</td><td>${info.facebook}</td><td>${info.instagram}</td><td>${info.tiktok}</td></tr>`;
+      }).join('')}
+    </tbody>
+  `;
+}
+
+const QUARTER_NAMES = ['1er trimestre', '2º trimestre', '3er trimestre', '4º trimestre'];
+
+function quarterKeyForMonth(monthKey){
+  const [y, m] = monthKey.split('-').map(Number);
+  const q = Math.ceil(m / 3);
+  return `${y}-Q${q}`;
+}
+
+function quarterLabel(quarterKey){
+  const [y, q] = quarterKey.split('-Q');
+  return `${QUARTER_NAMES[Number(q) - 1]} ${y}`;
+}
+
+async function renderImpuestos(){
+  const { data: rawData, error } = await supabase.from('reservations').select('*');
+  if (error || !rawData) return;
+  const confirmed = visibleReservations(rawData).filter(r => r.status === 'confirmada');
+  const byMonth = monthlyRoomRevenue(confirmed);
+  const months = Object.keys(byMonth).sort().reverse();
+
+  const totals = months.reduce((acc, m) => {
+    acc.net += byMonth[m].net;
+    acc.iva += byMonth[m].iva;
+    acc.gross += byMonth[m].gross;
+    return acc;
+  }, { net: 0, iva: 0, gross: 0 });
+
+  document.getElementById('taxBaseTotal').textContent = formatPrice(totals.net);
+  document.getElementById('taxIvaTotal').textContent = formatPrice(totals.iva);
+  document.getElementById('taxGrossTotal').textContent = formatPrice(totals.gross);
+
+  const table = document.getElementById('taxMonthsTable');
+  if (!months.length){
+    table.innerHTML = '<tr><td>Todavía no hay reservas confirmadas.</td></tr>';
+    return;
+  }
+
+  const byQuarter = {};
+  months.forEach(m => {
+    const qKey = quarterKeyForMonth(m);
+    if (!byQuarter[qKey]) byQuarter[qKey] = { months: [], net: 0, iva: 0, gross: 0 };
+    byQuarter[qKey].months.push(m);
+    byQuarter[qKey].net += byMonth[m].net;
+    byQuarter[qKey].iva += byMonth[m].iva;
+    byQuarter[qKey].gross += byMonth[m].gross;
+  });
+  const quarters = Object.keys(byQuarter).sort().reverse();
+
+  table.innerHTML = `
+    <thead><tr><th>Mes</th><th>Base imponible</th><th>IVA (21%)</th><th>Total con IVA</th></tr></thead>
+    <tbody>
+      ${quarters.map(q => {
+        const qInfo = byQuarter[q];
+        const monthRows = qInfo.months.map(m => {
+          const label = new Date(m + '-01T00:00:00').toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+          const info = byMonth[m];
+          return `<tr><td style="text-transform:capitalize; padding-left:18px;">${label}</td><td>${formatPrice(info.net)}</td><td>${formatPrice(info.iva)}</td><td>${formatPrice(info.gross)}</td></tr>`;
+        }).join('');
+        return `
+          <tr class="quarter-header"><td colspan="4">${quarterLabel(q)}</td></tr>
+          ${monthRows}
+          <tr class="quarter-subtotal"><td>Subtotal ${quarterLabel(q)}</td><td>${formatPrice(qInfo.net)}</td><td>${formatPrice(qInfo.iva)}</td><td>${formatPrice(qInfo.gross)}</td></tr>
+        `;
+      }).join('')}
+    </tbody>
+    <tfoot>
+      <tr><td>Total</td><td>${formatPrice(totals.net)}</td><td>${formatPrice(totals.iva)}</td><td>${formatPrice(totals.gross)}</td></tr>
+    </tfoot>
+  `;
+}
+
+async function updateStats(){
+  const { data: rawData, error } = await supabase.from('reservations').select('*');
+  if (error || !rawData) return;
+  const data = visibleReservations(rawData);
+
+  const confirmed = data.filter(r => r.status === 'confirmada');
+  const pending = data.filter(r => r.status === 'pendiente');
+  const totalIncome = confirmed.reduce((sum, r) => sum + reservationTotal(r) - kidsMenuRevenue(r) - cleaningRevenue(r), 0);
+
+  const kidsMenuCount = confirmed.reduce((sum, r) => sum + (r.kids_menus_count || 0), 0);
+  const kidsMenuTotal = confirmed.reduce((sum, r) => sum + kidsMenuRevenue(r), 0);
+  const decorReservations = confirmed.filter(r => r.wants_decoration);
+  const decorCostTotal = decorReservations.reduce((sum, r) => sum + Number(r.decoration_cost || 0), 0);
+  const cleaningReservations = confirmed.filter(r => r.wants_cleaning);
+  const cleaningTotal = cleaningReservations.reduce((sum, r) => sum + cleaningRevenue(r), 0);
+
+  document.getElementById('statIncome').textContent = formatPrice(totalIncome);
+  document.getElementById('statConfirmed').textContent = confirmed.length;
+  document.getElementById('statPending').textContent = pending.length;
+  document.getElementById('statCleaning').textContent = `${cleaningReservations.length} reservas · ${formatPrice(cleaningTotal)}`;
+  document.getElementById('statKidsMenus').textContent = `${kidsMenuCount} unidades · ${formatPrice(kidsMenuTotal)}`;
+  document.getElementById('statDecorCost').textContent = `${decorReservations.length} reservas · ${formatPrice(decorCostTotal)}`;
+
+  const byMonth = {};
+  confirmed.forEach(r => {
+    const key = (r.event_date || '').slice(0,7);
+    if (!key) return;
+    if (!byMonth[key]) byMonth[key] = { count: 0, total: 0 };
+    byMonth[key].count += 1;
+    byMonth[key].total += reservationTotal(r) - kidsMenuRevenue(r) - cleaningRevenue(r);
+  });
+  const months = Object.keys(byMonth).sort().reverse();
+  const table = document.getElementById('statsMonthsTable');
+  table.innerHTML = months.length
+    ? months.map(m => {
+        const label = new Date(m + '-01T00:00:00').toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+        const info = byMonth[m];
+        return `<tr><td>${label}</td><td>${info.count} reserva(s)</td><td>${formatPrice(info.total)}</td></tr>`;
+      }).join('')
+    : '<tr><td>Todavía no hay reservas confirmadas.</td></tr>';
+}
+
+function setActionMsg(html, type){
+  const el = document.getElementById('actionMsg');
+  el.innerHTML = html;
+  el.className = type || '';
+  el.style.display = html ? 'block' : 'none';
+}
+
+function openWhatsApp(phone, text){
+  const url = `https://wa.me/${waNumber(phone)}?text=${encodeURIComponent(text)}`;
+  const win = window.open(url, '_blank', 'noopener');
+  return !!win;
+}
+
+async function updateStatus(id, status){
+  const { data, error } = await supabase.from('reservations').update({ status }).eq('id', id).select();
+  if (error){
+    setActionMsg('No se ha podido guardar el cambio en Supabase: ' + error.message, 'err');
+    return false;
+  }
+  if (!data || !data.length){
+    setActionMsg('Supabase no ha actualizado ninguna fila (revisa los permisos/RLS). El estado NO se ha guardado.', 'err');
+    return false;
+  }
+  return true;
+}
+
+const RES_SOURCE_LABELS = { web: '🌐 Web', whatsapp: '💬 WhatsApp', presencial: '📍 Presencial' };
+
+// Tarjeta de reserva compartida entre la pestaña Reservas y el detalle de un día en Calendario,
+// para que ambas muestren la misma información y los mismos botones de acción.
+function reservationCardHtml(r){
+  const plan = ALL_PLANS.find(p => p.id === r.pricing_plan_id);
+  const extras = [];
+  if (r.wants_cleaning) extras.push('Limpieza');
+  if (r.wants_decoration) extras.push(`Decoración${r.decoration_theme ? ' (' + r.decoration_theme + ')' : ''}${r.decoration_cost ? ' — coste interno ' + formatPrice(r.decoration_cost) : ''}`);
+  if (r.kids_menus_count) extras.push(`${r.kids_menus_count} menú(s) infantil(es)`);
+  if (r.wants_catering) extras.push('Catering');
+  if (r.wants_animation) extras.push('Animación');
+
+  const actions = `<div class="res-actions">
+      ${r.status === 'pendiente'
+        ? `<button class="btn btn-primary" data-action="accept" data-id="${r.id}">✅ Aceptar</button>
+           <button class="btn btn-deny" data-action="deny" data-id="${r.id}">❌ Denegar</button>`
+        : `<button class="btn btn-ghost" data-action="resend" data-id="${r.id}">Reenviar WhatsApp</button>
+           ${r.status === 'confirmada' ? `<button class="btn btn-deny" data-action="cancel" data-id="${r.id}">🚫 Anular reserva</button>` : ''}
+           <button class="btn btn-ghost" data-action="partial-cancel" data-id="${r.id}">💸 Anular parcial</button>`}
+      <button class="btn btn-ghost" data-action="edit" data-id="${r.id}">✏️ Modificar</button>
+      <button class="btn btn-deny" data-action="delete" data-id="${r.id}">🗑️ Borrar</button>
+    </div>`;
+
+  return `
+    <div class="res-card">
+      <div class="res-head">
+        <h3>${r.full_name}</h3>
+        <span class="badge ${r.status}">${r.status}</span>
+      </div>
+      <div style="font-size:12px; color:var(--ink-soft); margin:-6px 0 10px;">🕓 Reserva creada el ${fmtDateTime(r.created_at)}</div>
+      <div class="res-meta">
+        <div>📅 ${fmtDate(r.event_date)} · ⏰ ${r.start_time}-${r.end_time}</div>
+        <div>🎉 ${r.event_type}${r.guests_estimate ? ' · 👥 ' + r.guests_estimate + ' invitados' : ''}</div>
+        <div>📞 ${r.phone}${r.email ? ' · ' + r.email : ''}</div>
+        ${plan ? `<div>💶 ${plan.label} — ${formatPrice(roomPrice(r))}${r.manual_price != null ? ' (precio manual)' : ''} · Total est. ${formatPrice(reservationTotal(r))}</div>` : ''}
+        ${extras.length ? `<div>➕ ${extras.join(', ')}</div>` : ''}
+        ${r.coupon_code ? `<div>🏷️ Cupón ${r.coupon_code} (-${formatPrice(r.discount_amount || 0)})</div>` : ''}
+        ${r.message ? `<div>💬 “${r.message}”</div>` : ''}
+        <div>${RES_SOURCE_LABELS[r.source] || r.source || ''}</div>
+      </div>
+      ${r.status !== 'pendiente' ? `
+      <div style="margin-top:14px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+        ${r.deposit_paid
+          ? `<span class="badge confirmada">✅ Señal pagada${r.deposit_method ? ' (' + (r.deposit_method === 'bizum' ? 'Bizum' : 'Efectivo') + ')' : ''}</span><button class="btn btn-ghost" data-action="undeposit" data-id="${r.id}" style="font-size:11.5px; padding:5px 10px;">Deshacer</button>`
+          : `<span style="font-size:13px; color:var(--ink-soft);">Marcar señal de 20€ pagada:</span>
+             <button class="btn btn-ghost" data-action="mark-deposit" data-method="efectivo" data-id="${r.id}">💵 Efectivo</button>
+             <button class="btn btn-ghost" data-action="mark-deposit" data-method="bizum" data-id="${r.id}">📱 Bizum</button>`}
+      </div>` : ''}
+      ${r.status === 'confirmada' ? `
+      <div style="margin-top:10px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+        ${r._contractSignedAt
+          ? `<span class="badge confirmada">📄 Contrato firmado el ${fmtDate(r._contractSignedAt.slice(0,10))}</span><button class="btn btn-ghost" data-action="view-contract" data-id="${r.id}">👁️ Ver contrato</button>`
+          : r.contract_token
+            ? `<span style="font-size:13px; color:var(--ink-soft);">📄 Contrato enviado, pendiente de firma</span><button class="btn btn-ghost" data-action="resend-contract" data-id="${r.id}">🔁 Reenviar enlace</button>`
+            : `<button class="btn btn-ghost" data-action="send-contract" data-id="${r.id}">📄 Enviar contrato</button>`}
+      </div>` : ''}
+      ${r.status === 'confirmada' && r.event_date <= ymd(new Date()) ? `
+      <div style="margin-top:10px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+        ${r.review_requested_at
+          ? `<span class="badge confirmada">⭐ Reseña pedida el ${fmtDate(r.review_requested_at.slice(0,10))}</span>`
+          : `<button class="btn btn-ghost" data-action="request-review" data-id="${r.id}">⭐ Pedir reseña</button>`}
+      </div>` : ''}
+      ${actions}
+    </div>`;
+}
+
+// Conecta los botones data-action de las tarjetas dentro de `container`. `findReservation(id)`
+// localiza la reserva correspondiente y `onChange()` se llama tras cualquier acción que cambie datos,
+// para que cada pestaña decida cómo refrescarse.
+function bindReservationCardActions(container, findReservation, onChange){
+  container.querySelectorAll('button[data-action]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.id;
+      const r = findReservation(id);
+      const plan = ALL_PLANS.find(p => p.id === r.pricing_plan_id);
+      const action = btn.dataset.action;
+
+      if (action === 'accept' || action === 'deny'){
+        if (action === 'accept'){
+          const { data: conflicts } = await supabase
+            .from('reservations')
+            .select('id, full_name')
+            .eq('event_date', r.event_date)
+            .eq('status', 'confirmada')
+            .neq('id', id)
+            .limit(1);
+          if (conflicts && conflicts.length){
+            const wantsDeny = confirm(`⚠️ El día ${fmtDate(r.event_date)} ya tienes confirmada la reserva de ${conflicts[0].full_name}.\n\nNo puedes aceptar esta también. ¿Quieres denegarla ahora avisando al cliente de que la fecha ya está reservada?`);
+            if (wantsDeny){
+              btn.disabled = true;
+              const msg = buildDateTakenMessage(r);
+              const saved = await updateStatus(id, 'cancelada');
+              if (saved){
+                const opened = openWhatsApp(r.phone, msg);
+                setActionMsg(
+                  opened
+                    ? `Reserva de ${r.full_name} denegada (fecha ya reservada) en Supabase. Se ha abierto WhatsApp para que envíes el mensaje.`
+                    : `Reserva de ${r.full_name} denegada (fecha ya reservada) en Supabase, pero el navegador ha bloqueado la ventana de WhatsApp. <a href="https://wa.me/${waNumber(r.phone)}?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">Ábrela manualmente aquí</a>.`,
+                  'ok'
+                );
+              }
+              await onChange();
+            }
+            return;
+          }
+        }
+        btn.disabled = true;
+        const status = action === 'accept' ? 'confirmada' : 'cancelada';
+        const label = action === 'accept' ? 'confirmada ✅' : 'cancelada ❌';
+        const msg = action === 'accept' ? buildConfirmMessage(r, plan) : buildDenyMessage(r);
+        const saved = await updateStatus(id, status);
+        if (saved){
+          const opened = openWhatsApp(r.phone, msg);
+          setActionMsg(
+            opened
+              ? `Reserva de ${r.full_name} marcada como <strong>${label}</strong> en Supabase. Se ha abierto WhatsApp para que envíes el mensaje.`
+              : `Reserva de ${r.full_name} marcada como <strong>${label}</strong> en Supabase, pero el navegador ha bloqueado la ventana de WhatsApp. <a href="https://wa.me/${waNumber(r.phone)}?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">Ábrela manualmente aquí</a>.`,
+            'ok'
+          );
+        }
+        await onChange();
+      } else if (action === 'resend'){
+        const msg = r.status === 'confirmada' ? buildConfirmMessage(r, plan) : buildDenyMessage(r);
+        const opened = openWhatsApp(r.phone, msg);
+        if (!opened) setActionMsg(`El navegador ha bloqueado la ventana. <a href="https://wa.me/${waNumber(r.phone)}?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">Ábrela manualmente aquí</a>.`, 'ok');
+      } else if (action === 'cancel'){
+        if (!confirm(`¿Seguro que quieres anular la reserva de ${r.full_name} (${fmtDate(r.event_date)})?`)) return;
+        btn.disabled = true;
+        const msg = buildCancelMessage(r);
+        const saved = await updateStatus(id, 'cancelada');
+        if (saved){
+          const opened = openWhatsApp(r.phone, msg);
+          setActionMsg(
+            opened
+              ? `Reserva de ${r.full_name} anulada en Supabase. Se ha abierto WhatsApp para avisar al cliente.`
+              : `Reserva de ${r.full_name} anulada en Supabase, pero el navegador ha bloqueado la ventana de WhatsApp. <a href="https://wa.me/${waNumber(r.phone)}?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">Ábrela manualmente aquí</a>.`,
+            'ok'
+          );
+        }
+        await onChange();
+      } else if (action === 'mark-deposit'){
+        btn.disabled = true;
+        const method = btn.dataset.method;
+        const { error } = await supabase.from('reservations').update({ deposit_paid: true, deposit_method: method }).eq('id', id).select();
+        if (error){
+          setActionMsg('No se ha podido guardar la señal: ' + error.message, 'err');
+          btn.disabled = false;
+          return;
+        }
+        const msg = buildDepositMessage(r, method);
+        const opened = openWhatsApp(r.phone, msg);
+        setActionMsg(
+          opened
+            ? `Señal de ${r.full_name} marcada como pagada (${method === 'bizum' ? 'Bizum' : 'efectivo'}) en Supabase. Se ha abierto WhatsApp para confirmárselo.`
+            : `Señal de ${r.full_name} marcada como pagada en Supabase, pero el navegador ha bloqueado la ventana de WhatsApp. <a href="https://wa.me/${waNumber(r.phone)}?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">Ábrela manualmente aquí</a>.`,
+          'ok'
+        );
+        await onChange();
+      } else if (action === 'request-review'){
+        btn.disabled = true;
+        const { error } = await supabase.from('reservations').update({ review_requested_at: new Date().toISOString() }).eq('id', id).select();
+        if (error){
+          setActionMsg('No se ha podido guardar: ' + error.message, 'err');
+          btn.disabled = false;
+          return;
+        }
+        const msg = buildReviewRequestMessage(r);
+        const opened = openWhatsApp(r.phone, msg);
+        setActionMsg(
+          opened
+            ? `Se ha abierto WhatsApp para pedirle la reseña a ${r.full_name}.`
+            : `Marcado en Supabase, pero el navegador ha bloqueado la ventana de WhatsApp. <a href="https://wa.me/${waNumber(r.phone)}?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">Ábrela manualmente aquí</a>.`,
+          'ok'
+        );
+        await onChange();
+      } else if (action === 'undeposit'){
+        if (!confirm('¿Desmarcar la señal como pagada? No se avisará al cliente.')) return;
+        const { error } = await supabase.from('reservations').update({ deposit_paid: false, deposit_method: null }).eq('id', id).select();
+        if (error){
+          setActionMsg('No se ha podido actualizar: ' + error.message, 'err');
+          return;
+        }
+        await onChange();
+      } else if (action === 'send-contract' || action === 'resend-contract'){
+        btn.disabled = true;
+        let token = r.contract_token;
+        if (!token){
+          token = crypto.randomUUID();
+          const { error } = await supabase.from('reservations').update({ contract_token: token, contract_sent_at: new Date().toISOString() }).eq('id', id).select();
+          if (error){
+            setActionMsg('No se ha podido generar el enlace del contrato: ' + error.message, 'err');
+            btn.disabled = false;
+            return;
+          }
+        }
+        const msg = buildContractMessage(r, token);
+        const opened = openWhatsApp(r.phone, msg);
+        setActionMsg(
+          opened
+            ? `Se ha abierto WhatsApp para enviarle el contrato a ${r.full_name}.`
+            : `Enlace de contrato generado, pero el navegador ha bloqueado la ventana de WhatsApp. <a href="https://wa.me/${waNumber(r.phone)}?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">Ábrela manualmente aquí</a>.`,
+          'ok'
+        );
+        await onChange();
+      } else if (action === 'view-contract'){
+        const { data: sig, error } = await supabase.from('contract_signatures').select('*').eq('reservation_id', id).maybeSingle();
+        if (error || !sig){
+          setActionMsg('No se ha podido cargar el contrato firmado.', 'err');
+          return;
+        }
+        openContractPrintView(r, plan, sig);
+      } else if (action === 'edit'){
+        openEditResModal(r);
+      } else if (action === 'partial-cancel'){
+        openPartialCancelModal(r);
+      } else if (action === 'delete'){
+        if (!confirm(`¿Seguro que quieres borrar definitivamente la reserva de ${r.full_name} (${fmtDate(r.event_date)})? Esta acción no se puede deshacer.`)) return;
+        btn.disabled = true;
+        const { error } = await supabase.from('reservations').delete().eq('id', id);
+        if (error){
+          setActionMsg('No se ha podido borrar la reserva: ' + error.message, 'err');
+          btn.disabled = false;
+          return;
+        }
+        setActionMsg(`Reserva de ${r.full_name} borrada.`, 'ok');
+        await onChange();
+      }
+    });
+  });
+}
+
+async function loadReservations(){
+  const filter = statusFilter.value;
+  let query = supabase.from('reservations').select('*').order('event_date', { ascending: true });
+  if (filter !== 'todas') query = query.eq('status', filter);
+  const { data: rawData, error } = await query;
+  const data = visibleReservations(rawData);
+
+  await updateStats();
+
+  if (error){
+    resList.innerHTML = `<p class="empty-msg">Error cargando reservas: ${error.message}</p>`;
+    return;
+  }
+
+  const searchTerm = resSearchInput.value;
+  const filteredData = (data || []).filter(r => matchesReservationSearch(r, searchTerm));
+
+  if (!filteredData.length){
+    resList.innerHTML = `<p class="empty-msg">${searchTerm.trim() ? 'No se han encontrado reservas con esa búsqueda.' : 'No hay reservas en este filtro.'}</p>`;
+    return;
+  }
+
+  await attachContractSignedFlags(filteredData);
+
+  resList.innerHTML = filteredData.map(reservationCardHtml).join('');
+
+  bindReservationCardActions(
+    resList,
+    (id) => filteredData.find(x => x.id === id),
+    async () => { await loadReservations(); refreshActiveTab(); }
+  );
+}
+
+async function showDashboard(){
+  loginView.hidden = true;
+  dashView.hidden = false;
+  const [{ data: plans }, { data: extras }, { data: types }, { data: festivos }] = await Promise.all([
+    supabase.from('pricing_plans').select('*').eq('active', true),
+    supabase.from('extras').select('*').eq('active', true),
+    supabase.from('event_types').select('name').order('name'),
+    supabase.from('festivos').select('event_date'),
+  ]);
+  ALL_PLANS = plans || [];
+  ALL_EXTRAS = extras || [];
+  EVENT_TYPES = (types || []).map(t => t.name);
+  FESTIVOS = new Set((festivos || []).map(f => f.event_date));
+
+  document.getElementById('nr_event_type').innerHTML = EVENT_TYPES.map(t => `<option value="${t}">${t}</option>`).join('');
+
+  await refreshHiddenReservationIds();
+  await loadReservations();
+  checkNotifButton();
+  checkHiddenHash();
+}
+
+async function init(){
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session) {
+    await showDashboard();
+  }
+  supabase.auth.onAuthStateChange((_event, session) => {
+    if (session) showDashboard();
+  });
+}
+
+init();
+
+// ---------- Tabs ----------
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.hidden = true);
+    btn.classList.add('active');
+    const panel = document.getElementById(btn.dataset.tab);
+    panel.hidden = false;
+    if (btn.dataset.tab === 'tabCalendario') renderCalendarState();
+    if (btn.dataset.tab === 'tabClientes') renderClients();
+    if (btn.dataset.tab === 'tabCupones') renderCoupons();
+    if (btn.dataset.tab === 'tabGaleria'){ renderGallery(); renderEventTypePhotos(); renderVideosAdmin(); }
+    if (btn.dataset.tab === 'tabGraficos'){ renderGraficos(); renderVisitas(); renderSocialClicks(); }
+    if (btn.dataset.tab === 'tabEstadisticas') renderEstadisticas();
+    if (btn.dataset.tab === 'tabImpuestos') renderImpuestos();
+    if (btn.dataset.tab === 'tabFacturas') renderInvoices();
+    if (btn.dataset.tab === 'tabEnchufes'){ renderPlugSettings(); renderPlugsList(); }
+  });
+});
+
+function refreshActiveTab(){
+  const activeBtn = document.querySelector('.tab-btn.active');
+  if (!activeBtn) return;
+  if (activeBtn.dataset.tab === 'tabCalendario') renderCalendarState();
+  if (activeBtn.dataset.tab === 'tabClientes') renderClients();
+  if (activeBtn.dataset.tab === 'tabGraficos') renderGraficos();
+  if (activeBtn.dataset.tab === 'tabImpuestos') renderImpuestos();
+}
+
+document.getElementById('statsRange').addEventListener('change', renderEstadisticas);
+
+// ---------- Calendar tab ----------
+const MONTH_NAMES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const DOWS = ['L','M','X','J','V','S','D'];
+const calState = { year: new Date().getFullYear(), month: new Date().getMonth() };
+
+function ymd(d){
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+async function renderCalendarState(){
+  document.getElementById('calLabel').textContent = `${MONTH_NAMES[calState.month]} ${calState.year}`;
+  document.getElementById('calDayList').innerHTML = '';
+
+  const [{ data: rawData, error }, { data: invRows }] = await Promise.all([
+    supabase.from('reservations').select('*')
+      .gte('event_date', `${calState.year}-${String(calState.month+1).padStart(2,'0')}-01`)
+      .lt('event_date', calState.month === 11 ? `${calState.year+1}-01-01` : `${calState.year}-${String(calState.month+2).padStart(2,'0')}-01`),
+    supabase.from('invoices').select('reservation_id').not('reservation_id', 'is', null),
+  ]);
+  const data = visibleReservations(rawData);
+  const invoicedResIds = new Set((invRows || []).map(x => x.reservation_id));
+  await attachContractSignedFlags(data);
+
+  const byDate = {};
+  (data || []).forEach(r => {
+    if (!byDate[r.event_date]) byDate[r.event_date] = [];
+    byDate[r.event_date].push(r);
+  });
+
+  const first = new Date(calState.year, calState.month, 1);
+  const startOffset = (first.getDay() + 6) % 7;
+  const daysInMonth = new Date(calState.year, calState.month + 1, 0).getDate();
+
+  let html = '';
+  DOWS.forEach(d => html += `<div class="dow">${d}</div>`);
+  for (let i = 0; i < startOffset; i++) html += `<div class="cal-day empty"></div>`;
+  for (let day = 1; day <= daysInMonth; day++){
+    const key = ymd(new Date(calState.year, calState.month, day));
+    const dayRes = byDate[key] || [];
+    const dayStatus = dayRes.some(r => r.status === 'confirmada') ? 'confirmada'
+      : dayRes.some(r => r.status === 'pendiente') ? 'pendiente'
+      : null;
+    const cls = 'cal-day' + (dayRes.length ? ' clickable' : '') + (dayStatus ? ` status-${dayStatus}` : '');
+    const dayInvoiced = dayRes.some(r => invoicedResIds.has(r.id));
+    html += `<div class="${cls}" ${dayRes.length ? `data-date="${key}"` : ''}>
+        ${dayInvoiced ? '<span class="cal-day-badge" title="Ya facturada">F</span>' : ''}
+        <span class="daynum">${day}</span>
+      </div>`;
+  }
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML = html;
+  grid.querySelectorAll('[data-date]').forEach(el => {
+    el.addEventListener('click', () => showCalDay(el.dataset.date, byDate[el.dataset.date]));
+  });
+}
+
+function showCalDay(dateStr, reservations){
+  const list = document.getElementById('calDayList');
+  list.innerHTML = `<h3 style="font-size:16px; margin-bottom:14px; text-transform:capitalize;">${fmtDate(dateStr)}</h3>` +
+    reservations.map(reservationCardHtml).join('');
+
+  bindReservationCardActions(
+    list,
+    (id) => reservations.find(x => x.id === id),
+    () => refreshCalDay(dateStr)
+  );
+}
+
+// Recarga la cuadrícula del mes (por si cambia el estado/color del día) y vuelve a pintar
+// el detalle del día abierto con los datos frescos.
+async function refreshCalDay(dateStr){
+  await renderCalendarState();
+  const { data: rawData } = await supabase.from('reservations').select('*').eq('event_date', dateStr);
+  const data = visibleReservations(rawData);
+  await attachContractSignedFlags(data);
+  showCalDay(dateStr, data);
+}
+
+document.getElementById('calPrevBtn').addEventListener('click', () => {
+  calState.month--;
+  if (calState.month < 0){ calState.month = 11; calState.year--; }
+  renderCalendarState();
+});
+document.getElementById('calNextBtn').addEventListener('click', () => {
+  calState.month++;
+  if (calState.month > 11){ calState.month = 0; calState.year++; }
+  renderCalendarState();
+});
+
+// ---------- Anulaciones parciales (panel oculto) ----------
+const ADMIN_HIDDEN_PIN = '2195';
+let partialCancelRes = null;
+const partialCancelModal = document.getElementById('partialCancelModal');
+const pinModal = document.getElementById('pinModal');
+const pcCalState = { year: new Date().getFullYear(), month: new Date().getMonth() };
+let PC_LISTS = { confirmed: [], pending: [], cancelled: [], partial: [], cleaning: [], decoration: [] };
+let PC_CANCELS_BY_RES = {};
+
+function openPartialCancelModal(r){
+  partialCancelRes = r;
+  document.getElementById('partialCancelForm').reset();
+  document.getElementById('partialCancelMsg').textContent = '';
+  document.getElementById('partialCancelResName').textContent = `${r.full_name} — ${fmtDate(r.event_date)}`;
+  document.getElementById('partialCancelResAmount').textContent = `Importe que se registrará: ${formatPrice(reservationTotal(r))}`;
+  partialCancelModal.hidden = false;
+}
+document.getElementById('partialCancelClose').addEventListener('click', () => { partialCancelModal.hidden = true; });
+partialCancelModal.addEventListener('click', (e) => { if (e.target === partialCancelModal) partialCancelModal.hidden = true; });
+
+document.getElementById('partialCancelForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const r = partialCancelRes;
+  const amount = reservationTotal(r);
+  const note = document.getElementById('pc_note').value.trim() || null;
+  const msgEl = document.getElementById('partialCancelMsg');
+  const submitBtn = document.getElementById('partialCancelSubmitBtn');
+  submitBtn.disabled = true;
+
+  const { error: updateError } = await supabase.from('reservations').update({ status: 'cancelada' }).eq('id', r.id).select();
+  if (updateError){
+    msgEl.textContent = 'No se ha podido anular la reserva: ' + updateError.message;
+    submitBtn.disabled = false;
+    return;
+  }
+  const { error: insertError } = await supabase.from('partial_cancellations').insert({ reservation_id: r.id, amount, note });
+  if (insertError){
+    msgEl.textContent = 'La reserva se anuló pero no se ha podido registrar en el panel oculto: ' + insertError.message;
+    submitBtn.disabled = false;
+    return;
+  }
+  partialCancelModal.hidden = true;
+  submitBtn.disabled = false;
+  await refreshHiddenReservationIds();
+  setActionMsg(`Reserva de ${r.full_name} anulada y movida al panel oculto.`, 'ok');
+  await loadReservations();
+  refreshActiveTab();
+});
+
+async function revertPartialCancellation(resId, resName){
+  if (!confirm(`¿Revertir la anulación parcial de ${resName}? La reserva volverá a "confirmada" y aparecerá de nuevo en el calendario normal.`)) return;
+  const { error: delError } = await supabase.from('partial_cancellations').delete().eq('reservation_id', resId);
+  if (delError){
+    setActionMsg('No se ha podido revertir la anulación parcial: ' + delError.message, 'err');
+    return;
+  }
+  const { error: updError } = await supabase.from('reservations').update({ status: 'confirmada' }).eq('id', resId).select();
+  if (updError){
+    setActionMsg('Se ha eliminado el registro de anulación parcial, pero no se ha podido restaurar el estado de la reserva: ' + updError.message, 'err');
+    return;
+  }
+  await refreshHiddenReservationIds();
+  setActionMsg(`Reserva de ${resName} restaurada como confirmada.`, 'ok');
+  await loadReservations();
+  renderPartialCancellations();
+}
+
+function checkHiddenHash(){
+  if (location.hash === '#anulaciones'){
+    document.getElementById('pinInput').value = '';
+    document.getElementById('pinMsg').textContent = '';
+    pinModal.hidden = false;
+  }
+}
+document.getElementById('pinClose').addEventListener('click', () => {
+  pinModal.hidden = true;
+  history.replaceState(null, '', location.pathname + location.search);
+});
+document.getElementById('pinForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const val = document.getElementById('pinInput').value;
+  if (val === ADMIN_HIDDEN_PIN){
+    pinModal.hidden = true;
+    history.replaceState(null, '', location.pathname + location.search);
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.hidden = true);
+    document.getElementById('tabAnulaciones').hidden = false;
+    renderPartialCancellations();
+  } else {
+    document.getElementById('pinMsg').textContent = 'Contraseña incorrecta.';
+  }
+});
+window.addEventListener('hashchange', () => { if (!dashView.hidden) checkHiddenHash(); });
+document.getElementById('hiddenPanelBtn').addEventListener('click', () => {
+  location.hash = '#anulaciones';
+  checkHiddenHash();
+});
+document.getElementById('pcBackBtn').addEventListener('click', () => {
+  history.replaceState(null, '', location.pathname + location.search);
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.hidden = true);
+  document.querySelector('.tab-btn[data-tab="tabReservas"]').classList.add('active');
+  document.getElementById('tabReservas').hidden = false;
+  loadReservations();
+});
+
+async function renderPartialCancellations(){
+  document.getElementById('pcCalLabel').textContent = `${MONTH_NAMES[pcCalState.month]} ${pcCalState.year}`;
+  document.getElementById('pcCalDayList').innerHTML = '';
+
+  const [{ data: allRes }, { data: allCancels }] = await Promise.all([
+    supabase.from('reservations').select('*'),
+    supabase.from('partial_cancellations').select('*'),
+  ]);
+  const reservations = allRes || [];
+  const cancels = allCancels || [];
+
+  const cancelsByRes = {};
+  cancels.forEach(c => {
+    if (!cancelsByRes[c.reservation_id]) cancelsByRes[c.reservation_id] = [];
+    cancelsByRes[c.reservation_id].push(c);
+  });
+
+  const confirmed = reservations.filter(r => r.status === 'confirmada');
+  const pending = reservations.filter(r => r.status === 'pendiente');
+  const cancelled = reservations.filter(r => r.status === 'cancelada' && !(cancelsByRes[r.id] || []).length);
+  const partialReservations = reservations.filter(r => (cancelsByRes[r.id] || []).length);
+  const sumTotal = (list) => list.reduce((sum, r) => sum + reservationTotal(r) - kidsMenuRevenue(r) - cleaningRevenue(r), 0);
+  const partialTotal = cancels.reduce((sum, c) => sum + Number(c.amount), 0);
+  const cleaningReservations = reservations.filter(r => r.wants_cleaning);
+  const cleaningTotal = cleaningReservations.reduce((sum, r) => sum + cleaningRevenue(r), 0);
+  const decorReservations = reservations.filter(r => r.wants_decoration);
+  const decorTotal = decorReservations.reduce((sum, r) => sum + Number(r.decoration_cost || 0), 0);
+
+  PC_LISTS = {
+    confirmed, pending, cancelled,
+    partial: partialReservations,
+    cleaning: cleaningReservations,
+    decoration: decorReservations,
+  };
+  PC_CANCELS_BY_RES = cancelsByRes;
+
+  document.getElementById('pcConfirmedTotal').textContent = formatPrice(sumTotal(confirmed));
+  document.getElementById('pcConfirmedCount').textContent = confirmed.length;
+  document.getElementById('pcPendingTotal').textContent = formatPrice(sumTotal(pending));
+  document.getElementById('pcPendingCount').textContent = pending.length;
+  document.getElementById('pcCancelledTotal').textContent = formatPrice(sumTotal(cancelled));
+  document.getElementById('pcCancelledCount').textContent = cancelled.length;
+  document.getElementById('pcTotal').textContent = formatPrice(partialTotal);
+  document.getElementById('pcCount').textContent = cancels.length;
+  document.getElementById('pcCleaningTotal').textContent = formatPrice(cleaningTotal);
+  document.getElementById('pcCleaningCount').textContent = cleaningReservations.length;
+  document.getElementById('pcDecorTotal').textContent = formatPrice(decorTotal);
+  document.getElementById('pcDecorCount').textContent = decorReservations.length;
+
+  const partialIds = new Set(partialReservations.map(r => r.id));
+  const incomeByMonth = monthlyRealIncome([...confirmed, ...partialReservations], partialIds);
+  const incomeMonths = Object.keys(incomeByMonth).sort().reverse();
+  const incomeTable = document.getElementById('pcIncomeTable');
+  if (!incomeMonths.length){
+    incomeTable.innerHTML = '<tr><td>Todavía no hay reservas aceptadas.</td></tr>';
+  } else {
+    const grandReal = incomeMonths.reduce((sum, m) => sum + incomeByMonth[m].real, 0);
+    const grandTotal = incomeMonths.reduce((sum, m) => sum + incomeByMonth[m].total, 0);
+    incomeTable.innerHTML = `
+      <thead><tr><th>Mes / Reserva</th><th>Real</th><th>Total</th></tr></thead>
+      <tbody>
+        ${incomeMonths.map(m => {
+          const label = new Date(m + '-01T00:00:00').toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+          const info = incomeByMonth[m];
+          const resRows = info.reservations
+            .slice()
+            .sort((a, b) => (a.event_date || '').localeCompare(b.event_date || ''))
+            .map(r => {
+              const icons = [
+                r.wants_decoration ? '🎈' : '',
+                r.wants_cleaning ? '🧹' : '',
+                r.kids_menus_count ? '🍕' : '',
+                r.wants_animation ? '🎭' : '',
+                r.wants_catering ? '🍽️' : '',
+              ].filter(Boolean).join(' ');
+              const real = realIncomeForReservation(r, partialIds.has(r.id));
+              return `<tr><td style="padding-left:18px;"><button type="button" class="pc-open-res" data-id="${r.id}" style="background:none; border:none; padding:0; font:inherit; color:var(--olive-dark); text-decoration:underline; cursor:pointer; text-align:left;">${r.full_name}</button>${icons ? ' ' + icons : ''}</td><td>${formatPrice(real)}</td><td>${formatPrice(totalIncomeForReservation(r))}</td></tr>`;
+            })
+            .join('');
+          return `
+            <tr class="quarter-header"><td colspan="3">${label}</td></tr>
+            ${resRows}
+            <tr class="quarter-subtotal"><td>Total ${label}</td><td>${formatPrice(info.real)}</td><td>${formatPrice(info.total)}</td></tr>
+          `;
+        }).join('')}
+      </tbody>
+      <tfoot><tr><td>Total general</td><td>${formatPrice(grandReal)}</td><td>${formatPrice(grandTotal)}</td></tr></tfoot>
+    `;
+    incomeTable.querySelectorAll('.pc-open-res').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const r = [...confirmed, ...partialReservations].find(x => x.id === btn.dataset.id);
+        if (r) openEditResModal(r);
+      });
+    });
+  }
+
+  const monthStart = `${pcCalState.year}-${String(pcCalState.month+1).padStart(2,'0')}-01`;
+  const monthEnd = pcCalState.month === 11 ? `${pcCalState.year+1}-01-01` : `${pcCalState.year}-${String(pcCalState.month+2).padStart(2,'0')}-01`;
+  const byDate = {};
+  reservations.forEach(r => {
+    if (r.event_date < monthStart || r.event_date >= monthEnd) return;
+    if (!byDate[r.event_date]) byDate[r.event_date] = [];
+    byDate[r.event_date].push(r);
+  });
+
+  const first = new Date(pcCalState.year, pcCalState.month, 1);
+  const startOffset = (first.getDay() + 6) % 7;
+  const daysInMonth = new Date(pcCalState.year, pcCalState.month + 1, 0).getDate();
+
+  let html = '';
+  DOWS.forEach(d => html += `<div class="dow">${d}</div>`);
+  for (let i = 0; i < startOffset; i++) html += `<div class="cal-day empty"></div>`;
+  for (let day = 1; day <= daysInMonth; day++){
+    const key = ymd(new Date(pcCalState.year, pcCalState.month, day));
+    const dayRes = byDate[key] || [];
+    const hasPartial = dayRes.some(r => (cancelsByRes[r.id] || []).length);
+    const dayStatus = hasPartial ? 'parcial'
+      : dayRes.some(r => r.status === 'confirmada') ? 'confirmada'
+      : dayRes.some(r => r.status === 'pendiente') ? 'pendiente'
+      : dayRes.some(r => r.status === 'cancelada') ? 'cancelada'
+      : null;
+    const cls = 'cal-day' + (dayRes.length ? ' clickable' : '') + (dayStatus ? ` pc-${dayStatus}` : '');
+    html += `<div class="${cls}" ${dayRes.length ? `data-date="${key}"` : ''}>
+        <span class="daynum">${day}</span>
+      </div>`;
+  }
+  const grid = document.getElementById('pcCalGrid');
+  grid.innerHTML = html;
+  grid.querySelectorAll('[data-date]').forEach(el => {
+    el.addEventListener('click', () => showPcDay(el.dataset.date, byDate[el.dataset.date], cancelsByRes));
+  });
+}
+
+function showPcDay(dateStr, reservations, cancelsByRes){
+  showPcList(fmtDate(dateStr), reservations, cancelsByRes);
+}
+
+function showPcList(title, reservations, cancelsByRes){
+  const SOURCE_LABELS = { web: '🌐 Web', whatsapp: '💬 WhatsApp', presencial: '📍 Presencial' };
+  const list = document.getElementById('pcCalDayList');
+  if (!reservations.length){
+    list.innerHTML = `<h3 style="font-size:16px; margin-bottom:14px; text-transform:capitalize;">${title}</h3><p class="empty-msg">No hay reservas en este grupo.</p>`;
+    return;
+  }
+  list.innerHTML = `<h3 style="font-size:16px; margin-bottom:14px; text-transform:capitalize;">${title}</h3>` +
+    reservations.map(r => {
+      const plan = ALL_PLANS.find(p => p.id === r.pricing_plan_id);
+      const resCancels = cancelsByRes[r.id] || [];
+      const cancelsTotal = resCancels.reduce((sum, c) => sum + Number(c.amount), 0);
+      const badgeClass = resCancels.length ? 'parcial' : r.status;
+      const badgeLabel = resCancels.length ? 'anulada parcial' : r.status;
+      const extras = [];
+      if (r.wants_cleaning) extras.push('Limpieza');
+      if (r.wants_decoration) extras.push(`Decoración${r.decoration_theme ? ' (' + r.decoration_theme + ')' : ''}${r.decoration_cost ? ' — coste interno ' + formatPrice(r.decoration_cost) : ''}`);
+      if (r.kids_menus_count) extras.push(`${r.kids_menus_count} menú(s) infantil(es)`);
+      if (r.wants_catering) extras.push('Catering');
+      if (r.wants_animation) extras.push('Animación');
+      return `
+        <div class="res-card">
+          <div class="res-head">
+            <h3>${r.full_name}</h3>
+            <span class="badge ${badgeClass}">${badgeLabel}</span>
+          </div>
+          <div style="font-size:12px; color:var(--ink-soft); margin:-6px 0 10px;">🕓 Reserva creada el ${fmtDateTime(r.created_at)}</div>
+          <div class="res-meta">
+            <div>📅 ${fmtDate(r.event_date)} · ⏰ ${r.start_time}-${r.end_time}</div>
+            <div>🎉 ${r.event_type}${r.guests_estimate ? ' · 👥 ' + r.guests_estimate + ' invitados' : ''}</div>
+            <div>📞 ${r.phone}${r.email ? ' · ' + r.email : ''}</div>
+            ${plan ? `<div>💶 ${plan.label} — ${formatPrice(roomPrice(r))}${r.manual_price != null ? ' (precio manual)' : ''} · Total est. ${formatPrice(reservationTotal(r))}</div>` : ''}
+            ${extras.length ? `<div>➕ ${extras.join(', ')}</div>` : ''}
+            ${r.coupon_code ? `<div>🏷️ Cupón ${r.coupon_code} (-${formatPrice(r.discount_amount || 0)})</div>` : ''}
+            ${r.message ? `<div>💬 “${r.message}”</div>` : ''}
+            ${r.deposit_paid ? `<div>✅ Señal pagada${r.deposit_method ? ' (' + (r.deposit_method === 'bizum' ? 'Bizum' : 'Efectivo') + ')' : ''}</div>` : ''}
+            <div>${SOURCE_LABELS[r.source] || r.source || ''}</div>
+          </div>
+          ${resCancels.length ? `
+          <div class="res-meta" style="margin-top:10px; padding-top:10px; border-top:1px dashed var(--line);">
+            <div>💸 Anulado parcialmente: ${formatPrice(cancelsTotal)}</div>
+            ${resCancels.map(c => `<div style="font-size:12.5px;">– ${formatPrice(c.amount)}${c.note ? ' · ' + c.note : ''} (${fmtDate(c.created_at.slice(0,10))})</div>`).join('')}
+            <button type="button" class="btn btn-ghost" data-action="revert-partial" data-id="${r.id}" data-name="${r.full_name}" style="margin-top:10px; font-size:11.5px; padding:5px 10px;">↩️ Revertir anulación parcial</button>
+          </div>` : ''}
+        </div>`;
+    }).join('');
+
+  list.querySelectorAll('button[data-action="revert-partial"]').forEach(btn => {
+    btn.addEventListener('click', () => revertPartialCancellation(btn.dataset.id, btn.dataset.name));
+  });
+}
+
+const PC_FILTER_LABELS = {
+  confirmed: 'Aceptadas',
+  pending: 'Pendientes',
+  cancelled: 'Anuladas',
+  partial: 'Anuladas parcialmente',
+  cleaning: '🧹 Limpieza',
+  decoration: '🎈 Decoración',
+};
+document.getElementById('pcStatsRow').addEventListener('click', (e) => {
+  const card = e.target.closest('[data-filter]');
+  if (!card) return;
+  const key = card.dataset.filter;
+  showPcList(PC_FILTER_LABELS[key] || key, PC_LISTS[key] || [], PC_CANCELS_BY_RES);
+});
+
+document.getElementById('pcCalPrevBtn').addEventListener('click', () => {
+  pcCalState.month--;
+  if (pcCalState.month < 0){ pcCalState.month = 11; pcCalState.year--; }
+  renderPartialCancellations();
+});
+document.getElementById('pcCalNextBtn').addEventListener('click', () => {
+  pcCalState.month++;
+  if (pcCalState.month > 11){ pcCalState.month = 0; pcCalState.year++; }
+  renderPartialCancellations();
+});
+
+// ---------- Clients tab (fidelidad) ----------
+async function renderClients(){
+  const container = document.getElementById('clientsList');
+  container.innerHTML = '<p class="empty-msg">Cargando…</p>';
+
+  const { data: rawData, error } = await supabase.from('reservations').select('*').order('event_date', { ascending: false });
+  if (error || !rawData){
+    container.innerHTML = `<p class="empty-msg">Error cargando clientes: ${error?.message || ''}</p>`;
+    return;
+  }
+  const data = visibleReservations(rawData);
+
+  const byPhone = {};
+  data.forEach(r => {
+    const key = waNumber(r.phone) || r.phone;
+    if (!byPhone[key]) byPhone[key] = { name: r.full_name, phone: r.phone, confirmed: [], pending: 0 };
+    if (r.status === 'confirmada') byPhone[key].confirmed.push(r);
+    if (r.status === 'pendiente') byPhone[key].pending += 1;
+  });
+
+  const clients = Object.values(byPhone)
+    .map(c => ({
+      ...c,
+      count: c.confirmed.length,
+      total: c.confirmed.reduce((sum, r) => sum + reservationTotal(r), 0),
+      dates: c.confirmed.map(r => r.event_date).sort().reverse(),
+    }))
+    .filter(c => c.count > 0 || c.pending > 0)
+    .sort((a, b) => b.count - a.count || b.total - a.total);
+
+  if (!clients.length){
+    container.innerHTML = '<p class="empty-msg">Todavía no hay reservas de clientes.</p>';
+    return;
+  }
+
+  container.innerHTML = clients.map(c => `
+    <div class="client-card">
+      <div>
+        <div class="name">${c.name} ${c.count >= 3 ? '<span class="frequent-badge">🎖 Cliente frecuente</span>' : ''}</div>
+        <div class="meta">📞 ${c.phone}${c.pending ? ` · ${c.pending} pendiente(s)` : ''}</div>
+        <div class="meta">${c.dates.slice(0,5).map(d => fmtDate(d)).join(' · ') || 'Sin reservas confirmadas'}</div>
+      </div>
+      <div>
+        <div class="count">${c.count}</div>
+        <div class="count-lbl">reservas</div>
+      </div>
+      <div>
+        <div class="count">${formatPrice(c.total)}</div>
+        <div class="count-lbl">gastado</div>
+      </div>
+    </div>`).join('');
+}
+
+// ---------- Coupons tab ----------
+const cpTypeSelect = document.getElementById('cp_type');
+const cpValueLabel = document.getElementById('cp_value_label');
+cpTypeSelect.addEventListener('change', () => {
+  cpValueLabel.textContent = cpTypeSelect.value === 'percentage' ? 'Valor (%)' : 'Valor (€)';
+});
+
+let editingCouponId = null;
+const couponFormTitle = document.getElementById('couponFormTitle');
+const couponSubmitBtn = document.getElementById('couponSubmitBtn');
+const couponCancelEditBtn = document.getElementById('couponCancelEditBtn');
+
+function startEditCoupon(c){
+  editingCouponId = c.id;
+  document.getElementById('cp_code').value = c.code;
+  cpTypeSelect.value = c.discount_type;
+  cpValueLabel.textContent = c.discount_type === 'percentage' ? 'Valor (%)' : 'Valor (€)';
+  document.getElementById('cp_value').value = c.discount_value;
+  document.getElementById('cp_expires').value = c.expires_at || '';
+  document.getElementById('cp_applies_to').value = c.applies_to || 'todos';
+  document.getElementById('cp_description').value = c.description || '';
+  couponFormTitle.textContent = `Editar cupón ${c.code}`;
+  couponSubmitBtn.textContent = 'Guardar cambios';
+  couponCancelEditBtn.hidden = false;
+  document.getElementById('couponFormMsg').textContent = '';
+  document.getElementById('couponForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function cancelEditCoupon(){
+  editingCouponId = null;
+  document.getElementById('couponForm').reset();
+  cpValueLabel.textContent = 'Valor (%)';
+  couponFormTitle.textContent = 'Nuevo cupón';
+  couponSubmitBtn.textContent = 'Crear cupón';
+  couponCancelEditBtn.hidden = true;
+  document.getElementById('couponFormMsg').textContent = '';
+}
+
+couponCancelEditBtn.addEventListener('click', cancelEditCoupon);
+
+document.getElementById('couponForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const msgEl = document.getElementById('couponFormMsg');
+  const payload = {
+    code: document.getElementById('cp_code').value.trim().toUpperCase(),
+    discount_type: cpTypeSelect.value,
+    discount_value: Number(document.getElementById('cp_value').value),
+    applies_to: document.getElementById('cp_applies_to').value,
+    description: document.getElementById('cp_description').value.trim() || null,
+    expires_at: document.getElementById('cp_expires').value || null,
+  };
+  const { error } = editingCouponId
+    ? await supabase.from('coupons').update(payload).eq('id', editingCouponId)
+    : await supabase.from('coupons').insert(payload);
+  if (error){
+    msgEl.textContent = 'No se ha podido guardar: ' + error.message;
+    return;
+  }
+  msgEl.textContent = editingCouponId ? `Cupón ${payload.code} actualizado.` : `Cupón ${payload.code} creado.`;
+  editingCouponId = null;
+  e.target.reset();
+  cpValueLabel.textContent = 'Valor (%)';
+  couponFormTitle.textContent = 'Nuevo cupón';
+  couponSubmitBtn.textContent = 'Crear cupón';
+  couponCancelEditBtn.hidden = true;
+  await renderCoupons();
+});
+
+function formatCouponValue(c){
+  if (c.discount_type === 'percentage') return `${Number(c.discount_value)}%`;
+  if (c.discount_type === 'fixed_amount') return `${formatPrice(c.discount_value)} dto.`;
+  if (c.discount_type === 'fixed_price') return `precio final ${formatPrice(c.discount_value)}`;
+  return '';
+}
+
+async function renderCoupons(){
+  const container = document.getElementById('couponsList');
+  const { data, error } = await supabase.from('coupons').select('*').order('created_at', { ascending: false });
+  if (error){
+    container.innerHTML = `<p class="empty-msg">Error cargando cupones: ${error.message}</p>`;
+    return;
+  }
+  if (!data || !data.length){
+    container.innerHTML = '<p class="empty-msg">Todavía no has creado ningún cupón.</p>';
+    return;
+  }
+  container.innerHTML = data.map(c => `
+    <div class="coupon-card">
+      <div>
+        <div class="code">${c.code}</div>
+        <div class="meta">${formatCouponValue(c)}${c.applies_to && c.applies_to !== 'todos' ? ' · ' + COUPON_SCOPE_LABELS[c.applies_to] : ''}${c.expires_at ? ' · caduca ' + c.expires_at : ''}${c.description ? ' · ' + c.description : ''}</div>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+        <span class="coupon-badge ${c.active ? 'active' : 'inactive'}">${c.active ? 'Activo' : 'Inactivo'}</span>
+        <button class="btn btn-ghost" data-toggle-coupon="${c.id}" data-active="${c.active}">${c.active ? 'Desactivar' : 'Activar'}</button>
+        <button class="btn btn-ghost" data-edit-coupon="${c.id}">✏️ Editar</button>
+        <button class="btn btn-deny" data-delete-coupon="${c.id}">🗑️ Borrar</button>
+      </div>
+    </div>`).join('');
+
+  container.querySelectorAll('[data-toggle-coupon]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.toggleCoupon;
+      const isActive = btn.dataset.active === 'true';
+      await supabase.from('coupons').update({ active: !isActive }).eq('id', id);
+      await renderCoupons();
+    });
+  });
+
+  container.querySelectorAll('[data-edit-coupon]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const c = data.find(x => x.id === btn.dataset.editCoupon);
+      if (c) startEditCoupon(c);
+    });
+  });
+
+  container.querySelectorAll('[data-delete-coupon]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const c = data.find(x => x.id === btn.dataset.deleteCoupon);
+      if (!confirm(`¿Borrar definitivamente el cupón ${c.code}? Esta acción no se puede deshacer.`)) return;
+      btn.disabled = true;
+      const { error } = await supabase.from('coupons').delete().eq('id', c.id);
+      if (error){
+        alert('No se ha podido borrar: ' + error.message);
+        btn.disabled = false;
+        return;
+      }
+      if (editingCouponId === c.id) cancelEditCoupon();
+      await renderCoupons();
+    });
+  });
+}
+
+// ---------- Gallery (imágenes de la web por sección) ----------
+const GALLERY_SECTION_LABELS = {
+  'sala-juegos': 'La sala — Zona de juegos',
+  'sala-mesas': 'La sala — Mesas para eventos',
+  'sala-escenario': 'La sala — Zona de proyector, escenario y photocall',
+  'sala-aseo': 'La sala — Aseo',
+  'sala-cocina': 'La sala — Cocina',
+  catas: 'Catas de vino',
+  decoraciones: 'Decoraciones',
+  ofertas: 'Ofertas',
+  catering: 'Catering',
+  'fotos-eventos': 'Fotos eventos',
+};
+
+document.getElementById('galleryForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const fileInput = document.getElementById('gal_file');
+  const file = fileInput.files[0];
+  const section = document.getElementById('gal_section').value;
+  const msgEl = document.getElementById('galFormMsg');
+  const submitBtn = document.getElementById('galSubmitBtn');
+  if (!file) return;
+
+  submitBtn.disabled = true;
+  msgEl.textContent = 'Subiendo foto…';
+
+  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
+  const path = `${section}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+
+  const { error: uploadError } = await supabase.storage.from('galeria').upload(path, file);
+  if (uploadError){
+    msgEl.textContent = 'No se ha podido subir la foto: ' + uploadError.message;
+    submitBtn.disabled = false;
+    return;
+  }
+
+  const caption = document.getElementById('gal_caption').value.trim() || null;
+  const { error: insertError } = await supabase.from('gallery_images').insert({ section, image_path: path, caption });
+  if (insertError){
+    msgEl.textContent = 'No se ha podido guardar la foto: ' + insertError.message;
+    submitBtn.disabled = false;
+    return;
+  }
+
+  msgEl.textContent = 'Foto añadida ✅';
+  e.target.reset();
+  submitBtn.disabled = false;
+  await renderGallery();
+});
+
+async function renderGallery(){
+  const container = document.getElementById('galleryAdminSections');
+  const { data, error } = await supabase.from('gallery_images').select('*').order('created_at', { ascending: false });
+  if (error){
+    container.innerHTML = `<p class="empty-msg">Error cargando la galería: ${error.message}</p>`;
+    return;
+  }
+
+  const sections = Object.keys(GALLERY_SECTION_LABELS);
+  container.innerHTML = sections.map(section => {
+    const items = (data || []).filter(d => d.section === section);
+    const grid = items.length
+      ? items.map(d => {
+          const { data: pub } = supabase.storage.from('galeria').getPublicUrl(d.image_path);
+          return `
+            <div class="gallery-admin-card">
+              <img src="${pub.publicUrl}" alt="${(d.caption || GALLERY_SECTION_LABELS[section]).replace(/"/g, '&quot;')}">
+              <div class="gallery-admin-meta">
+                <p>${d.caption || ''}</p>
+                <button class="btn btn-deny" data-delete-gallery="${d.id}" data-path="${d.image_path}" style="font-size:11.5px; padding:5px 10px;">🗑️ Borrar</button>
+              </div>
+            </div>`;
+        }).join('')
+      : '<p class="empty-msg">Todavía no has añadido ninguna foto en esta sección.</p>';
+    return `<h4 class="gallery-section-title">${GALLERY_SECTION_LABELS[section]}</h4><div class="gallery-admin-grid">${grid}</div>`;
+  }).join('');
+
+  container.querySelectorAll('[data-delete-gallery]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('¿Borrar esta foto de la web? No se puede deshacer.')) return;
+      btn.disabled = true;
+      const id = btn.dataset.deleteGallery;
+      const path = btn.dataset.path;
+      await supabase.storage.from('galeria').remove([path]);
+      await supabase.from('gallery_images').delete().eq('id', id);
+      await renderGallery();
+    });
+  });
+}
+
+// ---------- Fotos de tipos de evento ----------
+async function renderEventTypePhotos(){
+  const container = document.getElementById('eventTypePhotos');
+  const { data, error } = await supabase.from('event_types').select('*').order('name');
+  if (error){
+    container.innerHTML = `<p class="empty-msg">Error cargando los tipos de evento: ${error.message}</p>`;
+    return;
+  }
+
+  container.innerHTML = (data || []).map(t => {
+    const thumb = t.image_path
+      ? supabase.storage.from('galeria').getPublicUrl(t.image_path).data.publicUrl
+      : null;
+    return `
+      <div class="gallery-admin-card">
+        ${thumb ? `<img src="${thumb}" alt="${t.name}">` : `<div style="height:140px; display:flex; align-items:center; justify-content:center; background:var(--cream); color:var(--ink-soft); font-size:12.5px;">Sin foto</div>`}
+        <div class="gallery-admin-meta">
+          <p>${t.name}</p>
+          <input type="file" accept="image/*" data-et-file="${t.id}" style="font-size:12px; margin-bottom:8px;">
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn btn-ghost" data-et-upload="${t.id}" style="font-size:11.5px; padding:5px 10px;">Subir</button>
+            ${t.image_path ? `<button class="btn btn-deny" data-et-remove="${t.id}" data-path="${t.image_path}" style="font-size:11.5px; padding:5px 10px;">🗑️ Quitar foto</button>` : ''}
+          </div>
+          <p class="et-photo-msg" data-et-msg="${t.id}" style="font-size:12px; margin-top:6px;"></p>
+        </div>
+      </div>`;
+  }).join('');
+
+  container.querySelectorAll('[data-et-upload]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const typeId = btn.dataset.etUpload;
+      const fileInput = container.querySelector(`input[data-et-file="${typeId}"]`);
+      const msgEl = container.querySelector(`[data-et-msg="${typeId}"]`);
+      const file = fileInput.files[0];
+      if (!file){
+        msgEl.textContent = 'Elige antes una foto.';
+        return;
+      }
+      btn.disabled = true;
+      msgEl.textContent = 'Subiendo…';
+      const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
+      const path = `event-types/${typeId}-${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage.from('galeria').upload(path, file);
+      if (uploadError){
+        msgEl.textContent = 'No se ha podido subir: ' + uploadError.message;
+        btn.disabled = false;
+        return;
+      }
+      const { data: updateData, error: updateError } = await supabase.from('event_types').update({ image_path: path }).eq('id', typeId).select();
+      if (updateError || !updateData || !updateData.length){
+        msgEl.textContent = updateError
+          ? 'No se ha podido guardar: ' + updateError.message
+          : 'Supabase no ha guardado el cambio (revisa los permisos). La foto NO se ha vinculado.';
+        btn.disabled = false;
+        return;
+      }
+      await renderEventTypePhotos();
+    });
+  });
+
+  container.querySelectorAll('[data-et-remove]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('¿Quitar la foto de este tipo de evento?')) return;
+      btn.disabled = true;
+      const typeId = btn.dataset.etRemove;
+      const path = btn.dataset.path;
+      await supabase.storage.from('galeria').remove([path]);
+      await supabase.from('event_types').update({ image_path: null }).eq('id', typeId).select();
+      await renderEventTypePhotos();
+    });
+  });
+}
+
+// ---------- Vídeos de YouTube ----------
+function extractYoutubeId(url){
+  try {
+    const u = new URL(url.trim());
+    if (u.hostname.includes('youtu.be')) return u.pathname.slice(1).split('/')[0] || null;
+    if (u.pathname.startsWith('/embed/')) return u.pathname.split('/embed/')[1].split('/')[0] || null;
+    if (u.pathname.startsWith('/shorts/')) return u.pathname.split('/shorts/')[1].split('/')[0] || null;
+    if (u.searchParams.get('v')) return u.searchParams.get('v');
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+document.getElementById('videoForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const urlInput = document.getElementById('video_url');
+  const captionInput = document.getElementById('video_caption');
+  const msgEl = document.getElementById('videoFormMsg');
+  const submitBtn = document.getElementById('videoSubmitBtn');
+
+  const youtubeId = extractYoutubeId(urlInput.value);
+  if (!youtubeId){
+    msgEl.textContent = 'No he reconocido ese enlace de YouTube. Copia el enlace tal cual desde YouTube.';
+    return;
+  }
+
+  submitBtn.disabled = true;
+  msgEl.textContent = 'Añadiendo…';
+  const { error } = await supabase.from('videos').insert({
+    youtube_id: youtubeId,
+    caption: captionInput.value.trim() || null,
+  });
+  submitBtn.disabled = false;
+  if (error){
+    msgEl.textContent = 'No se ha podido añadir: ' + error.message;
+    return;
+  }
+  msgEl.textContent = 'Vídeo añadido ✅';
+  e.target.reset();
+  await renderVideosAdmin();
+});
+
+async function renderVideosAdmin(){
+  const container = document.getElementById('videosAdminList');
+  const { data, error } = await supabase.from('videos').select('*').order('created_at', { ascending: false });
+  if (error){
+    container.innerHTML = `<p class="empty-msg">Error cargando los vídeos: ${error.message}</p>`;
+    return;
+  }
+  if (!data || !data.length){
+    container.innerHTML = '<p class="empty-msg">Todavía no has añadido ningún vídeo.</p>';
+    return;
+  }
+  container.innerHTML = data.map(v => `
+    <div class="gallery-admin-card">
+      <img src="https://img.youtube.com/vi/${v.youtube_id}/hqdefault.jpg" alt="${(v.caption || 'Vídeo').replace(/"/g, '&quot;')}">
+      <div class="gallery-admin-meta">
+        <p>${v.caption || ''}</p>
+        <button class="btn btn-deny" data-delete-video="${v.id}" style="font-size:11.5px; padding:5px 10px;">🗑️ Borrar</button>
+      </div>
+    </div>`).join('');
+
+  container.querySelectorAll('[data-delete-video]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('¿Borrar este vídeo de la web? No se puede deshacer.')) return;
+      btn.disabled = true;
+      await supabase.from('videos').delete().eq('id', btn.dataset.deleteVideo);
+      await renderVideosAdmin();
+    });
+  });
+}
+
+// ---------- Manual reservation modal ----------
+const invoiceModal = document.getElementById('invoiceModal');
+const invoiceForm = document.getElementById('invoiceForm');
+const invReservationSelect = document.getElementById('inv_reservation');
+
+function updateInvoiceBreakdown(){
+  const total = Number(document.getElementById('inv_total').value) || 0;
+  const { base, iva } = invoiceBreakdownFromTotal(total, 21);
+  document.getElementById('invoiceBreakdown').textContent =
+    `Base imponible: ${formatPrice(base)} + 21% IVA: ${formatPrice(iva)} = ${formatPrice(total)} total`;
+}
+document.getElementById('inv_total').addEventListener('input', updateInvoiceBreakdown);
+
+let editingInvoiceId = null;
+
+async function openInvoiceModal(existing){
+  invoiceForm.reset();
+  document.getElementById('invoiceFormMsg').textContent = '';
+  editingInvoiceId = existing ? existing.id : null;
+  document.getElementById('invoiceModalTitle').textContent = existing ? 'Editar factura' : 'Nueva factura';
+  document.getElementById('invoiceSubmitBtn').textContent = existing ? 'Guardar cambios' : 'Guardar y ver factura';
+
+  const { data: confirmedRes } = await supabase
+    .from('reservations')
+    .select('*')
+    .eq('status', 'confirmada')
+    .order('event_date', { ascending: false });
+  invReservationSelect.innerHTML = '<option value="">— Sin reserva / rellenar a mano —</option>' +
+    (confirmedRes || []).map(r => `<option value="${r.id}">${r.full_name} — ${fmtDate(r.event_date)}</option>`).join('');
+  invReservationSelect.dataset.reservations = JSON.stringify(confirmedRes || []);
+
+  if (existing){
+    document.getElementById('inv_number').value = existing.invoice_number;
+    document.getElementById('inv_date').value = existing.issue_date;
+    document.getElementById('inv_name').value = existing.client_name;
+    document.getElementById('inv_dni').value = existing.client_dni || '';
+    document.getElementById('inv_address').value = existing.client_address || '';
+    document.getElementById('inv_phone').value = existing.client_phone || '';
+    document.getElementById('inv_email').value = existing.client_email || '';
+    document.getElementById('inv_concept').value = existing.concept;
+    document.getElementById('inv_total').value = existing.total_amount;
+    document.getElementById('inv_payment').value = existing.payment_method || 'Efectivo';
+    invReservationSelect.value = existing.reservation_id || '';
+  } else {
+    document.getElementById('inv_date').value = ymd(new Date());
+    document.getElementById('inv_concept').value = 'ALQUILER SALA DE EVENTOS.';
+    document.getElementById('inv_payment').value = 'Efectivo';
+    const suggested = await suggestNextInvoiceNumber();
+    document.getElementById('inv_number').value = suggested;
+    if (!suggested){
+      document.getElementById('invoiceFormMsg').textContent = 'Es tu primera factura en el panel: pon el número siguiente al último que hayas emitido.';
+    }
+  }
+
+  updateInvoiceBreakdown();
+  invoiceModal.hidden = false;
+}
+
+invReservationSelect.addEventListener('change', () => {
+  const id = invReservationSelect.value;
+  if (!id) return;
+  const list = JSON.parse(invReservationSelect.dataset.reservations || '[]');
+  const r = list.find(x => x.id === id);
+  if (!r) return;
+  document.getElementById('inv_name').value = r.full_name;
+  document.getElementById('inv_phone').value = r.phone || '';
+  document.getElementById('inv_email').value = r.email || '';
+  document.getElementById('inv_total').value = roomPrice(r).toFixed(2);
+  updateInvoiceBreakdown();
+});
+
+document.getElementById('newInvoiceBtn').addEventListener('click', () => openInvoiceModal());
+document.getElementById('invoiceClose').addEventListener('click', () => { invoiceModal.hidden = true; });
+invoiceModal.addEventListener('click', (e) => { if (e.target === invoiceModal) invoiceModal.hidden = true; });
+
+invoiceForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const submitBtn = document.getElementById('invoiceSubmitBtn');
+  submitBtn.disabled = true;
+  const payload = {
+    invoice_number: document.getElementById('inv_number').value.trim(),
+    issue_date: document.getElementById('inv_date').value,
+    reservation_id: invReservationSelect.value || null,
+    client_name: document.getElementById('inv_name').value.trim(),
+    client_dni: document.getElementById('inv_dni').value.trim() || null,
+    client_address: document.getElementById('inv_address').value.trim() || null,
+    client_phone: document.getElementById('inv_phone').value.trim() || null,
+    client_email: document.getElementById('inv_email').value.trim() || null,
+    concept: document.getElementById('inv_concept').value.trim(),
+    total_amount: Number(document.getElementById('inv_total').value),
+    iva_rate: 21,
+    payment_method: document.getElementById('inv_payment').value,
+  };
+  const { data, error } = editingInvoiceId
+    ? await supabase.from('invoices').update(payload).eq('id', editingInvoiceId).select().single()
+    : await supabase.from('invoices').insert(payload).select().single();
+  submitBtn.disabled = false;
+  if (error){
+    document.getElementById('invoiceFormMsg').textContent = error.code === '23505'
+      ? 'Ya existe una factura con ese número. Cambia el número e inténtalo de nuevo.'
+      : 'No se ha podido guardar: ' + error.message;
+    return;
+  }
+  invoiceModal.hidden = true;
+  openInvoicePrintView(data);
+  await renderInvoices();
+});
+
+const newResModal = document.getElementById('newResModal');
+const newResForm = document.getElementById('newResForm');
+const newResMsg = document.getElementById('newResMsg');
+
+function renderNrPlanOptions(dateStr, selectedPlanId){
+  const group = dateStr ? dayGroupFor(dateStr) : null;
+  const groupPlans = group ? ALL_PLANS.filter(p => p.day_group === group) : ALL_PLANS;
+  const wrap = document.getElementById('nrPlanOptions');
+
+  wrap.innerHTML = groupPlans.map((p, i) => {
+    const [start, end] = (p.hours_range || '').split(' a ').map(s => (s||'').trim());
+    const checked = selectedPlanId ? p.id === selectedPlanId : i === 0;
+    return `
+      <label class="plan-option">
+        <span><input type="radio" name="nr_pricing_plan" value="${p.id}" data-start="${start}" data-end="${end}" ${checked?'checked':''}> ${p.label} <span style="color:var(--ink-soft); font-size:12.5px;">(${p.hours_range})</span></span>
+        <span class="amt">${formatPrice(p.price)}</span>
+      </label>`;
+  }).join('');
+
+  const fillTimes = (input) => {
+    if (document.getElementById('nr_custom_hours').checked) return;
+    if (input.dataset.start) document.getElementById('nr_start_time').value = input.dataset.start;
+    if (input.dataset.end) document.getElementById('nr_end_time').value = input.dataset.end === '00:00' ? '23:59' : input.dataset.end;
+  };
+  wrap.querySelectorAll('input[name="nr_pricing_plan"]').forEach(input => {
+    input.addEventListener('change', () => { if (input.checked){ fillTimes(input); updateNrTotal(); } });
+  });
+  // Al editar, no pisamos las horas ya guardadas de la reserva con las horas por defecto de la tarifa.
+  if (!selectedPlanId){
+    const first = wrap.querySelector('input[name="nr_pricing_plan"]');
+    if (first) fillTimes(first);
+  }
+  updateNrTotal();
+}
+
+// El horario solo se puede tocar a mano si está marcado "Horario personalizado";
+// si no, sigue siempre a la tarifa elegida.
+function syncCustomHoursState(){
+  const checked = document.getElementById('nr_custom_hours').checked;
+  document.getElementById('nr_start_time').disabled = !checked;
+  document.getElementById('nr_end_time').disabled = !checked;
+}
+
+document.getElementById('nr_custom_hours').addEventListener('change', (e) => {
+  syncCustomHoursState();
+  if (!e.target.checked){
+    const planRadio = document.querySelector('#nrPlanOptions input[name="nr_pricing_plan"]:checked');
+    if (planRadio){
+      if (planRadio.dataset.start) document.getElementById('nr_start_time').value = planRadio.dataset.start;
+      if (planRadio.dataset.end) document.getElementById('nr_end_time').value = planRadio.dataset.end === '00:00' ? '23:59' : planRadio.dataset.end;
+    }
+  }
+});
+
+let nrAppliedCoupon = null;
+let nrManualDiscount = 0;
+
+function nrPlanPrice(){
+  const manualPrice = document.getElementById('nr_manual_price').value;
+  if (manualPrice !== '') return Number(manualPrice);
+  const planRadio = document.querySelector('#nrPlanOptions input[name="nr_pricing_plan"]:checked');
+  const plan = planRadio ? ALL_PLANS.find(p => p.id === planRadio.value) : null;
+  return plan ? Number(plan.price) : 0;
+}
+
+function nrExtrasTotal(){
+  const wantsCleaning = document.getElementById('nr_wants_cleaning').checked;
+  const wantsKids = document.getElementById('nr_wants_kids_menu').checked;
+  const kidsCount = wantsKids ? Number(document.getElementById('nr_kids_menus').value || 0) : 0;
+
+  let extras = 0;
+  if (wantsCleaning) extras += getExtraPrice('limpieza');
+  extras += kidsCount * getExtraPrice('infantil');
+  return extras;
+}
+
+// El cupón solo descuenta el precio de la sala; limpieza y menús infantiles se cobran siempre completos.
+function nrCurrentDiscount(planPrice){
+  if (nrAppliedCoupon) return computeDiscount(planPrice, nrAppliedCoupon);
+  return nrManualDiscount || 0;
+}
+
+function updateNrTotal(){
+  const planPrice = nrPlanPrice();
+  const discount = nrCurrentDiscount(planPrice);
+  const final = Math.max(0, planPrice - discount) + nrExtrasTotal();
+  document.getElementById('nrTotalAmount').textContent = formatPrice(final);
+}
+
+async function nrApplyCoupon(){
+  const input = document.getElementById('nr_coupon_code');
+  const msg = document.getElementById('nrCouponMsg');
+  const code = input.value.trim();
+  if (!code){
+    nrAppliedCoupon = null;
+    nrManualDiscount = 0;
+    msg.textContent = '';
+    updateNrTotal();
+    return;
+  }
+  msg.textContent = 'Comprobando cupón…';
+  const { coupon, notFound } = await lookupCoupon(supabase, code);
+  const eventDate = document.getElementById('nr_event_date').value;
+  if (notFound || !coupon){
+    nrAppliedCoupon = null;
+    nrManualDiscount = 0;
+    msg.textContent = 'Ese cupón no existe o ha caducado.';
+  } else if (eventDate && !couponAppliesTo(coupon, dayGroupFor(eventDate))){
+    nrAppliedCoupon = null;
+    nrManualDiscount = 0;
+    msg.textContent = `Ese cupón solo es válido para ${COUPON_SCOPE_LABELS[coupon.applies_to]}.`;
+  } else {
+    nrAppliedCoupon = coupon;
+    nrManualDiscount = 0;
+    msg.textContent = `¡Cupón válido! ${couponSummary(coupon)}.`;
+  }
+  updateNrTotal();
+}
+
+document.getElementById('nrApplyCouponBtn').addEventListener('click', nrApplyCoupon);
+
+let editingId = null;
+let editingOriginalStatus = null;
+
+function openNewResModal(){
+  editingId = null;
+  editingOriginalStatus = null;
+  newResForm.reset();
+  syncCustomHoursState();
+  document.getElementById('nrKidsMenuField').hidden = true;
+  document.getElementById('nrDecorationField').hidden = true;
+  newResMsg.textContent = '';
+  document.getElementById('nrCouponMsg').textContent = '';
+  nrAppliedCoupon = null;
+  nrManualDiscount = 0;
+  document.getElementById('newResTitle').textContent = 'Nueva reserva manual';
+  document.getElementById('newResSubmitBtn').textContent = 'Guardar reserva confirmada';
+  const dateInput = document.getElementById('nr_event_date');
+  dateInput.value = ymd(new Date());
+  renderNrPlanOptions(dateInput.value);
+  newResModal.hidden = false;
+}
+
+function openEditResModal(r){
+  editingId = r.id;
+  editingOriginalStatus = r.status;
+  newResForm.reset();
+  newResMsg.textContent = '';
+  document.getElementById('newResTitle').textContent = 'Modificar reserva';
+  document.getElementById('newResSubmitBtn').textContent = editingOriginalStatus === 'cancelada'
+    ? 'Guardar y reactivar como confirmada'
+    : 'Guardar cambios';
+
+  document.getElementById('nr_full_name').value = r.full_name || '';
+  document.getElementById('nr_phone').value = r.phone || '';
+  document.getElementById('nr_email').value = r.email || '';
+  document.getElementById('nr_event_type').value = r.event_type || '';
+  document.getElementById('nr_guests').value = r.guests_estimate || '';
+  document.getElementById('nr_event_date').value = r.event_date;
+
+  renderNrPlanOptions(r.event_date, r.pricing_plan_id);
+  document.getElementById('nr_start_time').value = (r.start_time || '').slice(0,5);
+  document.getElementById('nr_end_time').value = (r.end_time || '').slice(0,5);
+  document.getElementById('nr_manual_price').value = r.manual_price != null ? r.manual_price : '';
+
+  // Si el horario guardado no coincide con el de la tarifa, es que ya era un horario a medida:
+  // marcamos "Horario personalizado" para que se vea editable con su valor real.
+  const editPlan = ALL_PLANS.find(p => p.id === r.pricing_plan_id);
+  const [editPlanStart, editPlanEndRaw] = (editPlan?.hours_range || '').split(' a ').map(s => (s||'').trim());
+  const editPlanEnd = editPlanEndRaw === '00:00' ? '23:59' : editPlanEndRaw;
+  const isCustomHours = !editPlan
+    || document.getElementById('nr_start_time').value !== editPlanStart
+    || document.getElementById('nr_end_time').value !== editPlanEnd;
+  document.getElementById('nr_custom_hours').checked = isCustomHours;
+  syncCustomHoursState();
+
+  document.getElementById('nr_wants_cleaning').checked = !!r.wants_cleaning;
+  const wantsKids = !!r.kids_menus_count;
+  document.getElementById('nr_wants_kids_menu').checked = wantsKids;
+  document.getElementById('nrKidsMenuField').hidden = !wantsKids;
+  document.getElementById('nr_kids_menus').value = r.kids_menus_count || 1;
+  document.getElementById('nr_wants_decoration').checked = !!r.wants_decoration;
+  document.getElementById('nrDecorationField').hidden = !r.wants_decoration;
+  document.getElementById('nr_decoration_theme').value = r.decoration_theme || '';
+  document.getElementById('nr_decoration_cost').value = r.decoration_cost ?? '';
+  document.getElementById('nr_wants_catering').checked = !!r.wants_catering;
+  document.getElementById('nr_wants_animation').checked = !!r.wants_animation;
+  document.getElementById('nr_message').value = r.message || '';
+
+  nrAppliedCoupon = null;
+  nrManualDiscount = Number(r.discount_amount || 0);
+  document.getElementById('nr_coupon_code').value = r.coupon_code || '';
+  document.getElementById('nrCouponMsg').textContent = r.coupon_code
+    ? `Cupón registrado: -${formatPrice(nrManualDiscount)}. Pulsa "Aplicar" para revalidarlo si el descuento ha cambiado.`
+    : '';
+
+  updateNrTotal();
+  newResModal.hidden = false;
+}
+
+document.getElementById('newResBtn').addEventListener('click', openNewResModal);
+document.getElementById('newResClose').addEventListener('click', () => { newResModal.hidden = true; });
+newResModal.addEventListener('click', (e) => { if (e.target === newResModal) newResModal.hidden = true; });
+
+document.getElementById('nr_event_date').addEventListener('change', (e) => renderNrPlanOptions(e.target.value));
+document.getElementById('nr_wants_cleaning').addEventListener('change', updateNrTotal);
+document.getElementById('nr_wants_kids_menu').addEventListener('change', (e) => {
+  document.getElementById('nrKidsMenuField').hidden = !e.target.checked;
+  updateNrTotal();
+});
+document.getElementById('nr_kids_menus').addEventListener('input', updateNrTotal);
+document.getElementById('nr_manual_price').addEventListener('input', updateNrTotal);
+document.getElementById('nr_wants_decoration').addEventListener('change', (e) => {
+  document.getElementById('nrDecorationField').hidden = !e.target.checked;
+});
+
+newResForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const planRadio = document.querySelector('#nrPlanOptions input[name="nr_pricing_plan"]:checked');
+  if (!planRadio){
+    newResMsg.textContent = 'Selecciona una tarifa.';
+    return;
+  }
+  const wantsKidsMenu = document.getElementById('nr_wants_kids_menu').checked;
+  const wantsDecoration = document.getElementById('nr_wants_decoration').checked;
+  const startTime = document.getElementById('nr_start_time').value;
+  const endTime = document.getElementById('nr_end_time').value;
+
+  if (endTime <= startTime){
+    newResMsg.textContent = 'La hora de fin debe ser posterior a la hora de inicio.';
+    return;
+  }
+
+  // Al reactivar una reserva anulada (o crear una nueva) comprobamos que ese día siga libre.
+  const willBeConfirmed = !editingId || editingOriginalStatus === 'cancelada';
+  if (willBeConfirmed){
+    let conflictQuery = supabase
+      .from('reservations')
+      .select('id, full_name')
+      .eq('event_date', document.getElementById('nr_event_date').value)
+      .eq('status', 'confirmada')
+      .limit(1);
+    if (editingId) conflictQuery = conflictQuery.neq('id', editingId);
+    const { data: conflicts } = await conflictQuery;
+    if (conflicts && conflicts.length){
+      newResMsg.textContent = `⚠️ Ese día ya tienes confirmada la reserva de ${conflicts[0].full_name}. No se ha guardado.`;
+      return;
+    }
+  }
+
+  const payload = {
+    full_name: document.getElementById('nr_full_name').value.trim(),
+    phone: document.getElementById('nr_phone').value.trim(),
+    email: document.getElementById('nr_email').value.trim() || null,
+    event_type: document.getElementById('nr_event_type').value,
+    guests_estimate: document.getElementById('nr_guests').value ? Number(document.getElementById('nr_guests').value) : null,
+    event_date: document.getElementById('nr_event_date').value,
+    pricing_plan_id: planRadio.value,
+    start_time: startTime,
+    end_time: endTime,
+    wants_cleaning: document.getElementById('nr_wants_cleaning').checked,
+    wants_decoration: wantsDecoration,
+    decoration_theme: wantsDecoration ? (document.getElementById('nr_decoration_theme').value.trim() || null) : null,
+    decoration_cost: wantsDecoration && document.getElementById('nr_decoration_cost').value
+      ? Number(document.getElementById('nr_decoration_cost').value)
+      : null,
+    wants_catering: document.getElementById('nr_wants_catering').checked,
+    wants_animation: document.getElementById('nr_wants_animation').checked,
+    kids_menus_count: wantsKidsMenu ? Number(document.getElementById('nr_kids_menus').value || 1) : 0,
+    message: document.getElementById('nr_message').value.trim() || null,
+    coupon_code: nrAppliedCoupon ? nrAppliedCoupon.code : (document.getElementById('nr_coupon_code').value.trim() || null),
+    discount_amount: nrCurrentDiscount(nrPlanPrice()),
+    manual_price: document.getElementById('nr_manual_price').value !== '' ? Number(document.getElementById('nr_manual_price').value) : null,
+  };
+
+  const submitBtn = newResForm.querySelector('button[type="submit"]');
+  submitBtn.disabled = true;
+
+  let error, successMsg;
+  if (editingId){
+    if (editingOriginalStatus === 'cancelada') payload.status = 'confirmada';
+    ({ error } = await supabase.from('reservations').update(payload).eq('id', editingId).select());
+    successMsg = editingOriginalStatus === 'cancelada'
+      ? `Reserva de <strong>${payload.full_name}</strong> actualizada y reactivada como confirmada en Supabase.`
+      : `Reserva de <strong>${payload.full_name}</strong> actualizada en Supabase.`;
+  } else {
+    payload.status = 'confirmada';
+    payload.source = 'presencial';
+    ({ error } = await supabase.from('reservations').insert(payload));
+    successMsg = `Reserva presencial de <strong>${payload.full_name}</strong> guardada como confirmada en Supabase.`;
+  }
+
+  submitBtn.disabled = false;
+
+  if (error){
+    newResMsg.textContent = 'No se ha podido guardar: ' + error.message;
+    return;
+  }
+
+  newResModal.hidden = true;
+  editingId = null;
+  setActionMsg(successMsg, 'ok');
+  await loadReservations();
+  refreshActiveTab();
+});
+</script>
+
+</body>
+</html>
