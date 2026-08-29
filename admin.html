@@ -2222,6 +2222,7 @@ function reservationCardHtml(r){
         ? `<button class="btn btn-primary" data-action="accept" data-id="${r.id}">✅ Aceptar</button>
            <button class="btn btn-deny" data-action="deny" data-id="${r.id}">❌ Denegar</button>`
         : `<button class="btn btn-ghost" data-action="resend" data-id="${r.id}">Reenviar WhatsApp</button>
+           ${r.status === 'confirmada' ? `<button class="btn btn-ghost" data-action="invoice-from-reservation" data-id="${r.id}">🧾 Facturar</button>` : ''}
            ${r.status === 'confirmada' ? `<button class="btn btn-deny" data-action="cancel" data-id="${r.id}">🚫 Anular reserva</button>` : ''}
            <button class="btn btn-ghost" data-action="partial-cancel" data-id="${r.id}">💸 Anular parcial</button>`}
       <button class="btn btn-ghost" data-action="edit" data-id="${r.id}">✏️ Modificar</button>
@@ -2431,6 +2432,18 @@ function bindReservationCardActions(container, findReservation, onChange){
         }
         btn.disabled = false;
         btn.textContent = '📥 Descargar PDF';
+      } else if (action === 'invoice-from-reservation'){
+        await openInvoiceModal();
+        invReservationSelect.value = id;
+        applyReservationToInvoiceForm(r);
+        const { data: sig } = await supabase.from('contract_signatures').select('*').eq('reservation_id', id).maybeSingle();
+        if (sig){
+          document.getElementById('inv_name').value = sig.client_full_name || r.full_name;
+          document.getElementById('inv_dni').value = sig.client_dni || '';
+          document.getElementById('inv_address').value = sig.client_address || '';
+          document.getElementById('inv_phone').value = sig.client_phone || r.phone || '';
+          document.getElementById('inv_email').value = sig.client_email || r.email || '';
+        }
       } else if (action === 'edit'){
         openEditResModal(r);
       } else if (action === 'partial-cancel'){
@@ -3442,17 +3455,21 @@ async function openInvoiceModal(existing){
   invoiceModal.hidden = false;
 }
 
+function applyReservationToInvoiceForm(r){
+  document.getElementById('inv_name').value = r.full_name;
+  document.getElementById('inv_phone').value = r.phone || '';
+  document.getElementById('inv_email').value = r.email || '';
+  document.getElementById('inv_total').value = roomPrice(r).toFixed(2);
+  updateInvoiceBreakdown();
+}
+
 invReservationSelect.addEventListener('change', () => {
   const id = invReservationSelect.value;
   if (!id) return;
   const list = JSON.parse(invReservationSelect.dataset.reservations || '[]');
   const r = list.find(x => x.id === id);
   if (!r) return;
-  document.getElementById('inv_name').value = r.full_name;
-  document.getElementById('inv_phone').value = r.phone || '';
-  document.getElementById('inv_email').value = r.email || '';
-  document.getElementById('inv_total').value = roomPrice(r).toFixed(2);
-  updateInvoiceBreakdown();
+  applyReservationToInvoiceForm(r);
 });
 
 document.getElementById('newInvoiceBtn').addEventListener('click', () => openInvoiceModal());
