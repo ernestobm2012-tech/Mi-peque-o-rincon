@@ -1839,7 +1839,9 @@ function extractTown(address){
   const parts = String(address).split(',');
   let town = parts[parts.length - 1].trim();
   town = town.replace(/^\d{4,5}\s*/, '').trim();
-  if (!town) return null;
+  // Si lleva algún número, es casi seguro una calle (no un pueblo): mejor no contarla que
+  // contar mal, como pedía Ernesto ("si están en blanco no poner nada").
+  if (!town || /\d/.test(town) || town.length < 3) return null;
   return town.toLowerCase().replace(/(^|\s)\p{L}/gu, (c) => c.toUpperCase());
 }
 
