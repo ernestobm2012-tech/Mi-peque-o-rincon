@@ -530,6 +530,10 @@
         <h3 style="margin-bottom:14px;">🏷️ Uso de cupones</h3>
         <div id="statsCouponUsage"></div>
       </div>
+      <div class="res-card">
+        <h3 style="margin-bottom:14px;">📍 Pueblos de origen</h3>
+        <div id="statsTowns"></div>
+      </div>
     </div>
   </div>
 
@@ -1825,6 +1829,52 @@ async function renderEstadisticas(){
   renderStatsWeekdayChart(rows);
   renderStatsTopClients(rows);
   renderStatsCouponUsage(rows);
+  renderStatsTowns(rows);
+}
+
+// Saca el pueblo/localidad de una dirección en texto libre: si hay comas, se queda con el
+// último trozo (donde suele ir la localidad); si no, asume que ya es solo el nombre del pueblo.
+function extractTown(address){
+  if (!address) return null;
+  const parts = String(address).split(',');
+  let town = parts[parts.length - 1].trim();
+  town = town.replace(/^\d{4,5}\s*/, '').trim();
+  if (!town) return null;
+  return town.toLowerCase().replace(/(^|\s)\p{L}/gu, (c) => c.toUpperCase());
+}
+
+async function renderStatsTowns(rows){
+  const el = document.getElementById('statsTowns');
+  const resIds = rows.map(r => r.id);
+  if (!resIds.length){ el.innerHTML = '<p class="empty-msg">Sin datos en este periodo.</p>'; return; }
+
+  const [{ data: sigRows }, { data: invRows }] = await Promise.all([
+    supabase.from('contract_signatures').select('reservation_id, client_address').in('reservation_id', resIds),
+    supabase.from('invoices').select('reservation_id, client_address').in('reservation_id', resIds),
+  ]);
+
+  const addressByRes = {};
+  (invRows || []).forEach(i => { if (i.client_address) addressByRes[i.reservation_id] = i.client_address; });
+  (sigRows || []).forEach(s => { if (s.client_address) addressByRes[s.reservation_id] = s.client_address; });
+
+  const byTown = {};
+  Object.values(addressByRes).forEach(addr => {
+    const town = extractTown(addr);
+    if (!town) return;
+    byTown[town] = (byTown[town] || 0) + 1;
+  });
+
+  const entries = Object.entries(byTown).sort((a, b) => b[1] - a[1]);
+  if (!entries.length){ el.innerHTML = '<p class="empty-msg">Todavía no hay direcciones registradas (contratos o facturas) en este periodo.</p>'; return; }
+  const max = Math.max(...entries.map(e => e[1]), 1);
+  el.innerHTML = entries.map(([town, count], i) => {
+    const pct = Math.max(4, Math.round((count / max) * 100));
+    return `
+      <div class="chart-row">
+        <div class="chart-month-lbl" style="text-transform:none;" title="${town}">${town}</div>
+        <div class="chart-bar-track"><div class="chart-bar-fill ${i === 0 ? 'top' : 'net'}" style="width:${pct}%">${count}</div></div>
+      </div>`;
+  }).join('');
 }
 
 function renderStatsRevenueChart(rows){
