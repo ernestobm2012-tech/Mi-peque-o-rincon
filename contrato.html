@@ -101,8 +101,10 @@
         <input type="text" id="f_full_name" required>
         <label for="f_dni">DNI / CIF</label>
         <input type="text" id="f_dni" required placeholder="Ej: 12345678A">
-        <label for="f_address">Domicilio completo</label>
-        <input type="text" id="f_address" required placeholder="Calle, número, localidad, provincia">
+        <label for="f_address">Domicilio (calle y número)</label>
+        <input type="text" id="f_address" required placeholder="Calle, número">
+        <label for="f_town">Población</label>
+        <input type="text" id="f_town" required placeholder="Ej: Chozas de Canales">
         <label for="f_phone">Teléfono</label>
         <input type="tel" id="f_phone" required>
         <label for="f_email">Correo electrónico</label>
@@ -278,7 +280,7 @@ async function init(){
   document.getElementById('f_email').value = contractData.email || '';
 
   renderContractPreview();
-  ['f_full_name','f_dni','f_address','f_phone','f_email'].forEach(id => {
+  ['f_full_name','f_dni','f_address','f_town','f_phone','f_email'].forEach(id => {
     document.getElementById(id).addEventListener('input', renderContractPreview);
   });
 
@@ -293,7 +295,7 @@ function renderContractPreview(){
   const ph = {
     nombre: esc(document.getElementById('f_full_name').value) || '________________',
     dni: esc(document.getElementById('f_dni').value) || '________________',
-    domicilio: esc(document.getElementById('f_address').value) || '________________',
+    domicilio: [esc(document.getElementById('f_address').value), esc(document.getElementById('f_town').value)].filter(Boolean).join(', ') || '________________',
     telefono: esc(document.getElementById('f_phone').value) || '________________',
     email: esc(document.getElementById('f_email').value) || '________________',
     fechaEvento: fmtDateShort(contractData.event_date),
@@ -328,6 +330,7 @@ document.getElementById('contractForm').addEventListener('submit', async (e) => 
     p_token: token,
     p_dni: document.getElementById('f_dni').value.trim(),
     p_address: document.getElementById('f_address').value.trim(),
+    p_town: document.getElementById('f_town').value.trim(),
     p_full_name: document.getElementById('f_full_name').value.trim(),
     p_phone: document.getElementById('f_phone').value.trim(),
     p_email: document.getElementById('f_email').value.trim() || null,
