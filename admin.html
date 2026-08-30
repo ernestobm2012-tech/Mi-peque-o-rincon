@@ -839,9 +839,15 @@
       </div>
       <div class="field-row">
         <div class="field">
+          <label for="inv_town">Población (opcional)</label>
+          <input type="text" id="inv_town">
+        </div>
+        <div class="field">
           <label for="inv_phone">Teléfono (opcional)</label>
           <input type="tel" id="inv_phone">
         </div>
+      </div>
+      <div class="field-row">
         <div class="field">
           <label for="inv_email">Correo (opcional)</label>
           <input type="email" id="inv_email">
@@ -1278,6 +1284,7 @@ function buildInvoiceHtml(inv){
     <tr><td>NOMBRE:</td><td>${inv.client_name}</td></tr>
     <tr><td>DNI:</td><td>${inv.client_dni || ''}</td></tr>
     <tr><td>DIRECCIÓN:</td><td>${inv.client_address || ''}</td></tr>
+    <tr><td>POBLACIÓN:</td><td>${inv.client_town || ''}</td></tr>
     <tr><td>TELÉFONO:</td><td>${inv.client_phone || ''}</td></tr>
     <tr><td>CORREO:</td><td>${inv.client_email || ''}</td></tr>
   </table>
@@ -1305,7 +1312,7 @@ function buildContractSignedHtml(r, plan, sig){
   const total = reservationTotal(r);
   const nombre = sig.client_full_name;
   const dni = sig.client_dni;
-  const domicilio = sig.client_address;
+  const domicilio = [sig.client_address, sig.client_town].filter(Boolean).join(', ');
   const telefono = sig.client_phone || r.phone;
   const email = sig.client_email || r.email || '';
   const fechaEvento = fmtDateShort(r.event_date);
@@ -1832,8 +1839,13 @@ async function renderEstadisticas(){
   renderStatsTowns(rows);
 }
 
-// Saca el pueblo/localidad de una dirección en texto libre: si hay comas, se queda con el
-// último trozo (donde suele ir la localidad); si no, asume que ya es solo el nombre del pueblo.
+function normalizeTownName(town){
+  return String(town).trim().toLowerCase().replace(/(^|\s)\p{L}/gu, (c) => c.toUpperCase());
+}
+
+// Saca el pueblo/localidad de una dirección en texto libre (solo se usa como respaldo para
+// contratos/facturas antiguos sin el campo de población dedicado): si hay comas, se queda con
+// el último trozo (donde suele ir la localidad); si no, asume que ya es solo el nombre del pueblo.
 function extractTown(address){
   if (!address) return null;
   const parts = String(address).split(',');
@@ -1842,7 +1854,7 @@ function extractTown(address){
   // Si lleva algún número, es casi seguro una calle (no un pueblo): mejor no contarla que
   // contar mal, como pedía Ernesto ("si están en blanco no poner nada").
   if (!town || /\d/.test(town) || town.length < 3) return null;
-  return town.toLowerCase().replace(/(^|\s)\p{L}/gu, (c) => c.toUpperCase());
+  return normalizeTownName(town);
 }
 
 async function renderStatsTowns(rows){
@@ -1851,17 +1863,20 @@ async function renderStatsTowns(rows){
   if (!resIds.length){ el.innerHTML = '<p class="empty-msg">Sin datos en este periodo.</p>'; return; }
 
   const [{ data: sigRows }, { data: invRows }] = await Promise.all([
-    supabase.from('contract_signatures').select('reservation_id, client_address').in('reservation_id', resIds),
-    supabase.from('invoices').select('reservation_id, client_address').in('reservation_id', resIds),
+    supabase.from('contract_signatures').select('reservation_id, client_address, client_town').in('reservation_id', resIds),
+    supabase.from('invoices').select('reservation_id, client_address, client_town').in('reservation_id', resIds),
   ]);
 
-  const addressByRes = {};
-  (invRows || []).forEach(i => { if (i.client_address) addressByRes[i.reservation_id] = i.client_address; });
-  (sigRows || []).forEach(s => { if (s.client_address) addressByRes[s.reservation_id] = s.client_address; });
+  const townByRes = {};
+  // La población escrita en el campo dedicado es siempre de fiar; solo si falta
+  // intentamos adivinarla del texto libre de la dirección (contratos/facturas antiguos).
+  (invRows || []).forEach(i => { townByRes[i.reservation_id] = i.client_town ? normalizeTownName(i.client_town) : extractTown(i.client_address); });
+  (sigRows || []).forEach(s => { if (s.client_town || s.client_address) townByRes[s.reservation_id] = s.client_town ? normalizeTownName(s.client_town) : extractTown(s.client_address); });
 
   const byTown = {};
-  Object.values(addressByRes).forEach(addr => {
-    const town = extractTown(addr);
+  Object.values(townByRes).forEach(town => {
+    if (!town) return;
+    town = town.trim();
     if (!town) return;
     byTown[town] = (byTown[town] || 0) + 1;
   });
@@ -2441,6 +2456,7 @@ function bindReservationCardActions(container, findReservation, onChange){
           document.getElementById('inv_name').value = sig.client_full_name || r.full_name;
           document.getElementById('inv_dni').value = sig.client_dni || '';
           document.getElementById('inv_address').value = sig.client_address || '';
+          document.getElementById('inv_town').value = sig.client_town || '';
           document.getElementById('inv_phone').value = sig.client_phone || r.phone || '';
           document.getElementById('inv_email').value = sig.client_email || r.email || '';
         }
@@ -3434,6 +3450,7 @@ async function openInvoiceModal(existing){
     document.getElementById('inv_name').value = existing.client_name;
     document.getElementById('inv_dni').value = existing.client_dni || '';
     document.getElementById('inv_address').value = existing.client_address || '';
+    document.getElementById('inv_town').value = existing.client_town || '';
     document.getElementById('inv_phone').value = existing.client_phone || '';
     document.getElementById('inv_email').value = existing.client_email || '';
     document.getElementById('inv_concept').value = existing.concept;
@@ -3487,6 +3504,7 @@ invoiceForm.addEventListener('submit', async (e) => {
     client_name: document.getElementById('inv_name').value.trim(),
     client_dni: document.getElementById('inv_dni').value.trim() || null,
     client_address: document.getElementById('inv_address').value.trim() || null,
+    client_town: document.getElementById('inv_town').value.trim() || null,
     client_phone: document.getElementById('inv_phone').value.trim() || null,
     client_email: document.getElementById('inv_email').value.trim() || null,
     concept: document.getElementById('inv_concept').value.trim(),
