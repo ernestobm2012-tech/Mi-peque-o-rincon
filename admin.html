@@ -3476,7 +3476,8 @@ function applyReservationToInvoiceForm(r){
   document.getElementById('inv_name').value = r.full_name;
   document.getElementById('inv_phone').value = r.phone || '';
   document.getElementById('inv_email').value = r.email || '';
-  document.getElementById('inv_total').value = roomPrice(r).toFixed(2);
+  document.getElementById('inv_total').value = reservationTotal(r).toFixed(2);
+  document.getElementById('inv_date').value = r.event_date;
   updateInvoiceBreakdown();
 }
 
