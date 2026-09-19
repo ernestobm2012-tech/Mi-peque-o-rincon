@@ -196,6 +196,14 @@
   .coupon-badge.active{ background:#EAF0E2; color:var(--olive-dark); }
   .coupon-badge.inactive{ background:#F6E4E0; color:#7A2E22; }
 
+  /* ---------- Precios ---------- */
+  .pricing-row{ background:#fff; border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px; margin-bottom:10px; display:flex; align-items:flex-end; gap:14px; flex-wrap:wrap; }
+  .pricing-row .field{ margin-bottom:0; }
+  .pricing-row .field input{ width:auto; }
+  .pricing-active{ display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink); white-space:nowrap; }
+  .pricing-row-actions{ display:flex; gap:8px; margin-left:auto; }
+  .pricing-row.inactive{ opacity:.6; }
+
   /* ---------- Gallery ---------- */
   .gallery-section-title{ margin:28px 0 14px; font-size:16px; }
   .gallery-section-title:first-child{ margin-top:0; }
@@ -265,6 +273,7 @@
     <button class="tab-btn" data-tab="tabCalendario">Calendario</button>
     <button class="tab-btn" data-tab="tabClientes">Clientes</button>
     <button class="tab-btn" data-tab="tabCupones">Cupones</button>
+    <button class="tab-btn" data-tab="tabPrecios">Precios</button>
     <button class="tab-btn" data-tab="tabGaleria">Galería web</button>
     <button class="tab-btn" data-tab="tabEstadisticas">Estadísticas</button>
     <button class="tab-btn" data-tab="tabImpuestos">Impuestos</button>
@@ -374,6 +383,19 @@
       </form>
     </div>
     <div id="couponsList"></div>
+  </div>
+
+  <div id="tabPrecios" class="tab-panel" hidden>
+    <div class="res-card" style="margin-bottom:24px;">
+      <h3 style="margin-bottom:6px;">🕐 Tarifas de la sala</h3>
+      <p style="font-size:13.5px; color:var(--ink-soft); margin-bottom:16px;">Estas son las tarifas que se muestran en la web y con las que se calcula el precio de cada reserva. El horario se escribe como "16:30 a 21:30". Los cambios se guardan al pulsar "Guardar" en cada tarifa.</p>
+      <div id="pricingPlansList"></div>
+    </div>
+    <div class="res-card">
+      <h3 style="margin-bottom:6px;">🧺 Extras</h3>
+      <p style="font-size:13.5px; color:var(--ink-soft); margin-bottom:16px;">Precio de la limpieza y de los menús infantiles que se suman al precio de la sala.</p>
+      <div id="extrasList"></div>
+    </div>
   </div>
 
   <div id="tabGaleria" class="tab-panel" hidden>
@@ -2556,6 +2578,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     if (btn.dataset.tab === 'tabCalendario') renderCalendarState();
     if (btn.dataset.tab === 'tabClientes') renderClients();
     if (btn.dataset.tab === 'tabCupones') renderCoupons();
+    if (btn.dataset.tab === 'tabPrecios'){ renderPricingPlans(); renderExtras(); }
     if (btn.dataset.tab === 'tabGaleria'){ renderGallery(); renderEventTypePhotos(); renderVideosAdmin(); }
     if (btn.dataset.tab === 'tabEstadisticas'){ renderEstadisticas(); renderGraficos(); renderVisitas(); renderSocialClicks(); }
     if (btn.dataset.tab === 'tabImpuestos') renderImpuestos();
@@ -3170,6 +3193,164 @@ async function renderCoupons(){
       }
       if (editingCouponId === c.id) cancelEditCoupon();
       await renderCoupons();
+    });
+  });
+}
+
+// ---------- Precios (tarifas de la sala y extras) ----------
+const PRICING_DAY_GROUPS = [
+  { key: 'lunes_jueves', label: 'Entre semana (lunes a jueves)' },
+  { key: 'viernes_domingo_festivos', label: 'Fin de semana, festivos y vísperas' },
+];
+
+// ALL_PLANS y ALL_EXTRAS solo se cargan una vez al entrar en el panel; hay que
+// refrescarlos tras cualquier cambio para que el resto del panel (reservas, totales...)
+// use siempre el precio/horario más reciente sin necesidad de recargar la página.
+async function reloadPricingData(){
+  const [{ data: plans }, { data: extras }] = await Promise.all([
+    supabase.from('pricing_plans').select('*').eq('active', true),
+    supabase.from('extras').select('*').eq('active', true),
+  ]);
+  ALL_PLANS = plans || [];
+  ALL_EXTRAS = extras || [];
+}
+
+function pricingRowHtml(p){
+  return `
+    <div class="pricing-row ${p.active ? '' : 'inactive'}" data-pricing-id="${p.id}">
+      <div class="field" style="width:220px;">
+        <label>Nombre</label>
+        <input type="text" class="pp-label" value="${(p.label || '').replace(/"/g, '&quot;')}">
+      </div>
+      <div class="field" style="width:170px;">
+        <label>Horario</label>
+        <input type="text" class="pp-hours" value="${(p.hours_range || '').replace(/"/g, '&quot;')}" placeholder="16:30 a 21:30">
+      </div>
+      <div class="field" style="width:110px;">
+        <label>Precio (€)</label>
+        <input type="number" class="pp-price" min="0" step="0.01" value="${p.price}">
+      </div>
+      <label class="pricing-active">
+        <input type="checkbox" class="pp-active" ${p.active ? 'checked' : ''}> Activa
+      </label>
+      <div class="pricing-row-actions">
+        <button type="button" class="btn btn-primary pp-save">Guardar</button>
+        <button type="button" class="btn btn-deny pp-delete">🗑️</button>
+      </div>
+      <p class="pp-msg" style="width:100%; font-size:12.5px; color:var(--ink-soft); margin:0;"></p>
+    </div>`;
+}
+
+function bindPricingRowActions(container, group){
+  container.querySelectorAll('.pricing-row').forEach(row => {
+    const id = row.dataset.pricingId;
+    const msgEl = row.querySelector('.pp-msg');
+
+    row.querySelector('.pp-save').addEventListener('click', async () => {
+      const label = row.querySelector('.pp-label').value.trim();
+      const hours_range = row.querySelector('.pp-hours').value.trim();
+      const price = Number(row.querySelector('.pp-price').value);
+      const active = row.querySelector('.pp-active').checked;
+      if (!label || !hours_range || !(price >= 0)){
+        msgEl.textContent = 'Rellena nombre, horario y precio antes de guardar.';
+        return;
+      }
+      msgEl.textContent = 'Guardando…';
+      const { error } = await supabase.from('pricing_plans').update({ label, hours_range, price, active }).eq('id', id);
+      if (error){
+        msgEl.textContent = 'No se ha podido guardar: ' + error.message;
+        return;
+      }
+      msgEl.textContent = 'Guardado ✅';
+      row.classList.toggle('inactive', !active);
+      await reloadPricingData();
+    });
+
+    row.querySelector('.pp-delete').addEventListener('click', async () => {
+      const label = row.querySelector('.pp-label').value.trim();
+      if (!confirm(`¿Borrar definitivamente la tarifa "${label}"? Esta acción no se puede deshacer.`)) return;
+      const { error } = await supabase.from('pricing_plans').delete().eq('id', id);
+      if (error){
+        alert('No se ha podido borrar: ' + error.message);
+        return;
+      }
+      await reloadPricingData();
+      await renderPricingPlans();
+    });
+  });
+
+  const addBtn = container.querySelector('.pp-add');
+  if (addBtn){
+    addBtn.addEventListener('click', async () => {
+      addBtn.disabled = true;
+      const { data: existing } = await supabase.from('pricing_plans').select('sort_order').eq('day_group', group);
+      const nextSort = Math.max(0, ...(existing || []).map(p => p.sort_order)) + 1;
+      const { error } = await supabase.from('pricing_plans').insert({
+        day_group: group, label: 'Nueva tarifa', hours_range: '10:00 a 12:00', price: 0, sort_order: nextSort, active: true,
+      });
+      addBtn.disabled = false;
+      if (error){ alert('No se ha podido crear la tarifa: ' + error.message); return; }
+      await reloadPricingData();
+      await renderPricingPlans();
+    });
+  }
+}
+
+async function renderPricingPlans(){
+  const container = document.getElementById('pricingPlansList');
+  const { data, error } = await supabase.from('pricing_plans').select('*').order('day_group').order('sort_order');
+  if (error){
+    container.innerHTML = `<p class="empty-msg">Error cargando tarifas: ${error.message}</p>`;
+    return;
+  }
+  container.innerHTML = PRICING_DAY_GROUPS.map(g => {
+    const rows = (data || []).filter(p => p.day_group === g.key);
+    return `
+      <h4 style="margin:18px 0 10px;">${g.label}</h4>
+      <div class="pricing-group" data-group="${g.key}">
+        ${rows.map(pricingRowHtml).join('')}
+        <button type="button" class="btn btn-ghost pp-add" style="margin-top:4px;">+ Nueva tarifa en este grupo</button>
+      </div>`;
+  }).join('');
+  container.querySelectorAll('.pricing-group').forEach(group => bindPricingRowActions(group, group.dataset.group));
+}
+
+// El nombre de cada extra no se puede cambiar libremente: reservationTotal() y demás
+// cálculos lo buscan por texto ("limpieza", "infantil"), así que solo se deja tocar el precio.
+async function renderExtras(){
+  const container = document.getElementById('extrasList');
+  const { data, error } = await supabase.from('extras').select('*').order('name');
+  if (error){
+    container.innerHTML = `<p class="empty-msg">Error cargando extras: ${error.message}</p>`;
+    return;
+  }
+  container.innerHTML = (data || []).map(x => `
+    <div class="pricing-row" data-extra-id="${x.id}">
+      <div class="field" style="width:220px; margin-bottom:0;">
+        <label>Nombre</label>
+        <p style="margin:0; padding:11px 0; font-size:14.5px;">${x.name}</p>
+      </div>
+      <div class="field" style="width:110px;">
+        <label>Precio (€)</label>
+        <input type="number" class="ex-price" min="0" step="0.01" value="${x.price}">
+      </div>
+      <div class="pricing-row-actions">
+        <button type="button" class="btn btn-primary ex-save">Guardar</button>
+      </div>
+      <p class="ex-msg" style="width:100%; font-size:12.5px; color:var(--ink-soft); margin:0;"></p>
+    </div>`).join('');
+
+  container.querySelectorAll('[data-extra-id]').forEach(row => {
+    const id = row.dataset.extraId;
+    row.querySelector('.ex-save').addEventListener('click', async () => {
+      const msgEl = row.querySelector('.ex-msg');
+      const price = Number(row.querySelector('.ex-price').value);
+      if (!(price >= 0)){ msgEl.textContent = 'Precio no válido.'; return; }
+      msgEl.textContent = 'Guardando…';
+      const { error } = await supabase.from('extras').update({ price }).eq('id', id);
+      if (error){ msgEl.textContent = 'No se ha podido guardar: ' + error.message; return; }
+      msgEl.textContent = 'Guardado ✅';
+      await reloadPricingData();
     });
   });
 }
