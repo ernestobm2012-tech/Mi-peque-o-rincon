@@ -269,8 +269,8 @@
   <p id="notifMsg" style="font-size:13px; color:var(--ink-soft); margin-top:-10px; margin-bottom:20px;"></p>
 
   <div class="tabs-row">
-    <button class="tab-btn active" data-tab="tabReservas">Reservas</button>
-    <button class="tab-btn" data-tab="tabCalendario">Calendario</button>
+    <button class="tab-btn" data-tab="tabReservas">Reservas</button>
+    <button class="tab-btn active" data-tab="tabCalendario">Calendario</button>
     <button class="tab-btn" data-tab="tabClientes">Clientes</button>
     <button class="tab-btn" data-tab="tabCupones">Cupones</button>
     <button class="tab-btn" data-tab="tabPrecios">Precios</button>
@@ -283,7 +283,7 @@
 
   <p id="actionMsg" style="display:none; font-size:13.5px; padding:10px 14px; margin-bottom:18px; border-radius:2px;"></p>
 
-  <div id="tabReservas" class="tab-panel">
+  <div id="tabReservas" class="tab-panel" hidden>
     <div class="stats-row">
       <div class="stat-card">
         <span class="num" id="statIncome">0€</span>
@@ -320,7 +320,7 @@
     <div id="resList"></div>
   </div>
 
-  <div id="tabCalendario" class="tab-panel" hidden>
+  <div id="tabCalendario" class="tab-panel">
     <div class="cal-nav">
       <button type="button" class="btn btn-ghost" id="calPrevBtn">← Mes anterior</button>
       <h2 id="calLabel" style="font-size:18px; text-transform:capitalize;"></h2>
@@ -2551,6 +2551,7 @@ async function showDashboard(){
 
   await refreshHiddenReservationIds();
   await loadReservations();
+  renderCalendarState();
   checkNotifButton();
   checkHiddenHash();
 }
