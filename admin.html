@@ -266,7 +266,6 @@
     <button class="tab-btn" data-tab="tabClientes">Clientes</button>
     <button class="tab-btn" data-tab="tabCupones">Cupones</button>
     <button class="tab-btn" data-tab="tabGaleria">Galería web</button>
-    <button class="tab-btn" data-tab="tabGraficos">Gráficos</button>
     <button class="tab-btn" data-tab="tabEstadisticas">Estadísticas</button>
     <button class="tab-btn" data-tab="tabImpuestos">Impuestos</button>
     <button class="tab-btn" data-tab="tabFacturas">Facturas</button>
@@ -432,55 +431,6 @@
     <div id="galleryAdminSections"></div>
   </div>
 
-  <div id="tabGraficos" class="tab-panel" hidden>
-    <p style="color:var(--ink-soft); font-size:14px; margin-bottom:18px;">Ingresos del alquiler de la sala por mes (solo reservas confirmadas). "Facturado" es el importe cobrado, con el 21% de IVA incluido; "Ganado" es lo que queda una vez descontado ese IVA.</p>
-    <div class="chart-legend">
-      <span><i class="chart-swatch chart-swatch-billed"></i> Facturado (con IVA)</span>
-      <span><i class="chart-swatch chart-swatch-net"></i> Ganado (sin IVA)</span>
-    </div>
-    <div id="chartMonths"></div>
-
-    <h3 style="margin:32px 0 6px;">Visitas a la web</h3>
-    <p style="color:var(--ink-soft); font-size:14px; margin-bottom:18px;">"Visitas" cuenta cada carga de la página principal; "Visitantes únicos" cuenta dispositivos distintos (si alguien recarga o vuelve a entrar, no suma otra vez). No cuenta el panel de admin.</p>
-    <div class="stats-row" style="margin-bottom:24px;">
-      <div class="stat-card">
-        <span class="num" id="visitsTotal">0</span>
-        <span class="lbl">Visitas totales</span>
-      </div>
-      <div class="stat-card">
-        <span class="num" id="visitsUniqueTotal">0</span>
-        <span class="lbl">Visitantes únicos totales</span>
-      </div>
-      <div class="stat-card">
-        <span class="num" id="visitsMonth">0</span>
-        <span class="lbl">Visitas este mes</span>
-      </div>
-      <div class="stat-card">
-        <span class="num" id="visitsUniqueMonth">0</span>
-        <span class="lbl">Visitantes únicos este mes</span>
-      </div>
-    </div>
-    <table class="tax-table" id="visitsMonthsTable"></table>
-
-    <h3 style="margin:32px 0 6px;">Clics en redes sociales</h3>
-    <p style="color:var(--ink-soft); font-size:14px; margin-bottom:18px;">Veces que se ha pinchado en cualquiera de los enlaces a cada red social dentro de la web.</p>
-    <div class="stats-row" style="margin-bottom:24px;">
-      <div class="stat-card">
-        <span class="num" id="socialFacebookTotal">0</span>
-        <span class="lbl">Facebook</span>
-      </div>
-      <div class="stat-card">
-        <span class="num" id="socialInstagramTotal">0</span>
-        <span class="lbl">Instagram</span>
-      </div>
-      <div class="stat-card">
-        <span class="num" id="socialTiktokTotal">0</span>
-        <span class="lbl">TikTok</span>
-      </div>
-    </div>
-    <table class="tax-table" id="socialMonthsTable"></table>
-  </div>
-
   <div id="tabEstadisticas" class="tab-panel" hidden>
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; flex-wrap:wrap; gap:10px;">
       <p style="color:var(--ink-soft); font-size:14px; margin:0;">Solo tiene en cuenta reservas confirmadas.</p>
@@ -535,6 +485,54 @@
         <div id="statsTowns"></div>
       </div>
     </div>
+
+    <h3 style="margin:32px 0 6px;">📊 Facturación mensual (todo el historial)</h3>
+    <p style="color:var(--ink-soft); font-size:14px; margin-bottom:18px;">Ingresos del alquiler de la sala por mes (solo reservas confirmadas). "Facturado" es el importe cobrado, con el 21% de IVA incluido; "Ganado" es lo que queda una vez descontado ese IVA.</p>
+    <div class="chart-legend">
+      <span><i class="chart-swatch chart-swatch-billed"></i> Facturado (con IVA)</span>
+      <span><i class="chart-swatch chart-swatch-net"></i> Ganado (sin IVA)</span>
+    </div>
+    <div id="chartMonths"></div>
+
+    <h3 style="margin:32px 0 6px;">Visitas a la web</h3>
+    <p style="color:var(--ink-soft); font-size:14px; margin-bottom:18px;">"Visitas" cuenta cada carga de la página principal; "Visitantes únicos" cuenta dispositivos distintos (si alguien recarga o vuelve a entrar, no suma otra vez). No cuenta el panel de admin.</p>
+    <div class="stats-row" style="margin-bottom:24px;">
+      <div class="stat-card">
+        <span class="num" id="visitsTotal">0</span>
+        <span class="lbl">Visitas totales</span>
+      </div>
+      <div class="stat-card">
+        <span class="num" id="visitsUniqueTotal">0</span>
+        <span class="lbl">Visitantes únicos totales</span>
+      </div>
+      <div class="stat-card">
+        <span class="num" id="visitsMonth">0</span>
+        <span class="lbl">Visitas este mes</span>
+      </div>
+      <div class="stat-card">
+        <span class="num" id="visitsUniqueMonth">0</span>
+        <span class="lbl">Visitantes únicos este mes</span>
+      </div>
+    </div>
+    <table class="tax-table" id="visitsMonthsTable"></table>
+
+    <h3 style="margin:32px 0 6px;">Clics en redes sociales</h3>
+    <p style="color:var(--ink-soft); font-size:14px; margin-bottom:18px;">Veces que se ha pinchado en cualquiera de los enlaces a cada red social dentro de la web.</p>
+    <div class="stats-row" style="margin-bottom:24px;">
+      <div class="stat-card">
+        <span class="num" id="socialFacebookTotal">0</span>
+        <span class="lbl">Facebook</span>
+      </div>
+      <div class="stat-card">
+        <span class="num" id="socialInstagramTotal">0</span>
+        <span class="lbl">Instagram</span>
+      </div>
+      <div class="stat-card">
+        <span class="num" id="socialTiktokTotal">0</span>
+        <span class="lbl">TikTok</span>
+      </div>
+    </div>
+    <table class="tax-table" id="socialMonthsTable"></table>
   </div>
 
   <div id="tabImpuestos" class="tab-panel" hidden>
@@ -2559,8 +2557,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     if (btn.dataset.tab === 'tabClientes') renderClients();
     if (btn.dataset.tab === 'tabCupones') renderCoupons();
     if (btn.dataset.tab === 'tabGaleria'){ renderGallery(); renderEventTypePhotos(); renderVideosAdmin(); }
-    if (btn.dataset.tab === 'tabGraficos'){ renderGraficos(); renderVisitas(); renderSocialClicks(); }
-    if (btn.dataset.tab === 'tabEstadisticas') renderEstadisticas();
+    if (btn.dataset.tab === 'tabEstadisticas'){ renderEstadisticas(); renderGraficos(); renderVisitas(); renderSocialClicks(); }
     if (btn.dataset.tab === 'tabImpuestos') renderImpuestos();
     if (btn.dataset.tab === 'tabFacturas') renderInvoices();
     if (btn.dataset.tab === 'tabEnchufes'){ renderPlugSettings(); renderPlugsList(); }
@@ -2572,7 +2569,7 @@ function refreshActiveTab(){
   if (!activeBtn) return;
   if (activeBtn.dataset.tab === 'tabCalendario') renderCalendarState();
   if (activeBtn.dataset.tab === 'tabClientes') renderClients();
-  if (activeBtn.dataset.tab === 'tabGraficos') renderGraficos();
+  if (activeBtn.dataset.tab === 'tabEstadisticas') renderGraficos();
   if (activeBtn.dataset.tab === 'tabImpuestos') renderImpuestos();
 }
 
