@@ -189,27 +189,20 @@ const url = new URL(location.href);
 const token = url.searchParams.get('token');
 
 let ALL_PLANS = [];
-let ALL_EXTRAS = [];
 let contractData = null;
 let signaturePad = null;
 
-function getExtraPrice(keyword){
-  const e = ALL_EXTRAS.find(x => x.name.toLowerCase().includes(keyword));
-  return e ? Number(e.price) : 0;
-}
-
+// El contrato solo recoge el alquiler de la sala: la limpieza y los menús infantiles
+// van aparte y no deben aparecer aquí ni en el precio del contrato.
 function reservationTotalFromData(d){
-  let total;
+  let roomPrice;
   if (d.manual_price != null){
-    total = Number(d.manual_price);
+    roomPrice = Number(d.manual_price);
   } else {
     const plan = ALL_PLANS.find(p => p.id === d.pricing_plan_id);
-    total = plan ? Number(plan.price) : 0;
+    roomPrice = plan ? Number(plan.price) : 0;
   }
-  if (d.wants_cleaning) total += getExtraPrice('limpieza');
-  total += (d.kids_menus_count || 0) * getExtraPrice('infantil');
-  total -= Number(d.discount_amount || 0);
-  return Math.max(0, total);
+  return Math.max(0, roomPrice - Number(d.discount_amount || 0));
 }
 
 function setupSignaturePad(){
@@ -255,13 +248,11 @@ function setupSignaturePad(){
 async function init(){
   if (!token){ showState('invalidState'); return; }
 
-  const [{ data, error }, { data: plans }, { data: extras }] = await Promise.all([
+  const [{ data, error }, { data: plans }] = await Promise.all([
     supabase.rpc('get_contract_data', { p_token: token }),
     supabase.from('pricing_plans').select('*'),
-    supabase.from('extras').select('*'),
   ]);
   ALL_PLANS = plans || [];
-  ALL_EXTRAS = extras || [];
 
   if (error || !data || !data.length){ showState('invalidState'); return; }
   contractData = data[0];

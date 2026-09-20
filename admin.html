@@ -1329,7 +1329,9 @@ function openInvoicePrintView(inv){
 
 // Texto íntegro del contrato de alquiler, con los datos ya rellenados por el cliente en contrato.html.
 function buildContractSignedHtml(r, plan, sig){
-  const total = reservationTotal(r);
+  // El contrato solo recoge el alquiler de la sala: la limpieza y los menús infantiles
+  // van aparte y no deben aparecer aquí (así lo pidió Ernesto).
+  const total = roomRevenue(r);
   const nombre = sig.client_full_name;
   const dni = sig.client_dni;
   const domicilio = [sig.client_address, sig.client_town].filter(Boolean).join(', ');
