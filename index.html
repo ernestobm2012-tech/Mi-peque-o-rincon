@@ -1714,5 +1714,19 @@ async function safeInit(fn, label){
 })();
 </script>
 
+<!-- Asistente de IA de la sala (EBM Agencia IA). A la izquierda para no tapar el botón de WhatsApp. -->
+<!-- Por debajo del aviso de cookies (z-index 200), para no tapar sus botones. -->
+<style>
+  .ebm-chat-btn{ z-index:150 !important; }
+  .ebm-chat{ z-index:151 !important; }
+</style>
+<script src="https://ernestobm2012-tech.github.io/ebmagenciaia/js/chat.js?v=2"
+  data-client="mi-pequeno-rincon"
+  data-title="Mi Pequeño Rincón"
+  data-welcome="¡Hola! Soy el asistente de Mi Pequeño Rincón. ¿Qué celebración tienes en mente?"
+  data-color="#4B5E22"
+  data-position="left"
+  defer></script>
+
 </body>
 </html>
