@@ -33,7 +33,7 @@
   h1,h2,h3{ font-family:'Fraunces', serif; font-weight:500; letter-spacing:-0.01em; color:var(--ink); margin:0 0 8px; }
   .wrap{ max-width:760px; margin:0 auto; padding:28px 20px 80px; }
   .brand{ display:flex; align-items:center; gap:12px; margin-bottom:10px; }
-  .brand img{ height:52px; width:auto; border-radius:50%; }
+  .brand img{ height:52px; width:52px; object-fit:cover; border-radius:50%; }
   .brand span{ font-family:'Fraunces', serif; font-size:19px; }
   .back-link{ display:inline-block; color:var(--ink-soft); font-size:13.5px; text-decoration:none; margin-bottom:22px; }
   .back-link:hover{ color:var(--olive-dark); }
@@ -108,7 +108,7 @@
 </head>
 <body>
 <div class="wrap">
-  <div class="brand"><img src="assets/logo-mpr.jpg" alt=""><span>Mi Pequeño Rincón</span></div>
+  <div class="brand"><img src="assets/icon-maskable-512.png" alt=""><span>Mi Pequeño Rincón</span></div>
   <a class="back-link" href="/">← Volver a la web</a>
 
   <div id="phoneState" class="card">
@@ -159,7 +159,7 @@
               <div class="invite-venue"><strong>Mi Pequeño Rincón</strong>C/ Guadalajara 15, local&nbsp;5 (C.C. La Pacheca)<br>Chozas de Canales (Toledo)</div>
             </div>
             <div class="invite-brand">
-              <img src="assets/logo-mpr.jpg" alt="" class="invite-logo">
+              <img src="assets/icon-maskable-512.png" alt="" class="invite-logo">
               <span>mipequenorincon.es</span>
             </div>
           </div>
@@ -204,6 +204,8 @@ function groupFor(eventType){
 const BG_SETS = {
   cumpleanos: [
     { id: 'cumpleanos', file: 'assets/invitacion-cumpleanos.jpg', label: 'Clásico' },
+    { id: 'globos', file: 'assets/invitacion-cumpleanos-globos.jpg', label: 'Globos de colores' },
+    { id: 'tarta', file: 'assets/invitacion-cumpleanos-tarta.jpg', label: 'Tarta' },
   ],
   babyshower: [
     { id: 'elegante', file: 'assets/invitacion-babyshower.jpg', label: 'Elegante' },
@@ -214,9 +216,13 @@ const BG_SETS = {
   ],
   ceremonia: [
     { id: 'ceremonia', file: 'assets/invitacion-comunion.jpg', label: 'Clásico' },
+    { id: 'caliz', file: 'assets/invitacion-ceremonia-caliz.jpg', label: 'Cáliz' },
+    { id: 'bautismo', file: 'assets/invitacion-ceremonia-bautismo.jpg', label: 'Bautismo' },
   ],
   generico: [
     { id: 'generico', file: 'assets/invitacion-generico.jpg', label: 'Clásico' },
+    { id: 'boda', file: 'assets/invitacion-generico-boda.jpg', label: 'Boda' },
+    { id: 'fiesta', file: 'assets/invitacion-generico-fiesta.jpg', label: 'Fiesta' },
   ],
 };
 
