@@ -140,7 +140,7 @@
             <div class="invite-subtitle" id="invSubtitle"></div>
             <div class="invite-meta">
               <div id="invDateTime"></div>
-              <div class="venue">Mi Pequeño Rincón · Chozas de Canales (Toledo)</div>
+              <div class="venue">Mi Pequeño Rincón · Calle Guadalajara 15, local 5 (C.C. La Pacheca)<br>Chozas de Canales (Toledo)</div>
             </div>
             <div class="invite-brand">
               <img src="assets/logo-mpr.jpg" alt="" class="invite-logo">
@@ -293,11 +293,22 @@ function fieldsHtmlFor(group, r){
     <input type="date" id="inv_fecha" value="${r.event_date}" required>`;
 }
 
+// Hora de la celebración: por defecto la hora a la que empieza el alquiler, pero editable,
+// porque puede no coincidir con la hora a la que arranca la fiesta en sí.
+function commonFieldsHtml(r){
+  const horaDefault = r.start_time ? r.start_time.slice(0,5) : '';
+  return `
+    <label for="inv_hora">Hora de la celebración</label>
+    <input type="time" id="inv_hora" value="${horaDefault}" required>
+    <p class="field-note">Puede ser distinta a la hora de alquiler de la sala.</p>`;
+}
+
 function updatePreview(group, r){
   const titleEl = document.getElementById('invTitle');
   const subtitleEl = document.getElementById('invSubtitle');
   const dateTimeEl = document.getElementById('invDateTime');
-  const hora = r.start_time ? r.start_time.slice(0,5) : '';
+  const horaInput = document.getElementById('inv_hora');
+  const hora = horaInput ? horaInput.value : '';
 
   if (group === 'cumpleanos'){
     const nombre = document.getElementById('inv_nombre').value.trim() || '________';
@@ -331,7 +342,7 @@ function openBuilder(r){
   currentReservation = r;
   const group = groupFor(r.event_type);
   document.getElementById('fieldsTitle').textContent = `Tus datos (${r.event_type})`;
-  document.getElementById('fieldsContainer').innerHTML = fieldsHtmlFor(group, r);
+  document.getElementById('fieldsContainer').innerHTML = fieldsHtmlFor(group, r) + commonFieldsHtml(r);
   document.getElementById('inviteCard').style.backgroundImage = `url('${BG_IMAGES[group]}')`;
   document.getElementById('builderMsg').textContent = '';
 
