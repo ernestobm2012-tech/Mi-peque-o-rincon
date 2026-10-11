@@ -254,9 +254,7 @@ const GENERIC_PLACEHOLDERS = {
 
 let currentReservation = null;
 
-document.getElementById('phoneForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const phone = document.getElementById('f_phone').value.trim();
+async function searchByPhone(phone){
   const msgEl = document.getElementById('phoneMsg');
   const btn = document.getElementById('phoneSubmitBtn');
   msgEl.textContent = '';
@@ -283,7 +281,19 @@ document.getElementById('phoneForm').addEventListener('submit', async (e) => {
     return;
   }
   renderPickList(data);
+}
+
+document.getElementById('phoneForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  searchByPhone(document.getElementById('f_phone').value.trim());
 });
+
+// Si llega desde el enlace del WhatsApp de confirmación (?telefono=...), buscamos directamente.
+const prefilledPhone = new URL(location.href).searchParams.get('telefono');
+if (prefilledPhone){
+  document.getElementById('f_phone').value = prefilledPhone;
+  searchByPhone(prefilledPhone);
+}
 
 function renderPickList(reservations){
   const list = document.getElementById('pickList');
