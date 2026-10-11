@@ -88,6 +88,9 @@
   .invite-subtitle{ font-family:'Fraunces', serif; font-style:italic; font-size:clamp(14px,3.2cqw,18px); color:var(--olive-dark); }
   .invite-meta{ margin-top:10px; font-size:clamp(11px,2.4cqw,13.5px); color:var(--ink-soft); letter-spacing:.02em; }
   .invite-meta .venue{ margin-top:6px; text-transform:uppercase; letter-spacing:.06em; font-size:clamp(9.5px,2cqw,11.5px); color:var(--gold); }
+  .invite-brand{ display:flex; align-items:center; gap:8px; margin-top:16px; }
+  .invite-logo{ width:clamp(20px,6cqw,30px); height:clamp(20px,6cqw,30px); border-radius:50%; object-fit:cover; flex:none; }
+  .invite-brand span{ font-size:clamp(9px,1.9cqw,11.5px); letter-spacing:.03em; color:var(--ink-soft); }
   .field-note{ font-size:12.5px; color:var(--ink-soft); margin-top:6px; }
 </style>
 </head>
@@ -138,6 +141,10 @@
             <div class="invite-meta">
               <div id="invDateTime"></div>
               <div class="venue">Mi Pequeño Rincón · Chozas de Canales (Toledo)</div>
+            </div>
+            <div class="invite-brand">
+              <img src="assets/logo-mpr.jpg" alt="" class="invite-logo">
+              <span>mipequenorincon.es</span>
             </div>
           </div>
         </div>
