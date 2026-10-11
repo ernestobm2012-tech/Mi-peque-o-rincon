@@ -344,8 +344,16 @@ function fieldsHtmlFor(group, r){
   }
   if (group === 'babyshower'){
     return `
-      <label for="inv_nombre">Nombre del bebé</label>
-      <input type="text" id="inv_nombre" value="${r.full_name.replace(/"/g,'&quot;')}" placeholder="Ej: Sara o David" required>`;
+      <div class="field-row">
+        <div>
+          <label for="inv_nombre_nino">Si es niño, se llamará</label>
+          <input type="text" id="inv_nombre_nino" placeholder="Ej: David" required>
+        </div>
+        <div>
+          <label for="inv_nombre_nina">Si es niña, se llamará</label>
+          <input type="text" id="inv_nombre_nina" placeholder="Ej: Sara" required>
+        </div>
+      </div>`;
   }
   if (group === 'ceremonia'){
     return `
@@ -385,9 +393,10 @@ function updatePreview(group, r){
     titleEl.textContent = nombre;
     subtitleEl.textContent = edad ? `¡Cumple ${edad} años!` : '¡Es mi cumpleaños!';
   } else if (group === 'babyshower'){
-    const nombre = document.getElementById('inv_nombre').value.trim() || '________';
-    titleEl.textContent = nombre;
-    subtitleEl.textContent = 'Baby Shower';
+    const nino = document.getElementById('inv_nombre_nino').value.trim() || '________';
+    const nina = document.getElementById('inv_nombre_nina').value.trim() || '________';
+    titleEl.textContent = `${nino} o ${nina}`;
+    subtitleEl.textContent = '¡Ven a descubrirlo!';
   } else if (group === 'ceremonia'){
     const nombre = document.getElementById('inv_nombre').value.trim() || '________';
     titleEl.textContent = nombre;
