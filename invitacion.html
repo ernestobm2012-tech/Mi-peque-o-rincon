@@ -92,6 +92,14 @@
   .invite-logo{ width:clamp(20px,6cqw,30px); height:clamp(20px,6cqw,30px); border-radius:50%; object-fit:cover; flex:none; }
   .invite-brand span{ font-size:clamp(9px,1.9cqw,11.5px); letter-spacing:.03em; color:var(--ink-soft); }
   .field-note{ font-size:12.5px; color:var(--ink-soft); margin-top:6px; }
+  #designPicker{ margin-bottom:18px; }
+  .design-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(72px,1fr)); gap:10px; margin-top:4px; }
+  .design-thumb{
+    padding:0; border:2px solid transparent; border-radius:var(--radius); overflow:hidden; cursor:pointer;
+    background:none; aspect-ratio:1792/2400; line-height:0;
+  }
+  .design-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .design-thumb.selected{ border-color:var(--olive-dark); }
 </style>
 </head>
 <body>
@@ -129,6 +137,7 @@
     <div class="builder-grid">
       <div class="card" id="fieldsCard">
         <h2 id="fieldsTitle">Tus datos</h2>
+        <div id="designPicker" hidden></div>
         <div id="fieldsContainer"></div>
         <button type="button" class="btn-primary" id="downloadBtn">📥 Descargar invitación en PDF</button>
         <p class="msg" id="builderMsg"></p>
@@ -184,12 +193,58 @@ function groupFor(eventType){
   return EVENT_GROUPS[eventType] || 'generico';
 }
 
-const BG_IMAGES = {
-  cumpleanos: 'assets/invitacion-cumpleanos.jpg',
-  babyshower: 'assets/invitacion-babyshower.jpg',
-  ceremonia: 'assets/invitacion-comunion.jpg',
-  generico: 'assets/invitacion-generico.jpg',
+// Cada tipo de evento puede tener uno o varios diseños de fondo entre los que elegir.
+const BG_SETS = {
+  cumpleanos: [
+    { id: 'cumpleanos', file: 'assets/invitacion-cumpleanos.jpg', label: 'Clásico' },
+  ],
+  babyshower: [
+    { id: 'elegante', file: 'assets/invitacion-babyshower.jpg', label: 'Elegante' },
+    { id: 'nino', file: 'assets/invitacion-babyshower-nino.jpg', label: 'Niño' },
+    { id: 'nina', file: 'assets/invitacion-babyshower-nina.jpg', label: 'Niña' },
+    { id: 'revelacion', file: 'assets/invitacion-babyshower-revelacion.jpg', label: 'Revelación de sexo' },
+    { id: 'teddy', file: 'assets/invitacion-babyshower-teddy.jpg', label: 'Osito' },
+  ],
+  ceremonia: [
+    { id: 'ceremonia', file: 'assets/invitacion-comunion.jpg', label: 'Clásico' },
+  ],
+  generico: [
+    { id: 'generico', file: 'assets/invitacion-generico.jpg', label: 'Clásico' },
+  ],
 };
+
+let currentBg = null;
+
+function renderDesignPicker(group){
+  const wrap = document.getElementById('designPicker');
+  const options = BG_SETS[group];
+  if (options.length < 2){
+    wrap.innerHTML = '';
+    wrap.hidden = true;
+    return;
+  }
+  wrap.hidden = false;
+  wrap.innerHTML = `
+    <label>Elige el diseño</label>
+    <div class="design-grid">
+      ${options.map(o => `
+        <button type="button" class="design-thumb" data-id="${o.id}" title="${o.label}">
+          <img src="${o.file}" alt="${o.label}">
+        </button>`).join('')}
+    </div>`;
+  wrap.querySelectorAll('.design-thumb').forEach(btn => {
+    btn.addEventListener('click', () => selectDesign(group, btn.dataset.id));
+  });
+}
+
+function selectDesign(group, id){
+  const option = BG_SETS[group].find(o => o.id === id) || BG_SETS[group][0];
+  currentBg = option;
+  document.getElementById('inviteCard').style.backgroundImage = `url('${option.file}')`;
+  document.querySelectorAll('.design-thumb').forEach(btn => {
+    btn.classList.toggle('selected', btn.dataset.id === option.id);
+  });
+}
 
 const GENERIC_PLACEHOLDERS = {
   'Boda': 'Boda de Marta y Carlos',
@@ -343,8 +398,10 @@ function openBuilder(r){
   const group = groupFor(r.event_type);
   document.getElementById('fieldsTitle').textContent = `Tus datos (${r.event_type})`;
   document.getElementById('fieldsContainer').innerHTML = fieldsHtmlFor(group, r) + commonFieldsHtml(r);
-  document.getElementById('inviteCard').style.backgroundImage = `url('${BG_IMAGES[group]}')`;
   document.getElementById('builderMsg').textContent = '';
+
+  renderDesignPicker(group);
+  selectDesign(group, BG_SETS[group][0].id);
 
   document.getElementById('fieldsContainer').querySelectorAll('input').forEach(input => {
     input.addEventListener('input', () => updatePreview(group, r));
