@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crea tu invitación — Mi Pequeño Rincón</title>
+<meta name="description" content="Crea y descarga gratis la invitación de tu celebración en Mi Pequeño Rincón, con el teléfono de tu reserva.">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,500&family=Work+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#F7F2E7;
+    --cream-2:#E7EFC4;
+    --ink:#221F19;
+    --ink-soft:#4A473E;
+    --olive:#7C9A44;
+    --olive-dark:#4B5E22;
+    --gold:#B4924E;
+    --line: rgba(34,31,25,.16);
+    --radius: 2px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--cream-2);
+    color:var(--ink);
+    font-family:'Work Sans', sans-serif;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{ font-family:'Fraunces', serif; font-weight:500; letter-spacing:-0.01em; color:var(--ink); margin:0 0 8px; }
+  .wrap{ max-width:760px; margin:0 auto; padding:28px 20px 80px; }
+  .brand{ display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+  .brand img{ height:52px; width:auto; border-radius:50%; }
+  .brand span{ font-family:'Fraunces', serif; font-size:19px; }
+  .back-link{ display:inline-block; color:var(--ink-soft); font-size:13.5px; text-decoration:none; margin-bottom:22px; }
+  .back-link:hover{ color:var(--olive-dark); }
+  .card{ background:#fff; border:1px solid var(--line); border-radius:var(--radius); padding:24px; margin-bottom:22px; }
+  .state-box{ text-align:center; padding:50px 20px; }
+  .state-box p{ color:var(--ink-soft); }
+  .hidden{ display:none !important; }
+  label{ display:block; font-size:13.5px; font-weight:600; color:var(--ink-soft); margin:16px 0 6px; }
+  label:first-child{ margin-top:0; }
+  input[type="text"], input[type="tel"], input[type="number"], input[type="date"]{
+    width:100%; padding:11px 12px; font-size:15px; border:1px solid var(--line); border-radius:var(--radius);
+    font-family:'Work Sans', sans-serif; background:var(--cream); color:var(--ink);
+  }
+  .field-row{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .radio-row{ display:flex; gap:18px; flex-wrap:wrap; margin-top:4px; }
+  .radio-row label{ display:flex; align-items:center; gap:6px; font-weight:400; font-size:14.5px; color:var(--ink); margin:0; text-transform:none; }
+  .btn-primary{
+    display:inline-block; width:100%; margin-top:22px; padding:14px 20px; text-align:center;
+    background:var(--olive-dark); color:#fff; border:none; border-radius:var(--radius); font-size:15.5px;
+    font-family:'Work Sans', sans-serif; font-weight:600; cursor:pointer;
+  }
+  .btn-primary:disabled{ opacity:.6; cursor:not-allowed; }
+  .btn-ghost{
+    display:inline-block; padding:10px 16px; text-align:center; background:none;
+    border:1px solid var(--ink); color:var(--ink); border-radius:var(--radius); font-size:14px;
+    font-family:'Work Sans', sans-serif; cursor:pointer; text-decoration:none;
+  }
+  .btn-ghost:hover{ background:var(--ink); color:var(--cream); }
+  .msg{ margin-top:14px; font-size:14px; }
+  .msg.err{ color:#a33; }
+  .msg.ok{ color:var(--olive-dark); }
+  .pick-list{ display:flex; flex-direction:column; gap:10px; margin-top:16px; }
+  .pick-item{
+    display:flex; justify-content:space-between; align-items:center; gap:12px; text-align:left;
+    padding:14px 16px; border:1px solid var(--line); border-radius:var(--radius); background:var(--cream);
+    cursor:pointer; font-family:'Work Sans', sans-serif; font-size:14.5px; color:var(--ink);
+  }
+  .pick-item:hover{ border-color:var(--olive-dark); }
+  .pick-item .meta{ color:var(--ink-soft); font-size:13px; }
+  .builder-grid{ display:grid; grid-template-columns:1fr; gap:24px; }
+  @media (min-width:680px){ .builder-grid{ grid-template-columns:1fr 1fr; align-items:start; } }
+  .invite-card{
+    position:relative; width:100%; aspect-ratio:1792/2400; background-size:cover; background-position:center;
+    border-radius:var(--radius); overflow:hidden; box-shadow:0 10px 30px rgba(34,31,25,.18);
+    container-type:inline-size;
+  }
+  .invite-content{
+    position:absolute; top:38%; left:7%; right:7%; bottom:6%;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:10px;
+  }
+  .invite-title{ font-family:'Fraunces', serif; font-size:clamp(22px,6cqw,34px); color:var(--ink); line-height:1.15; word-break:break-word; }
+  .invite-subtitle{ font-family:'Fraunces', serif; font-style:italic; font-size:clamp(14px,3.2cqw,18px); color:var(--olive-dark); }
+  .invite-meta{ margin-top:10px; font-size:clamp(11px,2.4cqw,13.5px); color:var(--ink-soft); letter-spacing:.02em; }
+  .invite-meta .venue{ margin-top:6px; text-transform:uppercase; letter-spacing:.06em; font-size:clamp(9.5px,2cqw,11.5px); color:var(--gold); }
+  .field-note{ font-size:12.5px; color:var(--ink-soft); margin-top:6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand"><img src="assets/logo-mpr.jpg" alt=""><span>Mi Pequeño Rincón</span></div>
+  <a class="back-link" href="/">← Volver a la web</a>
+
+  <div id="phoneState" class="card">
+    <h2>Crea tu propia invitación</h2>
+    <p style="color:var(--ink-soft); font-size:14.5px;">Introduce el teléfono con el que hiciste la reserva y te ayudamos a montar la invitación de tu celebración, lista para descargar en PDF.</p>
+    <form id="phoneForm">
+      <label for="f_phone">Teléfono de la reserva</label>
+      <input type="tel" id="f_phone" required placeholder="Ej: 624 29 78 77">
+      <button type="submit" class="btn-primary" id="phoneSubmitBtn">Buscar mi reserva</button>
+      <p class="msg" id="phoneMsg"></p>
+    </form>
+  </div>
+
+  <div id="notFoundState" class="card hidden">
+    <h2>No hemos encontrado tu reserva</h2>
+    <p style="color:var(--ink-soft);">Revisa que el teléfono sea el mismo con el que reservaste, o escríbenos y te ayudamos.</p>
+    <a class="btn-ghost" href="https://wa.me/34624297877" target="_blank" rel="noopener">Escribir por WhatsApp</a>
+    <p style="margin-top:18px;"><a class="back-link" href="#" id="notFoundBackLink" style="margin:0;">← Probar con otro teléfono</a></p>
+  </div>
+
+  <div id="pickState" class="card hidden">
+    <h2>¿Cuál de tus reservas es?</h2>
+    <p style="color:var(--ink-soft); font-size:14.5px;">Hemos encontrado varias reservas con ese teléfono. Elige la que quieras invitar.</p>
+    <div class="pick-list" id="pickList"></div>
+    <p style="margin-top:18px;"><a class="back-link" href="#" id="pickBackLink" style="margin:0;">← Probar con otro teléfono</a></p>
+  </div>
+
+  <div id="builderState" class="hidden">
+    <p style="margin-bottom:16px;"><a class="back-link" href="#" id="builderBackLink" style="margin:0;">← Probar con otro teléfono</a></p>
+    <div class="builder-grid">
+      <div class="card" id="fieldsCard">
+        <h2 id="fieldsTitle">Tus datos</h2>
+        <div id="fieldsContainer"></div>
+        <button type="button" class="btn-primary" id="downloadBtn">📥 Descargar invitación en PDF</button>
+        <p class="msg" id="builderMsg"></p>
+      </div>
+      <div>
+        <div class="invite-card" id="inviteCard">
+          <div class="invite-content">
+            <div class="invite-title" id="invTitle"></div>
+            <div class="invite-subtitle" id="invSubtitle"></div>
+            <div class="invite-meta">
+              <div id="invDateTime"></div>
+              <div class="venue">Mi Pequeño Rincón · Chozas de Canales (Toledo)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { jsPDF } from 'https://esm.sh/jspdf@2.5.2';
+import html2canvas from 'https://esm.sh/html2canvas@1.4.1';
+
+const SUPABASE_URL = 'https://ztsdkfwnqrlmsirfvoat.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0c2RrZnducXJsbXNpcmZ2b2F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwOTM5OTksImV4cCI6MjA5ODY2OTk5OX0.ODimfaCqTpK8fkY4Oobk8kSR3rppb_afmoTTXG8H2os';
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+function showState(id){
+  ['phoneState','notFoundState','pickState','builderState'].forEach(s => {
+    document.getElementById(s).classList.toggle('hidden', s !== id);
+  });
+}
+
+function fmtDateLong(dateStr){
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+// Agrupa los tipos de evento reales (de la tabla event_types) en las 4 plantillas disponibles.
+const EVENT_GROUPS = {
+  'Cumpleaños': 'cumpleanos',
+  'Baby shower': 'babyshower',
+  'Comunión': 'ceremonia',
+  'Bautizo': 'ceremonia',
+};
+function groupFor(eventType){
+  return EVENT_GROUPS[eventType] || 'generico';
+}
+
+const BG_IMAGES = {
+  cumpleanos: 'assets/invitacion-cumpleanos.jpg',
+  babyshower: 'assets/invitacion-babyshower.jpg',
+  ceremonia: 'assets/invitacion-comunion.jpg',
+  generico: 'assets/invitacion-generico.jpg',
+};
+
+const GENERIC_PLACEHOLDERS = {
+  'Boda': 'Boda de Marta y Carlos',
+  'Grupo de amigos': 'Noche entre amigos',
+  'Reunión de empresa': 'Cena de empresa',
+};
+
+let currentReservation = null;
+
+document.getElementById('phoneForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const phone = document.getElementById('f_phone').value.trim();
+  const msgEl = document.getElementById('phoneMsg');
+  const btn = document.getElementById('phoneSubmitBtn');
+  msgEl.textContent = '';
+  msgEl.className = 'msg';
+  btn.disabled = true;
+  btn.textContent = 'Buscando…';
+
+  const { data, error } = await supabase.rpc('get_reservations_by_phone', { p_phone: phone });
+
+  btn.disabled = false;
+  btn.textContent = 'Buscar mi reserva';
+
+  if (error){
+    msgEl.textContent = 'No se ha podido buscar tu reserva: ' + error.message;
+    msgEl.className = 'msg err';
+    return;
+  }
+  if (!data || !data.length){
+    showState('notFoundState');
+    return;
+  }
+  if (data.length === 1){
+    openBuilder(data[0]);
+    return;
+  }
+  renderPickList(data);
+});
+
+function renderPickList(reservations){
+  const list = document.getElementById('pickList');
+  list.innerHTML = reservations.map((r, i) => `
+    <button type="button" class="pick-item" data-idx="${i}">
+      <span>${r.full_name}</span>
+      <span class="meta">${r.event_type} · ${fmtDateLong(r.event_date)}</span>
+    </button>`).join('');
+  list.querySelectorAll('.pick-item').forEach(btn => {
+    btn.addEventListener('click', () => openBuilder(reservations[Number(btn.dataset.idx)]));
+  });
+  showState('pickState');
+}
+
+['notFoundBackLink', 'pickBackLink', 'builderBackLink'].forEach(id => {
+  document.getElementById(id).addEventListener('click', (e) => {
+    e.preventDefault();
+    document.getElementById('f_phone').value = '';
+    showState('phoneState');
+  });
+});
+
+function fieldsHtmlFor(group, r){
+  if (group === 'cumpleanos'){
+    return `
+      <label for="inv_nombre">Nombre del cumpleañero/a</label>
+      <input type="text" id="inv_nombre" value="${r.full_name.replace(/"/g,'&quot;')}" required>
+      <label for="inv_edad">¿Cuántos años cumple?</label>
+      <input type="number" id="inv_edad" min="0" max="120" required>`;
+  }
+  if (group === 'babyshower'){
+    return `
+      <div class="field-row">
+        <div>
+          <label for="inv_nombre1">Nombre 1</label>
+          <input type="text" id="inv_nombre1" value="${r.full_name.replace(/"/g,'&quot;')}" required>
+        </div>
+        <div>
+          <label for="inv_nombre2">Nombre 2</label>
+          <input type="text" id="inv_nombre2">
+        </div>
+      </div>
+      <label>¿Niño o niña?</label>
+      <div class="radio-row">
+        <label><input type="radio" name="inv_sexo" value="niño" checked> Niño</label>
+        <label><input type="radio" name="inv_sexo" value="niña"> Niña</label>
+        <label><input type="radio" name="inv_sexo" value="sorpresa"> Sorpresa</label>
+      </div>`;
+  }
+  if (group === 'ceremonia'){
+    return `
+      <label for="inv_nombre">Nombre</label>
+      <input type="text" id="inv_nombre" value="${r.full_name.replace(/"/g,'&quot;')}" required>
+      <label for="inv_fecha">Fecha</label>
+      <input type="date" id="inv_fecha" value="${r.event_date}" required>`;
+  }
+  const placeholder = GENERIC_PLACEHOLDERS[r.event_type] || 'Nuestra celebración';
+  return `
+    <label for="inv_titulo">Título de la invitación</label>
+    <input type="text" id="inv_titulo" placeholder="${placeholder}" required>
+    <label for="inv_fecha">Fecha</label>
+    <input type="date" id="inv_fecha" value="${r.event_date}" required>`;
+}
+
+function updatePreview(group, r){
+  const titleEl = document.getElementById('invTitle');
+  const subtitleEl = document.getElementById('invSubtitle');
+  const dateTimeEl = document.getElementById('invDateTime');
+  const hora = r.start_time ? r.start_time.slice(0,5) : '';
+
+  if (group === 'cumpleanos'){
+    const nombre = document.getElementById('inv_nombre').value.trim() || '________';
+    const edad = document.getElementById('inv_edad').value;
+    titleEl.textContent = nombre;
+    subtitleEl.textContent = edad ? `¡Cumple ${edad} años!` : '¡Es mi cumpleaños!';
+  } else if (group === 'babyshower'){
+    const n1 = document.getElementById('inv_nombre1').value.trim() || '________';
+    const n2 = document.getElementById('inv_nombre2').value.trim();
+    const sexo = document.querySelector('input[name="inv_sexo"]:checked')?.value || 'sorpresa';
+    titleEl.textContent = n2 ? `${n1} & ${n2}` : n1;
+    subtitleEl.textContent = sexo === 'sorpresa'
+      ? '¡Ven a descubrir si es niño o niña!'
+      : `¡Esperamos a un${sexo === 'niña' ? 'a' : ''} ${sexo}!`;
+  } else if (group === 'ceremonia'){
+    const nombre = document.getElementById('inv_nombre').value.trim() || '________';
+    titleEl.textContent = nombre;
+    subtitleEl.textContent = `Mi ${r.event_type.toLowerCase()}`;
+  } else {
+    const titulo = document.getElementById('inv_titulo').value.trim() || '________';
+    titleEl.textContent = titulo;
+    subtitleEl.textContent = '';
+  }
+
+  const fechaInput = document.getElementById('inv_fecha');
+  const fecha = fechaInput ? fechaInput.value : r.event_date;
+  dateTimeEl.textContent = hora ? `${fmtDateLong(fecha)} · ${hora}h` : fmtDateLong(fecha);
+}
+
+function openBuilder(r){
+  currentReservation = r;
+  const group = groupFor(r.event_type);
+  document.getElementById('fieldsTitle').textContent = `Tus datos (${r.event_type})`;
+  document.getElementById('fieldsContainer').innerHTML = fieldsHtmlFor(group, r);
+  document.getElementById('inviteCard').style.backgroundImage = `url('${BG_IMAGES[group]}')`;
+  document.getElementById('builderMsg').textContent = '';
+
+  document.getElementById('fieldsContainer').querySelectorAll('input').forEach(input => {
+    input.addEventListener('input', () => updatePreview(group, r));
+  });
+  updatePreview(group, r);
+  showState('builderState');
+}
+
+document.getElementById('downloadBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('downloadBtn');
+  const msgEl = document.getElementById('builderMsg');
+  const requiredInputs = document.querySelectorAll('#fieldsContainer input[required]');
+  for (const input of requiredInputs){
+    if (!input.value.trim()){
+      msgEl.textContent = 'Rellena todos los campos antes de descargar.';
+      msgEl.className = 'msg err';
+      input.focus();
+      return;
+    }
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Generando PDF…';
+  msgEl.textContent = '';
+
+  try {
+    const card = document.getElementById('inviteCard');
+    const canvas = await html2canvas(card, { scale: 3, useCORS: true });
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+    const pdf = new jsPDF({ unit: 'px', format: [canvas.width, canvas.height] });
+    pdf.addImage(imgData, 'JPEG', 0, 0, canvas.width, canvas.height);
+    const safeName = (currentReservation.full_name || 'invitacion').replace(/[^\p{L}\p{N}]+/gu, '_');
+    pdf.save(`Invitacion_${safeName}.pdf`);
+    msgEl.textContent = '¡Invitación descargada! 🎉';
+    msgEl.className = 'msg ok';
+  } catch (err){
+    msgEl.textContent = 'No se ha podido generar el PDF: ' + err.message;
+    msgEl.className = 'msg err';
+  }
+
+  btn.disabled = false;
+  btn.textContent = '📥 Descargar invitación en PDF';
+});
+</script>
+</body>
+</html>
