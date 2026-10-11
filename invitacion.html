@@ -81,16 +81,20 @@
     container-type:inline-size;
   }
   .invite-content{
-    position:absolute; top:38%; left:7%; right:7%; bottom:6%;
-    display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:10px;
+    position:absolute; top:40%; left:9%; right:9%; bottom:4%;
+    display:flex; flex-direction:column; align-items:center; justify-content:space-between; text-align:center;
   }
-  .invite-title{ font-family:'Fraunces', serif; font-size:clamp(22px,6cqw,34px); color:var(--ink); line-height:1.15; word-break:break-word; }
-  .invite-subtitle{ font-family:'Fraunces', serif; font-style:italic; font-size:clamp(14px,3.2cqw,18px); color:var(--olive-dark); }
-  .invite-meta{ margin-top:10px; font-size:clamp(11px,2.4cqw,13.5px); color:var(--ink-soft); letter-spacing:.02em; }
-  .invite-meta .venue{ margin-top:6px; text-transform:uppercase; letter-spacing:.06em; font-size:clamp(9.5px,2cqw,11.5px); color:var(--gold); }
-  .invite-brand{ display:flex; align-items:center; gap:8px; margin-top:16px; }
-  .invite-logo{ width:clamp(20px,6cqw,30px); height:clamp(20px,6cqw,30px); border-radius:50%; object-fit:cover; flex:none; }
-  .invite-brand span{ font-size:clamp(9px,1.9cqw,11.5px); letter-spacing:.03em; color:var(--ink-soft); }
+  .invite-main{ display:flex; flex-direction:column; align-items:center; }
+  .invite-title{ font-family:'Fraunces', serif; font-weight:500; font-size:clamp(24px,7.4cqw,38px); color:var(--ink); line-height:1.15; word-break:break-word; }
+  .invite-subtitle{ font-family:'Fraunces', serif; font-style:italic; font-weight:400; font-size:clamp(14px,3.6cqw,19px); color:var(--olive-dark); margin-top:6px; }
+  .invite-divider{ width:38px; height:1px; background:var(--gold); margin-top:16px; }
+  .invite-when{ display:flex; flex-direction:column; align-items:center; gap:7px; }
+  .invite-datetime{ font-family:'Work Sans', sans-serif; font-size:clamp(12px,2.9cqw,15px); color:var(--ink-soft); letter-spacing:.02em; }
+  .invite-venue{ font-family:'Work Sans', sans-serif; text-transform:uppercase; letter-spacing:.05em; font-size:clamp(9px,2.1cqw,11px); color:var(--gold); line-height:1.6; max-width:28ch; }
+  .invite-venue strong{ color:var(--ink-soft); display:block; font-size:1.05em; letter-spacing:.04em; margin-bottom:2px; }
+  .invite-brand{ display:flex; align-items:center; gap:7px; }
+  .invite-logo{ width:clamp(22px,6cqw,28px); height:clamp(22px,6cqw,28px); border-radius:50%; object-fit:cover; flex:none; }
+  .invite-brand span{ font-size:clamp(9px,2cqw,11px); letter-spacing:.04em; color:var(--ink-soft); }
   .field-note{ font-size:12.5px; color:var(--ink-soft); margin-top:6px; }
   #designPicker{ margin-bottom:18px; }
   .design-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(72px,1fr)); gap:10px; margin-top:4px; }
@@ -145,11 +149,14 @@
       <div>
         <div class="invite-card" id="inviteCard">
           <div class="invite-content">
-            <div class="invite-title" id="invTitle"></div>
-            <div class="invite-subtitle" id="invSubtitle"></div>
-            <div class="invite-meta">
-              <div id="invDateTime"></div>
-              <div class="venue">Mi Pequeño Rincón · Calle Guadalajara 15, local 5 (C.C. La Pacheca)<br>Chozas de Canales (Toledo)</div>
+            <div class="invite-main">
+              <div class="invite-title" id="invTitle"></div>
+              <div class="invite-subtitle" id="invSubtitle"></div>
+              <div class="invite-divider"></div>
+            </div>
+            <div class="invite-when">
+              <div class="invite-datetime" id="invDateTime"></div>
+              <div class="invite-venue"><strong>Mi Pequeño Rincón</strong>C/ Guadalajara 15, local&nbsp;5 (C.C. La Pacheca)<br>Chozas de Canales (Toledo)</div>
             </div>
             <div class="invite-brand">
               <img src="assets/logo-mpr.jpg" alt="" class="invite-logo">
