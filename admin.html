@@ -279,6 +279,7 @@
     <button class="tab-btn" data-tab="tabImpuestos">Impuestos</button>
     <button class="tab-btn" data-tab="tabFacturas">Facturas</button>
     <button class="tab-btn" data-tab="tabEnchufes">Enchufes</button>
+    <button class="tab-btn" data-tab="tabInvitaciones">Invitaciones</button>
   </div>
 
   <p id="actionMsg" style="display:none; font-size:13.5px; padding:10px 14px; margin-bottom:18px; border-radius:2px;"></p>
@@ -647,6 +648,11 @@
       </form>
       <div id="plugsList"></div>
     </div>
+  </div>
+
+  <div id="tabInvitaciones" class="tab-panel" hidden>
+    <p style="color:var(--ink-soft); font-size:14px; margin-bottom:18px;">Clientes que han generado su invitación personalizada desde la web, ordenados por fecha de creación.</p>
+    <div id="invitationsList"></div>
   </div>
 
   <div id="tabAnulaciones" class="tab-panel" hidden>
@@ -2590,6 +2596,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     if (btn.dataset.tab === 'tabImpuestos') renderImpuestos();
     if (btn.dataset.tab === 'tabFacturas') renderInvoices();
     if (btn.dataset.tab === 'tabEnchufes'){ renderPlugSettings(); renderPlugsList(); }
+    if (btn.dataset.tab === 'tabInvitaciones') renderInvitations();
   });
 });
 
@@ -3068,6 +3075,38 @@ async function renderClients(){
         <div class="count-lbl">gastado</div>
       </div>
     </div>`).join('');
+}
+
+// ---------- Invitations tab (quién ha creado su invitación) ----------
+async function renderInvitations(){
+  const container = document.getElementById('invitationsList');
+  container.innerHTML = '<p class="empty-msg">Cargando…</p>';
+
+  const { data, error } = await supabase
+    .from('invitation_creations')
+    .select('id, design_id, created_at, reservations(full_name, phone, event_type, event_date)')
+    .order('created_at', { ascending: false });
+
+  if (error){
+    container.innerHTML = `<p class="empty-msg">Error cargando invitaciones: ${error.message}</p>`;
+    return;
+  }
+  if (!data || !data.length){
+    container.innerHTML = '<p class="empty-msg">Todavía nadie ha creado su invitación.</p>';
+    return;
+  }
+
+  container.innerHTML = data.map(inv => {
+    const r = inv.reservations;
+    return `
+    <div class="client-card">
+      <div>
+        <div class="name">${r?.full_name || '(reserva eliminada)'}</div>
+        <div class="meta">📞 ${r?.phone || '—'} · ${r?.event_type || ''}${r?.event_date ? ` · ${fmtDate(r.event_date)}` : ''}</div>
+        <div class="meta">Creada el ${fmtDateTime(inv.created_at)}${inv.design_id ? ` · diseño: ${inv.design_id}` : ''}</div>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 // ---------- Coupons tab ----------

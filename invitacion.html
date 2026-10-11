@@ -456,6 +456,10 @@ document.getElementById('downloadBtn').addEventListener('click', async () => {
     pdf.save(`Invitacion_${safeName}.pdf`);
     msgEl.textContent = '¡Invitación descargada! 🎉';
     msgEl.className = 'msg ok';
+    supabase.rpc('log_invitation_creation', {
+      p_reservation_id: currentReservation.id,
+      p_design_id: currentBg ? currentBg.id : null,
+    }).then(({ error }) => { if (error) console.warn('No se pudo registrar la invitación:', error.message); });
   } catch (err){
     msgEl.textContent = 'No se ha podido generar el PDF: ' + err.message;
     msgEl.className = 'msg err';
