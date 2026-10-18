@@ -1,0 +1,570 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" href="/assets/favicon-16.png" sizes="16x16" type="image/png">
+<link rel="icon" href="/assets/favicon-32.png" sizes="32x32" type="image/png">
+<title>Texto a voz — 58 voces IA | Mi Pequeño Rincón</title>
+<meta name="description" content="Escribe un texto y escúchalo con más de 55 voces creadas por IA: mujeres y hombres alegres, tristes, entusiasmados, narradores, cuentacuentos y voces graciosas.">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,500&family=Work+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#F7F2E7;
+    --cream-2:#E7EFC4;
+    --ink:#221F19;
+    --ink-soft:#4A473E;
+    --olive:#7C9A44;
+    --olive-dark:#4B5E22;
+    --gold:#B4924E;
+    --line: rgba(34,31,25,.14);
+    --radius: 2px;
+    --maxw: 1120px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--cream);
+    color:var(--ink);
+    font-family:'Work Sans', sans-serif;
+    font-weight:400;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.display{
+    font-family:'Fraunces', serif;
+    font-weight:500;
+    letter-spacing:-0.01em;
+    color:var(--ink);
+    margin:0;
+  }
+  a{color:inherit;}
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 20px;}
+  .eyebrow{
+    font-family:'Work Sans', sans-serif;
+    text-transform:uppercase;
+    letter-spacing:.16em;
+    font-size:12px;
+    font-weight:600;
+    color:var(--olive-dark);
+  }
+
+  header.top{
+    border-bottom:1px solid var(--line);
+    padding:16px 0;
+    position:sticky; top:0; z-index:20;
+    background:rgba(247,242,231,.92);
+    backdrop-filter:blur(6px);
+  }
+  header.top .wrap{display:flex; align-items:center; justify-content:space-between; gap:16px;}
+  .back{
+    font-size:14px; font-weight:600; text-decoration:none;
+    display:inline-flex; align-items:center; gap:6px;
+    color:var(--ink-soft);
+  }
+  .back:hover{color:var(--olive-dark);}
+  .brand{font-family:'Fraunces',serif; font-size:18px; font-weight:600;}
+
+  main{padding:36px 0 80px;}
+  .hero{margin-bottom:32px;}
+  .hero h1{font-size:clamp(26px,4vw,38px); margin-top:8px;}
+  .hero p{max-width:640px; color:var(--ink-soft); margin-top:10px; font-size:15.5px;}
+
+  .panel{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:20px;
+  }
+
+  .textbox{
+    width:100%;
+    min-height:140px;
+    resize:vertical;
+    padding:14px;
+    border:1px solid var(--line);
+    border-radius:6px;
+    font-family:'Work Sans', sans-serif;
+    font-size:15.5px;
+    color:var(--ink);
+    background:var(--cream);
+  }
+  .textbox:focus{outline:2px solid var(--olive); outline-offset:1px;}
+
+  .controls-row{
+    display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-top:12px;
+  }
+  .chip-select{
+    display:flex; align-items:center; gap:8px;
+    border:1px solid var(--line); border-radius:999px;
+    padding:6px 14px; background:var(--cream); font-size:13.5px;
+  }
+  select, input[type=range]{font-family:inherit;}
+
+  .btn{
+    border:none; cursor:pointer;
+    font-family:'Work Sans', sans-serif;
+    font-weight:600; font-size:14.5px;
+    padding:12px 22px;
+    border-radius:999px;
+    display:inline-flex; align-items:center; gap:8px;
+    transition:transform .12s ease, background .12s ease;
+  }
+  .btn:active{transform:scale(.97);}
+  .btn-primary{background:var(--olive-dark); color:#fff;}
+  .btn-primary:hover{background:var(--olive);}
+  .btn-secondary{background:transparent; color:var(--ink); border:1px solid var(--line);}
+  .btn-secondary:hover{border-color:var(--olive-dark);}
+  .btn:disabled{opacity:.45; cursor:not-allowed;}
+
+  .selected-bar{
+    margin-top:14px; padding:10px 14px; border-radius:6px;
+    background:var(--cream-2); font-size:14px; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;
+  }
+  .selected-bar strong{font-family:'Fraunces',serif; font-weight:600;}
+
+  .status-note{font-size:12.5px; color:var(--ink-soft); margin-top:10px;}
+  .status-note.warn{color:#8a5a1e;}
+
+  .catbar{
+    display:flex; gap:8px; flex-wrap:wrap; margin:32px 0 18px;
+  }
+  .catbtn{
+    border:1px solid var(--line); background:#fff; color:var(--ink-soft);
+    font-size:13px; font-weight:600; padding:7px 14px; border-radius:999px; cursor:pointer;
+  }
+  .catbtn.active{background:var(--olive-dark); color:#fff; border-color:var(--olive-dark);}
+
+  .group{margin-bottom:30px;}
+  .group h2{font-size:19px; display:flex; align-items:center; gap:10px;}
+  .group .count{font-family:'Work Sans',sans-serif; font-weight:500; font-size:12.5px; color:var(--ink-soft); background:var(--cream-2); padding:2px 9px; border-radius:999px;}
+
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(230px,1fr));
+    gap:12px;
+    margin-top:14px;
+  }
+  .card{
+    border:1px solid var(--line);
+    background:#fff;
+    border-radius:8px;
+    padding:14px;
+    cursor:pointer;
+    display:flex; flex-direction:column; gap:8px;
+    transition:border-color .12s ease, box-shadow .12s ease;
+  }
+  .card:hover{border-color:var(--olive);}
+  .card.selected{
+    border-color:var(--olive-dark);
+    box-shadow:0 0 0 2px var(--olive-dark) inset;
+    background:var(--cream-2);
+  }
+  .card.speaking{animation:pulse 1s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 2px var(--olive-dark) inset;} 50%{box-shadow:0 0 0 4px var(--gold) inset;}}
+
+  .card-top{display:flex; align-items:center; gap:10px;}
+  .avatar{
+    width:38px; height:38px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:18px; flex:none;
+    background:var(--cream-2);
+  }
+  .card.selected .avatar{background:#fff;}
+  .card-name{font-family:'Fraunces',serif; font-weight:600; font-size:15.5px; line-height:1.2;}
+  .card-tag{font-size:11.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.05em;}
+  .card-desc{font-size:13px; color:var(--ink-soft); flex:1;}
+  .card-actions{display:flex; gap:8px;}
+  .mini-btn{
+    flex:1; border:1px solid var(--line); background:var(--cream);
+    border-radius:6px; padding:7px 8px; font-size:12.5px; font-weight:600; cursor:pointer;
+  }
+  .mini-btn:hover{border-color:var(--olive-dark);}
+  .mini-btn.use{background:var(--olive-dark); color:#fff; border-color:var(--olive-dark);}
+  .mini-btn.use:hover{background:var(--olive);}
+
+  footer.foot{border-top:1px solid var(--line); padding:26px 0; margin-top:30px;}
+  footer.foot .wrap{font-size:12.5px; color:var(--ink-soft); display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;}
+
+  @media (max-width:620px){
+    .grid{grid-template-columns:repeat(auto-fill, minmax(160px,1fr));}
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="back" href="/">← Volver a Mi Pequeño Rincón</a>
+    <div class="brand">🔊 Texto a voz</div>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+
+    <section class="hero">
+      <div class="eyebrow">Conversor de texto a voz</div>
+      <h1>Escribe tu texto y elige entre 58 voces</h1>
+      <p>Mujeres y hombres alegres, tristes, entusiasmados, voces narrativas, cuentacuentos y voces para contar chistes. Se reproducen directamente en tu navegador, sin subir tu texto a ningún servidor.</p>
+    </section>
+
+    <section class="panel">
+      <label for="textInput" style="font-weight:600; font-size:14px;">Tu texto</label>
+      <textarea id="textInput" class="textbox" placeholder="Escribe o pega aquí el texto que quieres escuchar..." maxlength="4000"></textarea>
+
+      <div class="controls-row">
+        <button class="btn btn-primary" id="playBtn">▶ Reproducir</button>
+        <button class="btn btn-secondary" id="stopBtn">⏹ Detener</button>
+
+        <div class="chip-select">
+          Velocidad
+          <input type="range" id="rateRange" min="0.6" max="1.6" step="0.05" value="1">
+        </div>
+        <div class="chip-select">
+          Tono
+          <input type="range" id="pitchRange" min="0.5" max="1.8" step="0.05" value="1">
+        </div>
+
+        <span id="charCount" style="margin-left:auto; font-size:12.5px; color:var(--ink-soft);">0 / 4000</span>
+      </div>
+
+      <div class="selected-bar">
+        <span>Voz seleccionada: <strong id="selectedName">Laura — Alegre</strong></span>
+        <button class="mini-btn" id="previewBtn" style="flex:none; padding:7px 14px;">🔊 Probar frase de ejemplo</button>
+      </div>
+
+      <div class="status-note" id="voiceStatus">Cargando voces del navegador…</div>
+    </section>
+
+    <div class="catbar" id="catBar"></div>
+
+    <div id="groups"></div>
+
+  </div>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <span>Mi Pequeño Rincón</span>
+    <span>Las voces usan el sintetizador integrado de tu navegador (Web Speech API). La cantidad y naturalidad real de voces distintas depende de tu dispositivo — en Chrome o Edge en Windows suele haber más voces en español disponibles.</span>
+  </div>
+</footer>
+
+<script>
+(function(){
+
+  // ---------- 1. Definición de las 58 "personas de voz" ----------
+  // Cada persona = nombre + categoría + parámetros de tono/velocidad que
+  // simulan la emoción sobre la voz real del navegador que le asignemos.
+  const CATS = [
+    {id:'mujer-alegre',   label:'Mujeres alegres',        short:'Alegre',        icon:'😊', demo:'¡Qué alegría poder contarte esto hoy!'},
+    {id:'mujer-entusiasta',label:'Mujeres entusiasmadas',  short:'Entusiasmada', icon:'🤩', demo:'¡No me lo puedo creer, esto es increíble!'},
+    {id:'mujer-triste',   label:'Mujeres tristes',         short:'Triste',       icon:'😢', demo:'La verdad es que hoy lo he echado mucho de menos...'},
+    {id:'mujer-narradora',label:'Mujeres narradoras',      short:'Narradora',    icon:'🎙️', demo:'Y así, poco a poco, la historia fue tomando forma.'},
+    {id:'hombre-alegre',  label:'Hombres alegres',         short:'Alegre',       icon:'😄', demo:'¡Qué buena noticia, me alegro muchísimo!'},
+    {id:'hombre-entusiasta',label:'Hombres entusiasmados', short:'Entusiasmado',icon:'🔥', demo:'¡Vamos a por ello, esto va a salir genial!'},
+    {id:'hombre-triste',  label:'Hombres tristes',         short:'Triste',       icon:'😔', demo:'Han sido unos días difíciles, la verdad.'},
+    {id:'hombre-narrador',label:'Hombres narradores',      short:'Narrador',     icon:'📖', demo:'Cuenta la leyenda que, hace muchos años...'},
+    {id:'cuentacuentos',  label:'Cuentacuentos',           short:'Cuentacuentos',icon:'🧙', demo:'Érase una vez, en un reino muy muy lejano...'},
+    {id:'chistes',        label:'Voces de chistes',        short:'Chistosa/o',   icon:'😂', demo:'¿Sabes cuál es el colmo de un electricista? ¡Pues no tener corriente!'}
+  ];
+
+  function names(list){ return list; }
+
+  const RAW = [
+    // Mujeres alegres
+    ['mujer-alegre', names(['Laura','Marta','Sofía','Elena','Carmen','Paula'])],
+    // Mujeres entusiasmadas
+    ['mujer-entusiasta', names(['Valeria','Noa','Alba','Vega','Iris','Nerea'])],
+    // Mujeres tristes
+    ['mujer-triste', names(['Rocío','Julia','Ainhoa','Celia','Miriam'])],
+    // Mujeres narradoras
+    ['mujer-narradora', names(['Isabel','Pilar','Beatriz','Teresa','Raquel','Amparo'])],
+    // Hombres alegres
+    ['hombre-alegre', names(['Carlos','Javier','Diego','Hugo','Mario','Pablo'])],
+    // Hombres entusiasmados
+    ['hombre-entusiasta', names(['Marcos','Iker','Bruno','Leo','Rubén','Adrián'])],
+    // Hombres tristes
+    ['hombre-triste', names(['Ignacio','Tomás','Felipe','Gonzalo','Andrés'])],
+    // Hombres narradores
+    ['hombre-narrador', names(['Antonio','Manuel','Ramón','Alberto','Joaquín','Fernando'])],
+    // Cuentacuentos (mixto)
+    ['cuentacuentos', [
+      {n:'Abuela Luna', g:'f'}, {n:'Tío Cuentos', g:'m'}, {n:'Hada Mila', g:'f'},
+      {n:'Capitán Relato', g:'m'}, {n:'Doña Fábula', g:'f'}, {n:'Duende Naiel', g:'m'}
+    ]],
+    // Voces de chistes (mixto)
+    ['chistes', [
+      {n:'Pepe Bromas', g:'m'}, {n:'Lola Risas', g:'f'}, {n:'Tito Chascarrillo', g:'m'},
+      {n:'Kiki Guasa', g:'f'}, {n:'Manolo Chistes', g:'m'}, {n:'Nines Carcajada', g:'f'}
+    ]]
+  ];
+
+  // Perfil de tono/velocidad base por categoría (se aplica jitter por índice)
+  const PROFILE = {
+    'mujer-alegre':    {gender:'f', pitch:1.18, rate:1.08},
+    'mujer-entusiasta':{gender:'f', pitch:1.32, rate:1.22},
+    'mujer-triste':    {gender:'f', pitch:0.82, rate:0.85},
+    'mujer-narradora': {gender:'f', pitch:1.00, rate:0.92},
+    'hombre-alegre':   {gender:'m', pitch:1.05, rate:1.08},
+    'hombre-entusiasta':{gender:'m', pitch:1.15, rate:1.22},
+    'hombre-triste':   {gender:'m', pitch:0.78, rate:0.85},
+    'hombre-narrador': {gender:'m', pitch:0.92, rate:0.92},
+    'cuentacuentos':   {gender:null, pitch:1.05, rate:0.9},
+    'chistes':         {gender:null, pitch:1.18, rate:1.15}
+  };
+
+  let personas = [];
+  let idc = 0;
+  RAW.forEach(([catId, list])=>{
+    list.forEach((item, i)=>{
+      const isObj = typeof item === 'object';
+      const name = isObj ? item.n : item;
+      const gender = isObj ? item.g : PROFILE[catId].gender;
+      const jitter = (i % 5) * 0.02 - 0.04; // pequeña variación entre voces de la misma categoría
+      personas.push({
+        id: 'p' + (idc++),
+        name,
+        catId,
+        gender,
+        pitch: +(PROFILE[catId].pitch + jitter).toFixed(2),
+        rate: +(PROFILE[catId].rate + jitter/2).toFixed(2),
+        voice: null // se asigna al cargar las voces reales del navegador
+      });
+    });
+  });
+
+  // ---------- 2. Carga y asignación de voces reales del navegador ----------
+  const synth = window.speechSynthesis;
+  let browserVoices = [];
+  let selectedPersonaId = personas[0].id;
+
+  const FEMALE_HINTS = ['mujer','female','helena','laura','elvira','mónica','monica','paulina','lucia','lucía','maría','isabela','sabina','ines','inés','conchita','catalina','esperanza','marisol','sofia','sofía','carmen'];
+  const MALE_HINTS = ['hombre','male','diego','jorge','pablo','carlos','enrique','juan','miguel','raul','raúl','andres','andrés','francisca','tono'];
+
+  function guessGender(voiceName){
+    const n = voiceName.toLowerCase();
+    if (FEMALE_HINTS.some(h=>n.includes(h))) return 'f';
+    if (MALE_HINTS.some(h=>n.includes(h))) return 'm';
+    return null;
+  }
+
+  function assignVoices(){
+    const all = synth.getVoices();
+    if (!all.length) return;
+    browserVoices = all;
+
+    const es = all.filter(v=>v.lang && v.lang.toLowerCase().startsWith('es'));
+    const pool = es.length ? es : all;
+
+    let femalePool = pool.filter(v=>guessGender(v.name)==='f');
+    let malePool = pool.filter(v=>guessGender(v.name)==='m');
+    const unknown = pool.filter(v=>!guessGender(v.name));
+
+    // Si no detectamos género por nombre, repartimos el resto alternando
+    unknown.forEach((v,i)=>{ (i%2===0 ? femalePool : malePool).push(v); });
+
+    if (!femalePool.length) femalePool = pool.slice();
+    if (!malePool.length) malePool = pool.slice();
+
+    let fi = 0, mi = 0;
+    personas.forEach(p=>{
+      if (p.gender === 'f'){ p.voice = femalePool[fi % femalePool.length]; fi++; }
+      else if (p.gender === 'm'){ p.voice = malePool[mi % malePool.length]; mi++; }
+      else { p.voice = pool[(fi+mi) % pool.length]; fi++; }
+    });
+
+    const statusEl = document.getElementById('voiceStatus');
+    if (pool.length < 4){
+      statusEl.textContent = `Tu navegador solo expone ${pool.length} voz/voces del sistema, así que muchas de las 58 personas sonarán parecidas (se diferencian por tono/velocidad). Prueba en Chrome o Edge en un ordenador para tener más voces en español.`;
+      statusEl.classList.add('warn');
+    } else {
+      statusEl.textContent = `${pool.length} voces del sistema detectadas y repartidas entre las 58 personas.`;
+      statusEl.classList.remove('warn');
+    }
+  }
+
+  synth.addEventListener('voiceschanged', assignVoices);
+  assignVoices();
+  setTimeout(assignVoices, 300); // fallback para navegadores lentos en poblar la lista
+
+  // ---------- 3. Render de la interfaz ----------
+  const groupsEl = document.getElementById('groups');
+  const catBarEl = document.getElementById('catBar');
+  const selectedNameEl = document.getElementById('selectedName');
+
+  function personaLabel(p){
+    const cat = CATS.find(c=>c.id===p.catId);
+    return `${p.name} — ${cat.short}`;
+  }
+
+  function renderCatBar(){
+    const allBtn = document.createElement('button');
+    allBtn.className = 'catbtn active';
+    allBtn.textContent = 'Todas';
+    allBtn.dataset.cat = 'all';
+    catBarEl.appendChild(allBtn);
+
+    CATS.forEach(c=>{
+      const b = document.createElement('button');
+      b.className = 'catbtn';
+      b.textContent = `${c.icon} ${c.label}`;
+      b.dataset.cat = c.id;
+      catBarEl.appendChild(b);
+    });
+
+    catBarEl.addEventListener('click', e=>{
+      const btn = e.target.closest('.catbtn');
+      if (!btn) return;
+      [...catBarEl.children].forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      const cat = btn.dataset.cat;
+      document.querySelectorAll('.group').forEach(g=>{
+        g.style.display = (cat==='all' || g.dataset.cat===cat) ? '' : 'none';
+      });
+    });
+  }
+
+  function renderGroups(){
+    CATS.forEach(cat=>{
+      const list = personas.filter(p=>p.catId===cat.id);
+      const group = document.createElement('div');
+      group.className = 'group';
+      group.dataset.cat = cat.id;
+      group.innerHTML = `<h2>${cat.icon} ${cat.label} <span class="count">${list.length}</span></h2>`;
+      const grid = document.createElement('div');
+      grid.className = 'grid';
+
+      list.forEach(p=>{
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.id = 'card-' + p.id;
+        card.innerHTML = `
+          <div class="card-top">
+            <div class="avatar">${cat.icon}</div>
+            <div>
+              <div class="card-name">${p.name}</div>
+              <div class="card-tag">${cat.label}</div>
+            </div>
+          </div>
+          <div class="card-desc">Tono ${p.pitch.toFixed(2)} · Velocidad ${p.rate.toFixed(2)}</div>
+          <div class="card-actions">
+            <button class="mini-btn play-demo" data-id="${p.id}">🔊 Ejemplo</button>
+            <button class="mini-btn use" data-id="${p.id}">Usar esta voz</button>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+
+      group.appendChild(grid);
+      groupsEl.appendChild(group);
+    });
+  }
+
+  renderCatBar();
+  renderGroups();
+  document.getElementById('card-' + selectedPersonaId).classList.add('selected');
+  selectedNameEl.textContent = personaLabel(personas[0]);
+
+  // ---------- 4. Reproducción ----------
+  const textInput = document.getElementById('textInput');
+  const charCount = document.getElementById('charCount');
+  const rateRange = document.getElementById('rateRange');
+  const pitchRange = document.getElementById('pitchRange');
+  let userAdjustedRate = false, userAdjustedPitch = false;
+
+  textInput.addEventListener('input', ()=>{
+    charCount.textContent = `${textInput.value.length} / 4000`;
+  });
+  rateRange.addEventListener('input', ()=>{ userAdjustedRate = true; });
+  pitchRange.addEventListener('input', ()=>{ userAdjustedPitch = true; });
+
+  function clearSpeakingState(){
+    document.querySelectorAll('.card.speaking').forEach(c=>c.classList.remove('speaking'));
+  }
+
+  function speak(text, persona){
+    if (!text || !text.trim()) return;
+    synth.cancel();
+    const utter = new SpeechSynthesisUtterance(text);
+    if (persona.voice) {
+      utter.voice = persona.voice;
+      utter.lang = persona.voice.lang;
+    } else {
+      utter.lang = 'es-ES';
+    }
+    utter.pitch = userAdjustedPitch ? parseFloat(pitchRange.value) : persona.pitch;
+    utter.rate = userAdjustedRate ? parseFloat(rateRange.value) : persona.rate;
+    utter.volume = 1;
+
+    clearSpeakingState();
+    const card = document.getElementById('card-' + persona.id);
+    if (card) card.classList.add('speaking');
+
+    utter.onend = clearSpeakingState;
+    utter.onerror = clearSpeakingState;
+    synth.speak(utter);
+  }
+
+  function getSelectedPersona(){
+    return personas.find(p=>p.id===selectedPersonaId);
+  }
+
+  function selectPersona(id){
+    selectedPersonaId = id;
+    document.querySelectorAll('.card.selected').forEach(c=>c.classList.remove('selected'));
+    const card = document.getElementById('card-' + id);
+    if (card) card.classList.add('selected');
+    selectedNameEl.textContent = personaLabel(getSelectedPersona());
+    userAdjustedRate = false;
+    userAdjustedPitch = false;
+    rateRange.value = 1;
+    pitchRange.value = 1;
+  }
+
+  groupsEl.addEventListener('click', e=>{
+    const useBtn = e.target.closest('.mini-btn.use');
+    const demoBtn = e.target.closest('.play-demo');
+    if (useBtn){
+      const id = useBtn.dataset.id;
+      selectPersona(id);
+      const p = personas.find(x=>x.id===id);
+      const text = textInput.value.trim();
+      if (text) speak(text, p);
+    } else if (demoBtn){
+      const id = demoBtn.dataset.id;
+      const p = personas.find(x=>x.id===id);
+      const cat = CATS.find(c=>c.id===p.catId);
+      speak(cat.demo, p);
+    }
+  });
+
+  document.getElementById('playBtn').addEventListener('click', ()=>{
+    speak(textInput.value, getSelectedPersona());
+  });
+  document.getElementById('stopBtn').addEventListener('click', ()=>{
+    synth.cancel();
+    clearSpeakingState();
+  });
+  document.getElementById('previewBtn').addEventListener('click', ()=>{
+    const p = getSelectedPersona();
+    const cat = CATS.find(c=>c.id===p.catId);
+    speak(cat.demo, p);
+  });
+
+  if (!('speechSynthesis' in window)) {
+    document.getElementById('voiceStatus').textContent = 'Tu navegador no soporta la síntesis de voz (Web Speech API). Prueba con Chrome, Edge o Safari actualizados.';
+    document.getElementById('voiceStatus').classList.add('warn');
+    document.getElementById('playBtn').disabled = true;
+  }
+
+})();
+</script>
+
+</body>
+</html>
