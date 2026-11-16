@@ -156,6 +156,10 @@
   .cal-day.clickable:hover{ background:var(--cream-2); }
   .cal-day.empty{ background:none; border:none; }
   .cal-day .daynum{ font-weight:600; }
+  .cal-day .cal-extras{ display:flex; flex-wrap:wrap; gap:1px 3px; font-size:13px; line-height:1.2; }
+  .cal-day .cal-extras span{ filter:drop-shadow(0 0 1px rgba(255,255,255,.9)); }
+  .cal-legend{ font-size:12.5px; color:var(--ink-soft); margin-top:10px; display:flex; flex-wrap:wrap; gap:4px 14px; }
+  @media (max-width:520px){ .cal-day .cal-extras{ font-size:11px; gap:0 1px; } }
   .cal-day.status-pendiente{ background:#C9A227; border-color:#C9A227; }
   .cal-day.status-pendiente .daynum{ color:#221F19; }
   .cal-day.status-pendiente.clickable:hover{ background:#b3901f; }
@@ -343,6 +347,7 @@
       <button type="button" class="btn btn-ghost" id="calNextBtn">Mes siguiente →</button>
     </div>
     <div class="cal-grid" id="calGrid"></div>
+    <div class="cal-legend"><span>🎈 Decoración</span><span>🎭 Animación</span><span>🧹 Limpieza</span><span>🍕 Menú infantil</span><span>🍽️ Catering</span></div>
     <div id="calDayList" style="margin-top:24px;"></div>
   </div>
 
@@ -2692,9 +2697,19 @@ async function renderCalendarState(){
       : null;
     const cls = 'cal-day' + (dayRes.length ? ' clickable' : '') + (dayStatus ? ` status-${dayStatus}` : '');
     const dayInvoiced = dayRes.some(r => invoicedResIds.has(r.id));
+    // Lo que hay que preparar ese día (de las reservas no anuladas), para verlo de un vistazo.
+    const live = dayRes.filter(r => r.status !== 'cancelada');
+    const extras = [
+      live.some(r => r.wants_decoration) && ['🎈', 'Decoración'],
+      live.some(r => r.wants_animation) && ['🎭', 'Animación'],
+      live.some(r => r.wants_cleaning) && ['🧹', 'Limpieza'],
+      live.some(r => r.kids_menus_count > 0) && ['🍕', `Menú infantil (${live.reduce((n, r) => n + (r.kids_menus_count || 0), 0)})`],
+      live.some(r => r.wants_catering) && ['🍽️', 'Catering'],
+    ].filter(Boolean);
     html += `<div class="${cls}" ${dayRes.length ? `data-date="${key}"` : ''}>
         ${dayInvoiced ? '<span class="cal-day-badge" title="Ya facturada">F</span>' : ''}
         <span class="daynum">${day}</span>
+        ${extras.length ? `<div class="cal-extras">${extras.map(([i, t]) => `<span title="${t}" aria-label="${t}">${i}</span>`).join('')}</div>` : ''}
       </div>`;
   }
   const grid = document.getElementById('calGrid');
