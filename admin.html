@@ -185,6 +185,20 @@
   .client-card .name{ font-weight:500; }
   .client-card .meta{ font-size:12.5px; color:var(--ink-soft); margin-top:3px; }
   .client-card .count{ font-family:'Fraunces',serif; font-size:24px; color:var(--olive-dark); text-align:center; }
+  .claudia-card{ background:#fff; border:1px solid var(--line); padding:16px 20px; margin-bottom:12px; }
+  .claudia-card.lead{ border-left:4px solid var(--olive); }
+  .claudia-card .head{ display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; align-items:flex-start; cursor:pointer; }
+  .claudia-card .name{ font-weight:500; }
+  .claudia-card .meta{ font-size:12.5px; color:var(--ink-soft); margin-top:3px; }
+  .claudia-card .preview{ font-size:13.5px; margin-top:6px; color:var(--ink); }
+  .claudia-card .actions{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+  .claudia-card .chat{ margin-top:14px; border-top:1px solid var(--line); padding-top:12px; }
+  .claudia-msg{ margin:0 0 8px; display:flex; }
+  .claudia-msg.user{ justify-content:flex-end; }
+  .claudia-msg .bubble{ max-width:85%; padding:8px 12px; border-radius:12px; font-size:14px; line-height:1.45; white-space:pre-wrap; background:#F3F1EA; }
+  .claudia-msg.user .bubble{ background:#EAF0E2; }
+  .claudia-msg .who{ font-size:11px; color:var(--ink-soft); margin-bottom:2px; }
+  .btn-wa{ background:#25A35A; color:#fff; border:none; }
   .client-card .count-lbl{ font-size:10.5px; text-transform:uppercase; color:var(--ink-soft); text-align:center; }
   .frequent-badge{ font-size:11px; background:#F7EBD3; color:#6B4F17; padding:3px 10px; border-radius:999px; font-weight:600; }
 
@@ -280,6 +294,7 @@
     <button class="tab-btn" data-tab="tabFacturas">Facturas</button>
     <button class="tab-btn" data-tab="tabEnchufes">Enchufes</button>
     <button class="tab-btn" data-tab="tabInvitaciones">Invitaciones</button>
+    <button class="tab-btn" data-tab="tabClaudia">Claudia 💬</button>
   </div>
 
   <p id="actionMsg" style="display:none; font-size:13.5px; padding:10px 14px; margin-bottom:18px; border-radius:2px;"></p>
@@ -653,6 +668,23 @@
   <div id="tabInvitaciones" class="tab-panel" hidden>
     <p style="color:var(--ink-soft); font-size:14px; margin-bottom:18px;">Clientes que han generado su invitación personalizada desde la web, ordenados por fecha de creación.</p>
     <div id="invitationsList"></div>
+  </div>
+
+  <div id="tabClaudia" class="tab-panel" hidden>
+    <p style="color:var(--ink-soft); font-size:14px; margin-bottom:14px;">Lo que la gente ha hablado con Claudia en la web. Las que dejaron su teléfono tienen botón para escribirles por WhatsApp. Con las notificaciones activadas, te avisa al móvil cuando alguien deja sus datos.</p>
+    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:16px;">
+      <select id="claudiaFilter" class="filter-input" style="max-width:240px;">
+        <option value="all">Todas las conversaciones</option>
+        <option value="lead">Solo las que dejaron sus datos</option>
+      </select>
+      <select id="claudiaDays" class="filter-input" style="max-width:180px;">
+        <option value="7">Últimos 7 días</option>
+        <option value="30" selected>Últimos 30 días</option>
+        <option value="90">Últimos 3 meses</option>
+      </select>
+      <button type="button" class="btn btn-ghost" id="claudiaReload">Actualizar</button>
+    </div>
+    <div id="claudiaList"></div>
   </div>
 
   <div id="tabAnulaciones" class="tab-panel" hidden>
@@ -2565,6 +2597,7 @@ async function showDashboard(){
   renderCalendarState();
   checkNotifButton();
   checkHiddenHash();
+  openTabFromUrl();
 }
 
 async function init(){
@@ -2597,6 +2630,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     if (btn.dataset.tab === 'tabFacturas') renderInvoices();
     if (btn.dataset.tab === 'tabEnchufes'){ renderPlugSettings(); renderPlugsList(); }
     if (btn.dataset.tab === 'tabInvitaciones') renderInvitations();
+    if (btn.dataset.tab === 'tabClaudia') renderClaudia();
   });
 });
 
@@ -3107,6 +3141,103 @@ async function renderInvitations(){
       </div>
     </div>`;
   }).join('');
+}
+
+// ---------- Claudia tab (conversaciones del asistente de la web) ----------
+// Las conversaciones viven en la base de EBM; la función «claudia» de este
+// proyecto las pide con su clave y solo responde con la sesión iniciada.
+const claudiaEsc = (s) => String(s ?? '').replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
+const CLAUDIA_CHANNELS = { web: 'web', phone: 'teléfono', instagram: 'Instagram', whatsapp: 'WhatsApp' };
+let claudiaOpenId = null;
+
+async function claudiaCall(payload){
+  const { data, error } = await supabase.functions.invoke('claudia', { body: payload });
+  if (error) throw error;
+  if (data?.error) throw new Error(data.error);
+  return data;
+}
+
+function claudiaPhone(contact){
+  const digits = String(contact || '').replace(/[\s.-]/g, '').match(/(\+|00)?\d{9,13}/);
+  return digits ? digits[0] : '';
+}
+
+async function renderClaudia(){
+  const container = document.getElementById('claudiaList');
+  container.innerHTML = '<p class="empty-msg">Cargando…</p>';
+  let data;
+  try {
+    data = await claudiaCall({ action: 'list', days: Number(document.getElementById('claudiaDays').value) });
+  } catch (err){
+    container.innerHTML = `<p class="empty-msg">No se han podido cargar las conversaciones: ${claudiaEsc(err.message)}</p>`;
+    return;
+  }
+  let convs = data.conversations || [];
+  if (document.getElementById('claudiaFilter').value === 'lead') convs = convs.filter(c => c.lead);
+  if (!convs.length){
+    container.innerHTML = '<p class="empty-msg">No hay conversaciones en este periodo.</p>';
+    return;
+  }
+  container.innerHTML = convs.map(c => {
+    const l = c.lead;
+    const phone = l ? claudiaPhone(l.contact) : '';
+    const first = l?.name ? l.name.trim().split(/\s+/)[0] : '';
+    const hello = `¡Hola${first ? ' ' + first : ''}! Soy Bea, de Mi Pequeño Rincón 😊 Te escribo por lo que hablaste con Claudia en nuestra web.`;
+    const title = l?.name || (l ? 'Dejó sus datos' : 'Sin datos de contacto');
+    return `
+    <div class="claudia-card${l ? ' lead' : ''}" data-id="${claudiaEsc(c.id)}">
+      <div class="head" data-toggle="${claudiaEsc(c.id)}">
+        <div>
+          <div class="name">${claudiaEsc(title)}${c.handed_off ? ' · pidió hablar con una persona' : ''}</div>
+          <div class="meta">${fmtDateTime(c.started_at)} · ${CLAUDIA_CHANNELS[c.channel] || c.channel || ''} · ${c.message_count || 0} mensajes${l?.contact ? ' · ' + claudiaEsc(l.contact) : ''}</div>
+          ${l?.reason ? `<div class="preview"><strong>Qué quiere:</strong> ${claudiaEsc(l.reason)}</div>` : (c.first_message ? `<div class="preview">«${claudiaEsc(c.first_message)}»</div>` : '')}
+        </div>
+        <span class="meta">Ver conversación ▾</span>
+      </div>
+      ${phone ? `<div class="actions">
+        <a class="btn btn-wa" href="https://wa.me/${waNumber(phone)}?text=${encodeURIComponent(hello)}" target="_blank" rel="noopener">Responder por WhatsApp</a>
+        <a class="btn btn-ghost" href="tel:${claudiaEsc(phone)}">Llamar</a>
+      </div>` : ''}
+      <div class="chat" hidden></div>
+    </div>`;
+  }).join('');
+  container.querySelectorAll('[data-toggle]').forEach(el => {
+    el.addEventListener('click', () => toggleClaudiaChat(el.dataset.toggle));
+  });
+  if (claudiaOpenId) toggleClaudiaChat(claudiaOpenId, true);
+}
+
+async function toggleClaudiaChat(id, scroll = false){
+  const card = document.querySelector(`.claudia-card[data-id="${CSS.escape(id)}"]`);
+  if (!card) return;
+  const box = card.querySelector('.chat');
+  if (!box.hidden && !scroll){ box.hidden = true; claudiaOpenId = null; return; }
+  claudiaOpenId = id;
+  box.hidden = false;
+  box.innerHTML = '<p class="empty-msg">Cargando…</p>';
+  if (scroll) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  try {
+    const { messages } = await claudiaCall({ action: 'messages', conversation_id: id });
+    box.innerHTML = (messages || []).map(m => `
+      <div class="claudia-msg ${m.role === 'user' ? 'user' : ''}">
+        <div class="bubble"><div class="who">${m.role === 'user' ? 'Cliente' : 'Claudia'} · ${fmtDateTime(m.created_at)}</div>${claudiaEsc(m.content)}</div>
+      </div>`).join('') || '<p class="empty-msg">Sin mensajes.</p>';
+  } catch (err){
+    box.innerHTML = `<p class="empty-msg">No se ha podido cargar: ${claudiaEsc(err.message)}</p>`;
+  }
+}
+
+document.getElementById('claudiaReload').addEventListener('click', renderClaudia);
+document.getElementById('claudiaFilter').addEventListener('change', renderClaudia);
+document.getElementById('claudiaDays').addEventListener('change', renderClaudia);
+
+// Al tocar la notificación del móvil se abre admin.html?tab=claudia&c=<conversación>.
+function openTabFromUrl(){
+  const params = new URLSearchParams(location.search);
+  if (params.get('tab') !== 'claudia') return;
+  claudiaOpenId = params.get('c');
+  document.querySelector('.tab-btn[data-tab="tabClaudia"]')?.click();
+  history.replaceState(null, '', location.pathname + location.hash);
 }
 
 // ---------- Coupons tab ----------

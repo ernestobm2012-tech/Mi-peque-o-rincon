@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mpr-admin-v1';
+const CACHE_NAME = 'mpr-admin-v2';
 const PRECACHE_URLS = [
   './admin.html',
   './assets/coupons.js',
